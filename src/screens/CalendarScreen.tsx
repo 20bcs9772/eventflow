@@ -7,11 +7,7 @@ import {
   SafeAreaView,
   TouchableOpacity,
 } from 'react-native';
-import {
-  Header,
-  SegmentedControl,
-  Card,
-} from '../components';
+import { Header, SegmentedControl, Card } from '../components';
 import { Colors } from '../constants/colors';
 import { Spacing, FontSizes, BorderRadius } from '../constants/spacing';
 
@@ -40,14 +36,12 @@ const events = [
   },
 ];
 
-export const CalendarScreen: React.FC<CalendarScreenProps> = ({
-  onNavigate,
-}) => {
+export const CalendarScreen: React.FC<CalendarScreenProps> = () => {
   const [selectedView, setSelectedView] = useState(1); // 0 = Timeline, 1 = Calendar
 
   const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   const monthDays = [];
-  
+
   // Generate calendar days (simplified - showing October 2024)
   for (let i = 1; i <= 31; i++) {
     monthDays.push(i);
@@ -55,13 +49,8 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={{ paddingTop: 40 }}>
-        <Header
-          title="Timeline"
-          subtitle="October 18-20, 2024"
-          showBack
-          onBack={() => {}}
-        />
+      <View style={{ paddingTop: 50 }}>
+        <Header title="Timeline" subtitle="October 18-20, 2024" />
       </View>
 
       <View style={[styles.content, { paddingTop: 0 }]}>
@@ -76,15 +65,15 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({
             <View style={styles.calendarContainer}>
               <Text style={styles.monthTitle}>October 2024</Text>
               <View style={styles.weekDaysRow}>
-                {weekDays.map((day) => (
+                {weekDays.map(day => (
                   <View key={day} style={styles.weekDay}>
                     <Text style={styles.weekDayText}>{day}</Text>
                   </View>
                 ))}
               </View>
               <View style={styles.calendarGrid}>
-                {monthDays.map((day) => {
-                  const dayData = calendarDays.find((d) => d.date === day);
+                {monthDays.map(day => {
+                  const dayData = calendarDays.find(d => d.date === day);
                   const isSelected = dayData?.isSelected;
                   const hasEvent = dayData?.hasEvent;
 
@@ -95,12 +84,14 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({
                         styles.calendarDay,
                         isSelected && styles.calendarDaySelected,
                       ]}
-                      activeOpacity={0.7}>
+                      activeOpacity={0.7}
+                    >
                       <Text
                         style={[
                           styles.calendarDayText,
                           isSelected && styles.calendarDayTextSelected,
-                        ]}>
+                        ]}
+                      >
                         {day}
                       </Text>
                       {hasEvent && (
@@ -118,10 +109,8 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({
             </View>
 
             <View style={styles.eventsSection}>
-              <Text style={styles.eventsSectionTitle}>
-                Friday, October 18
-              </Text>
-              {events.map((event) => (
+              <Text style={styles.eventsSectionTitle}>Friday, October 18</Text>
+              {events.map(event => (
                 <Card key={event.id} style={styles.eventCard}>
                   <Text style={styles.eventTitle}>{event.title}</Text>
                   <View style={styles.eventInfo}>
@@ -255,4 +244,3 @@ const styles = StyleSheet.create({
     marginTop: Spacing.xl,
   },
 });
-

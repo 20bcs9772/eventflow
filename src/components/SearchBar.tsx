@@ -1,12 +1,8 @@
 import React from 'react';
-import {
-  View,
-  TextInput,
-  StyleSheet,
-  TouchableOpacity,
-} from 'react-native';
+import { View, TextInput, StyleSheet, TouchableOpacity } from 'react-native';
 import { Colors } from '../constants/colors';
 import { Spacing, BorderRadius, FontSizes } from '../constants/spacing';
+import FontAwesome6 from '@react-native-vector-icons/fontawesome6';
 
 interface SearchBarProps {
   placeholder?: string;
@@ -35,12 +31,9 @@ export const SearchBar: React.FC<SearchBarProps> = ({
           <TouchableOpacity
             style={styles.filterButton}
             onPress={onFilterPress}
-            activeOpacity={0.7}>
-            <View style={styles.filterIcon}>
-              <View style={styles.filterLine} />
-              <View style={[styles.filterLine, styles.filterLineMiddle]} />
-              <View style={styles.filterLine} />
-            </View>
+            activeOpacity={0.7}
+          >
+            <FontAwesome6 name="filter" iconStyle="solid" size={15} />
           </TouchableOpacity>
         )}
       </View>
@@ -58,7 +51,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.backgroundLight,
     borderRadius: BorderRadius.md,
     paddingHorizontal: Spacing.md,
-    height: 48,
+    height: 55,
   },
   input: {
     flex: 1,
@@ -67,6 +60,8 @@ const styles = StyleSheet.create({
   },
   filterButton: {
     marginLeft: Spacing.sm,
+    marginTop: Spacing.sm,
+    marginBottom: Spacing.sm,
     width: 40,
     height: 40,
     borderRadius: BorderRadius.full,
@@ -74,19 +69,4 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  filterIcon: {
-    width: 20,
-    height: 16,
-    justifyContent: 'space-between',
-  },
-  filterLine: {
-    width: 16,
-    height: 2,
-    backgroundColor: Colors.white,
-    borderRadius: 1,
-  },
-  filterLineMiddle: {
-    marginVertical: 3,
-  },
 });
-

@@ -1,3 +1,4 @@
+/* eslint-disable react/no-unstable-nested-components */
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -8,12 +9,8 @@ import {
   SettingsScreen,
 } from '../screens';
 import { Colors } from '../constants/colors';
-import {
-  HomeIcon,
-  EventIcon,
-  AnnouncementsIcon,
-  ProfileIcon,
-} from '../components/icons/TabIcons';
+
+import { FontAwesome6 } from "@react-native-vector-icons/fontawesome6";
 
 const Tab = createBottomTabNavigator();
 
@@ -23,68 +20,73 @@ export const MainTabNavigator = () => {
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: '#1A1A1A', // Very dark grey/black to match design
+          backgroundColor: '#1A1A1A',
           borderTopWidth: 0,
-          borderRadius: 28, // Rounded on all corners for floating effect
-          height: 70,
+          borderRadius: 50,
+          height: 75,
           paddingBottom: 12,
-          paddingTop: 12,
+          paddingTop: 17,
           paddingHorizontal: 20,
-          marginBottom: 16, // Spacing from bottom of screen
-          marginHorizontal: 16, // Spacing from sides
-          elevation: 8, // Shadow for floating effect (Android)
-          shadowColor: '#000', // Shadow for floating effect (iOS)
-          shadowOffset: {
-            width: 0,
-            height: -4,
-          },
+          marginBottom: 16,
+          marginHorizontal: 25,
+          elevation: 8,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: -4 },
           shadowOpacity: 0.3,
           shadowRadius: 8,
         },
         tabBarShowLabel: false,
         tabBarActiveTintColor: Colors.text,
         tabBarInactiveTintColor: Colors.white,
-      }}>
+      }}
+    >
+      {/* Home */}
       <Tab.Screen
         name="Home"
         component={HomeScreenWrapper}
         options={{
-          tabBarIcon: ({ focused }) => (
+          tabBarIcon: ({ focused, color }) => (
             <TabIconContainer focused={focused}>
-              <HomeIcon focused={focused} size={22} />
+              <FontAwesome6 name="house" size={22} color={color} iconStyle='solid' />
             </TabIconContainer>
           ),
         }}
       />
+
+      {/* Event */}
       <Tab.Screen
         name="Event"
         component={CalendarScreenWrapper}
         options={{
-          tabBarIcon: ({ focused }) => (
+          tabBarIcon: ({ focused, color }) => (
             <TabIconContainer focused={focused}>
-              <EventIcon focused={focused} size={22} />
+              <FontAwesome6 name="calendar-days" size={22} color={color} />
             </TabIconContainer>
           ),
         }}
       />
+
+      {/* Announcements */}
       <Tab.Screen
         name="Announcements"
         component={AnnouncementsScreenWrapper}
         options={{
-          tabBarIcon: ({ focused }) => (
+          tabBarIcon: ({ focused, color }) => (
             <TabIconContainer focused={focused}>
-              <AnnouncementsIcon focused={focused} size={22} />
+              <FontAwesome6 name="bullhorn" size={22} color={color} iconStyle='solid' />
             </TabIconContainer>
           ),
         }}
       />
+
+      {/* Profile */}
       <Tab.Screen
         name="Profile"
         component={SettingsScreenWrapper}
         options={{
-          tabBarIcon: ({ focused }) => (
+          tabBarIcon: ({ focused, color }) => (
             <TabIconContainer focused={focused}>
-              <ProfileIcon focused={focused} size={22} />
+              <FontAwesome6 name="user" size={22} color={color} />
             </TabIconContainer>
           ),
         }}
@@ -93,62 +95,31 @@ export const MainTabNavigator = () => {
   );
 };
 
-// Wrapper components to handle navigation
-const HomeScreenWrapper = ({ navigation }: any) => {
-  return (
-    <HomeScreen
-      onNavigate={(route) => {
-        navigation.navigate(route);
-      }}
-    />
-  );
-};
+// Screen wrappers
+const HomeScreenWrapper = ({ navigation }) => (
+  <HomeScreen onNavigate={route => navigation.navigate(route)} />
+);
 
-const CalendarScreenWrapper = ({ navigation }: any) => {
-  return (
-    <CalendarScreen
-      onNavigate={(route) => {
-        navigation.navigate(route);
-      }}
-    />
-  );
-};
+const CalendarScreenWrapper = ({ navigation }) => (
+  <CalendarScreen onNavigate={route => navigation.navigate(route)} />
+);
 
-const AnnouncementsScreenWrapper = ({ navigation }: any) => {
-  return (
-    <AnnouncementsScreen
-      onNavigate={(route) => {
-        navigation.navigate(route);
-      }}
-    />
-  );
-};
+const AnnouncementsScreenWrapper = ({ navigation }) => (
+  <AnnouncementsScreen onNavigate={route => navigation.navigate(route)} />
+);
 
-const SettingsScreenWrapper = ({ navigation }: any) => {
-  return (
-    <SettingsScreen
-      onNavigate={(route) => {
-        navigation.navigate(route);
-      }}
-    />
-  );
-};
+const SettingsScreenWrapper = ({ navigation }) => (
+  <SettingsScreen onNavigate={route => navigation.navigate(route)} />
+);
 
-// Tab icon container with white circle for active state
-const TabIconContainer: React.FC<{
-  focused: boolean;
-  children: React.ReactNode;
-}> = ({ focused, children }) => {
-  return (
-    <View
-      style={[
-        styles.tabIconContainer,
-        focused && styles.tabIconContainerFocused,
-      ]}>
-      {children}
-    </View>
-  );
-};
+// Icon container with active circle
+const TabIconContainer = ({ focused, children }) => (
+  <View
+    style={[styles.tabIconContainer, focused && styles.tabIconContainerFocused]}
+  >
+    {children}
+  </View>
+);
 
 const styles = StyleSheet.create({
   tabIconContainer: {
@@ -162,4 +133,3 @@ const styles = StyleSheet.create({
     borderRadius: 22,
   },
 });
-

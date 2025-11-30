@@ -7,10 +7,11 @@ import {
   SafeAreaView,
   TouchableOpacity,
 } from 'react-native';
-import { Header, SearchBar, EventCard } from '../components';
+import { SearchBar, EventCard } from '../components';
 import { Colors } from '../constants/colors';
 import { Spacing, FontSizes } from '../constants/spacing';
 import { Event } from '../types';
+import FontAwesome6 from '@react-native-vector-icons/fontawesome6';
 
 interface HomeScreenProps {
   onNavigate: (route: string) => void;
@@ -41,39 +42,46 @@ const mockEvents: Event[] = [
   },
 ];
 
-export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
+export const HomeScreen: React.FC<HomeScreenProps> = () => {
   const [searchQuery, setSearchQuery] = useState('');
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={[styles.header, { paddingTop: 40 }]}>
+      <View style={[styles.header, { paddingTop: 50 }]}>
         <View style={styles.headerContent}>
           {/* Profile Picture */}
           <TouchableOpacity style={styles.profilePicture}>
             <View style={styles.profileImageContainer}>
               <View style={styles.profileImagePlaceholder}>
-                <Text style={styles.profileImageText}>👤</Text>
+                <Text style={styles.profileImageText}>
+                  <FontAwesome6 name="user" size={25} />
+                </Text>
               </View>
             </View>
           </TouchableOpacity>
 
           {/* Location Information */}
-          <TouchableOpacity style={styles.locationContainer} activeOpacity={0.7}>
+          <TouchableOpacity
+            style={styles.locationContainer}
+            activeOpacity={0.7}
+          >
             <Text style={styles.locationLabel}>Your Location</Text>
             <View style={styles.locationRow}>
               <Text style={styles.locationText}>Metropolis,DC</Text>
-              <Text style={styles.chevron}>▼</Text>
+              <Text style={styles.chevron}>
+                <FontAwesome6 name="caret-down" size={25} iconStyle="solid" />
+              </Text>
             </View>
           </TouchableOpacity>
 
           {/* Notification Icon */}
-          <TouchableOpacity style={styles.notificationButton} activeOpacity={0.7}>
+          <TouchableOpacity
+            style={styles.notificationButton}
+            activeOpacity={0.7}
+          >
             <View style={styles.notificationCircle}>
               <View style={styles.bellIcon}>
-                <View style={[styles.bellTop, { borderColor: Colors.textSecondary }]} />
-                <View style={[styles.bellBody, { borderColor: Colors.textSecondary }]}>
-                  <View style={[styles.bellClapper, { backgroundColor: Colors.textSecondary }]} />
-                </View>
+                <FontAwesome6 name="bell" size={25} iconStyle="regular" />
               </View>
             </View>
           </TouchableOpacity>
@@ -89,14 +97,11 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}>
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>What's Happening Now</Text>
-          <EventCard
-            event={mockEvents[0]}
-            variant="large"
-            onPress={() => {}}
-          />
+          <EventCard event={mockEvents[0]} variant="large" onPress={() => {}} />
         </View>
 
         <View style={styles.section}>
@@ -147,6 +152,8 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
     borderRadius: 25,
+    borderColor: Colors.backgroundDark,
+    borderWidth: 1.5,
     overflow: 'hidden',
   },
   profileImagePlaceholder: {
@@ -259,4 +266,3 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
   },
 });
-

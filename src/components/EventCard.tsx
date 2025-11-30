@@ -10,6 +10,7 @@ import {
 import { Colors } from '../constants/colors';
 import { Spacing, BorderRadius, FontSizes } from '../constants/spacing';
 import { Event } from '../types';
+import FontAwesome6 from '@react-native-vector-icons/fontawesome6';
 
 interface EventCardProps {
   event: Event;
@@ -27,23 +28,39 @@ export const EventCard: React.FC<EventCardProps> = ({
       <TouchableOpacity
         style={styles.largeCard}
         onPress={onPress}
-        activeOpacity={0.9}>
+        activeOpacity={0.9}
+      >
         <ImageBackground
           source={
             event.image
               ? { uri: event.image }
-              : { uri: 'https://via.placeholder.com/400x280?text=Event' }
+              : {
+                  uri: 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+                }
           }
           style={styles.largeImage}
-          imageStyle={styles.largeImageStyle}>
+          imageStyle={styles.largeImageStyle}
+        >
           <View style={styles.largeOverlay}>
             <Text style={styles.largeTitle}>{event.title}</Text>
             <View style={styles.largeInfo}>
               <Text style={styles.largeInfoText}>
-                📅 {event.date}
+                <FontAwesome6
+                  name="calendar-day"
+                  color={Colors.background}
+                  iconStyle="solid"
+                  size={20}
+                />{' '}
+                {event.date}
               </Text>
               <Text style={styles.largeInfoText}>
-                📍 {event.location}
+                <FontAwesome6
+                  name="map-location"
+                  color={Colors.background}
+                  iconStyle="solid"
+                  size={20}
+                />{' '}
+                {event.location}
               </Text>
             </View>
             <View style={styles.largeFooter}>
@@ -51,10 +68,8 @@ export const EventCard: React.FC<EventCardProps> = ({
                 {event.attendeesAvatars?.slice(0, 3).map((avatar, index) => (
                   <View
                     key={index}
-                    style={[
-                      styles.avatar,
-                      { marginLeft: index > 0 ? -8 : 0 },
-                    ]}>
+                    style={[styles.avatar, { marginLeft: index > 0 ? -8 : 0 }]}
+                  >
                     <View style={styles.avatarPlaceholder} />
                   </View>
                 ))}
@@ -80,7 +95,8 @@ export const EventCard: React.FC<EventCardProps> = ({
     <TouchableOpacity
       style={styles.smallCard}
       onPress={onPress}
-      activeOpacity={0.8}>
+      activeOpacity={0.8}
+    >
       <View style={styles.smallImageContainer}>
         {event.image ? (
           <Image
@@ -134,6 +150,7 @@ const styles = StyleSheet.create({
   largeInfoText: {
     fontSize: FontSizes.md,
     color: Colors.white,
+    gap: 10,
   },
   largeFooter: {
     flexDirection: 'row',
@@ -218,4 +235,3 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
   },
 });
-

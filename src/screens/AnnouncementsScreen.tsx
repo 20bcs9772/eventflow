@@ -1,11 +1,5 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  SafeAreaView,
-} from 'react-native';
+import { View, Text, StyleSheet, ScrollView, SafeAreaView } from 'react-native';
 import { Header, Card } from '../components';
 import { Colors } from '../constants/colors';
 import { Spacing, FontSizes, BorderRadius } from '../constants/spacing';
@@ -46,20 +40,19 @@ const mockAnnouncements: Announcement[] = [
   },
 ];
 
-export const AnnouncementsScreen: React.FC<AnnouncementsScreenProps> = ({
-  onNavigate,
-}) => {
+export const AnnouncementsScreen: React.FC<AnnouncementsScreenProps> = () => {
   return (
     <SafeAreaView style={styles.container}>
-      <View style={{ paddingTop: 40 }}>
+      <View style={{ paddingTop: 50 }}>
         <Header title="Announcements" />
       </View>
 
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}>
-        {mockAnnouncements.map((announcement) => (
+        showsVerticalScrollIndicator={false}
+      >
+        {mockAnnouncements.map(announcement => (
           <Card key={announcement.id} style={styles.announcementCard}>
             <View style={styles.announcementHeader}>
               <View style={styles.announcementContent}>
@@ -109,13 +102,13 @@ const styles = StyleSheet.create({
     marginRight: Spacing.md,
   },
   announcementTitle: {
-    fontSize: FontSizes.md,
+    fontSize: FontSizes.lg,
     fontWeight: 'bold',
     color: Colors.text,
     marginBottom: Spacing.xs,
   },
   announcementDescription: {
-    fontSize: FontSizes.sm,
+    fontSize: FontSizes.md,
     color: Colors.textSecondary,
     marginBottom: Spacing.xs,
   },
@@ -125,17 +118,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.sm,
     paddingVertical: 2,
     borderRadius: BorderRadius.sm,
-    marginTop: Spacing.xs,
+    marginTop: Spacing.sm,
   },
   newBadgeText: {
-    fontSize: FontSizes.xs,
+    fontSize: FontSizes.sm,
     color: Colors.white,
     fontWeight: '600',
   },
   timestamp: {
-    fontSize: FontSizes.xs,
+    fontSize: FontSizes.sm,
     color: Colors.textSecondary,
     marginTop: Spacing.xs,
   },
 });
-

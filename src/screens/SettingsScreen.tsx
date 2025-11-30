@@ -17,27 +17,26 @@ interface SettingsScreenProps {
   onLogout?: () => void;
 }
 
-export const SettingsScreen: React.FC<SettingsScreenProps> = ({
-  onNavigate,
-  onLogout,
-}) => {
+export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onLogout }) => {
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={{ paddingTop: 40 }}>
-        <Header title="Settings" showBack onBack={() => {}} />
+      <View style={{ paddingTop: 50 }}>
+        <Header title="Settings" onBack={() => {}} />
       </View>
 
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}>
+        showsVerticalScrollIndicator={false}
+      >
         <Card style={styles.profileCard}>
           <TouchableOpacity
             style={styles.profileContent}
             activeOpacity={0.7}
-            onPress={() => {}}>
+            onPress={() => {}}
+          >
             <View style={styles.avatarContainer}>
               <View style={styles.avatar}>
                 <Text style={styles.avatarText}>👩</Text>
@@ -57,7 +56,8 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
             <TouchableOpacity
               style={styles.settingItem}
               activeOpacity={0.7}
-              onPress={() => {}}>
+              onPress={() => {}}
+            >
               <View style={styles.settingLeft}>
                 <Text style={styles.settingIcon}>🔔</Text>
                 <Text style={styles.settingLabel}>Notifications</Text>
@@ -78,7 +78,8 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
             <TouchableOpacity
               style={styles.settingItem}
               activeOpacity={0.7}
-              onPress={() => {}}>
+              onPress={() => {}}
+            >
               <View style={styles.settingLeft}>
                 <Text style={styles.settingIcon}>🎫</Text>
                 <Text style={styles.settingLabel}>Joined Events</Text>
@@ -97,7 +98,8 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
             <TouchableOpacity
               style={styles.settingItem}
               activeOpacity={0.7}
-              onPress={() => {}}>
+              onPress={() => {}}
+            >
               <View style={styles.settingLeft}>
                 <Text style={styles.settingIcon}>❓</Text>
                 <Text style={styles.settingLabel}>Help & Support</Text>
@@ -110,7 +112,8 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
             <TouchableOpacity
               style={styles.settingItem}
               activeOpacity={0.7}
-              onPress={() => {}}>
+              onPress={() => {}}
+            >
               <View style={styles.settingLeft}>
                 <Text style={styles.settingIcon}>📄</Text>
                 <Text style={styles.settingLabel}>Terms of Service</Text>
@@ -245,4 +248,3 @@ const styles = StyleSheet.create({
     fontSize: FontSizes.md,
   },
 });
-
