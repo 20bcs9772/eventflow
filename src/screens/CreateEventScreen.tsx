@@ -10,15 +10,18 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import FontAwesome6 from '@react-native-vector-icons/fontawesome6';
-import { ScreenLayout } from '../components';
+import { ScreenLayout, DateTimePickerModal, FloatingActionButton } from '../components';
 import { Colors } from '../constants/colors';
 import { Spacing, FontSizes, BorderRadius } from '../constants/spacing';
+import dayjs from 'dayjs';
 
 interface ScheduleBlock {
   id: string;
   title: string;
+  description?: string;
   startTime: string;
   endTime: string;
+  location?: string;
   icon: string;
 }
 
@@ -28,12 +31,26 @@ interface Collaborator {
 }
 
 export const CreateEventScreen = () => {
-  const navigation = useNavigation();
+  const navigation = useNavigation<any>();
   const [eventTitle, setEventTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [dateTime, setDateTime] = useState<{ start?: string; end?: string }>({});
-  const [venue, setVenue] = useState('');
-  const [collaborators] = useState<Collaborator[]>([
+  const [dateTime, setDateTime] = useState<{
+    startDate?: string;
+    endDate?: string;
+    startTime?: string;
+    endTime?: string;
+    timeZone?: string;
+  }>({});
+  const [venue, setVenue] = useState<{
+    name?: string;
+    fullAddress?: string;
+    address?: string;
+    city?: string;
+    state?: string;
+    zipCode?: string;
+  } | null>(null);
+  const [showDateTimeModal, setShowDateTimeModal] = useState(false);
+  const [collaborators, setCollaborators] = useState<Collaborator[]>([
     { id: '1', avatar: 'https://i.pravatar.cc/100?img=1' },
     { id: '2', avatar: 'https://i.pravatar.cc/100?img=2' },
     { id: '3', avatar: 'https://i.pravatar.cc/100?img=3' },
@@ -56,14 +73,46 @@ export const CreateEventScreen = () => {
   ]);
 
   const handleAddScheduleBlock = () => {
-    const newBlock: ScheduleBlock = {
-      id: Date.now().toString(),
-      title: 'New Session',
-      startTime: '10:30 AM',
-      endTime: '11:30 AM',
-      icon: 'calendar-check',
-    };
-    setScheduleBlocks([...scheduleBlocks, newBlock]);
+    navigation.navigate('AddScheduleBlock', {
+      onSave: (block: any) => {
+        const newBlock: ScheduleBlock = {
+          id: block.id || Date.now().toString(),
+          title: block.title,
+          description: block.description,
+          startTime: block.startTime,
+          endTime: block.endTime,
+          location: block.location,
+          icon: 'calendar-check',
+        };
+        setScheduleBlocks([...scheduleBlocks, newBlock]);
+      },
+    });
+  };
+
+  const handleDateTimeConfirm = (selectedDateTime: {
+    startDate?: string;
+    endDate?: string;
+    startTime: string;
+    endTime: string;
+    timeZone: string;
+  }) => {
+    setDateTime(selectedDateTime);
+  };
+
+  const formatDateTimeDisplay = () => {
+    if (!dateTime.startDate) return 'Set start and end dates';
+    
+    const startDate = dayjs(dateTime.startDate).format('MMM D, YYYY');
+    const endDate = dateTime.endDate 
+      ? ` - ${dayjs(dateTime.endDate).format('MMM D, YYYY')}`
+      : '';
+    const time = dateTime.startTime && dateTime.endTime
+      ? ` • ${dateTime.startTime} - ${dateTime.endTime}`
+      : dateTime.startTime
+      ? ` • ${dateTime.startTime}`
+      : '';
+    
+    return `${startDate}${endDate}${time}`;
   };
 
   const handlePublish = () => {
@@ -145,7 +194,10 @@ export const CreateEventScreen = () => {
           </View>
 
           {/* Date & Time */}
-          <TouchableOpacity style={styles.infoRow}>
+          <TouchableOpacity
+            style={styles.infoRow}
+            onPress={() => setShowDateTimeModal(true)}
+          >
             <View style={styles.infoIcon}>
               <FontAwesome6
                 name="calendar"
@@ -157,7 +209,7 @@ export const CreateEventScreen = () => {
             <View style={styles.infoContent}>
               <Text style={styles.infoTitle}>Date & Time</Text>
               <Text style={styles.infoSubtitle}>
-                {dateTime.start || 'Set start and end dates'}
+                {formatDateTimeDisplay()}
               </Text>
             </View>
             <FontAwesome6
@@ -169,7 +221,17 @@ export const CreateEventScreen = () => {
           </TouchableOpacity>
 
           {/* Venue */}
-          <TouchableOpacity style={styles.infoRow}>
+          <TouchableOpacity
+            style={styles.infoRow}
+            onPress={() => {
+              navigation.navigate('AddVenue', {
+                onSave: (savedVenue: any) => {
+                  setVenue(savedVenue);
+                },
+                initialVenue: venue,
+              });
+            }}
+          >
             <View style={styles.infoIcon}>
               <FontAwesome6
                 name="location-dot"
@@ -181,7 +243,7 @@ export const CreateEventScreen = () => {
             <View style={styles.infoContent}>
               <Text style={styles.infoTitle}>Venue</Text>
               <Text style={styles.infoSubtitle}>
-                {venue || 'Add event location'}
+                {venue?.fullAddress || venue?.name || 'Add event location'}
               </Text>
             </View>
             <FontAwesome6
@@ -196,7 +258,24 @@ export const CreateEventScreen = () => {
           <View style={styles.card}>
             <View style={styles.cardHeader}>
               <Text style={styles.cardTitle}>Invite People</Text>
-              <TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => {
+                  navigation.navigate('InvitePeople', {
+                    onSave: (people: any[]) => {
+                      setCollaborators(
+                        people.map((p) => ({
+                          id: p.id,
+                          avatar: p.avatar || 'https://i.pravatar.cc/100?img=1',
+                        }))
+                      );
+                    },
+                    initialPeople: collaborators.map((c) => ({
+                      id: c.id,
+                      avatar: c.avatar,
+                    })),
+                  });
+                }}
+              >
                 <Text style={styles.addLink}>Add</Text>
               </TouchableOpacity>
             </View>
@@ -217,7 +296,7 @@ export const CreateEventScreen = () => {
                 ))}
               </View>
               <Text style={styles.collaboratorCount}>
-                {collaborators.length} collaborators invited
+                {collaborators.length} {collaborators.length === 1 ? 'collaborator' : 'collaborators'} invited
               </Text>
             </View>
           </View>
@@ -270,12 +349,20 @@ export const CreateEventScreen = () => {
         </ScrollView>
 
         {/* Publish Button */}
-        <View style={styles.footer}>
-          <TouchableOpacity style={styles.publishButton} onPress={handlePublish}>
-            <Text style={styles.publishButtonText}>Publish Event</Text>
-          </TouchableOpacity>
-        </View>
+        <FloatingActionButton
+          title="Publish Event"
+          onPress={handlePublish}
+          disabled={!eventTitle || !dateTime.startDate}
+        />
       </View>
+
+      {/* Date & Time Picker Modal */}
+      <DateTimePickerModal
+        visible={showDateTimeModal}
+        onClose={() => setShowDateTimeModal(false)}
+        onConfirm={handleDateTimeConfirm}
+        initialDateTime={dateTime}
+      />
     </ScreenLayout>
   );
 };
@@ -473,22 +560,6 @@ const styles = StyleSheet.create({
   },
   dragHandle: {
     padding: Spacing.sm,
-  },
-  footer: {
-    padding: Spacing.lg,
-    paddingBottom: Spacing.xl,
-  },
-  publishButton: {
-    backgroundColor: Colors.primary,
-    height: 56,
-    borderRadius: BorderRadius.full,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  publishButtonText: {
-    fontSize: FontSizes.lg,
-    fontWeight: '700',
-    color: Colors.white,
   },
 });
 

@@ -32,6 +32,9 @@ export type RootStackParamList = {
   EventDetails: { event: Event };
   CreateEvent: undefined;
   SearchResults: { query?: string };
+  AddScheduleBlock: { onSave?: (block: any) => void; initialBlock?: any };
+  AddVenue: { onSave?: (venue: any) => void; initialVenue?: any };
+  InvitePeople: { onSave?: (people: any[]) => void; initialPeople?: any[] };
 };
 
 export type MainTabParamList = {

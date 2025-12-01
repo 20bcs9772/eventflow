@@ -15,7 +15,7 @@ import { Spacing, FontSizes, BorderRadius } from '../constants/spacing';
 import FontAwesome6 from '@react-native-vector-icons/fontawesome6';
 import { RouteProp, useRoute, useNavigation } from '@react-navigation/native';
 import { RootStackParamList } from '../types';
-import { ScreenLayout } from '../components';
+import { ScreenLayout, FloatingActionButton } from '../components';
 
 type EventDetailsRouteProp = RouteProp<RootStackParamList, 'EventDetails'>;
 
@@ -290,13 +290,17 @@ export const EventDetailsScreen = () => {
           {/* Dynamic Content */}
           {renderContent()}
 
-          <View style={{ height: 120 }} />
+          <View style={{ height: 100 }} />
         </ScrollView>
 
         {/* FLOATING JOIN BUTTON */}
-        <TouchableOpacity style={styles.joinButton}>
-          <Text style={styles.joinButtonText}>Join Event</Text>
-        </TouchableOpacity>
+        <FloatingActionButton
+          title="Join Event"
+          onPress={() => {
+            // Handle join event
+            console.log('Join event');
+          }}
+        />
       </View>
     </ScreenLayout>
   );
@@ -606,27 +610,4 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 
-  /* Floating Button */
-  joinButton: {
-    position: 'absolute',
-    bottom: 20,
-    left: 20,
-    right: 20,
-    backgroundColor: Colors.primary,
-    height: 60,
-    borderRadius: 30,
-    justifyContent: 'center',
-    alignItems: 'center',
-    elevation: 10,
-    shadowColor: '#000',
-    shadowOpacity: 0.25,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
-  },
-
-  joinButtonText: {
-    color: Colors.white,
-    fontSize: 18,
-    fontWeight: '700',
-  },
 });

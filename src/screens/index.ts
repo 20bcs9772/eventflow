@@ -6,4 +6,7 @@ export { SettingsScreen } from './SettingsScreen';
 export { EventDetailsScreen } from './EventDetailsScreen';
 export { CreateEventScreen } from './CreateEventScreen';
 export { SearchResultsScreen } from './SearchResultsScreen';
+export { AddScheduleBlockScreen } from './AddScheduleBlockScreen';
+export { AddVenueScreen } from './AddVenueScreen';
+export { InvitePeopleScreen } from './InvitePeopleScreen';
 
