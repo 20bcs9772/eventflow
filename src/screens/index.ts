@@ -9,4 +9,7 @@ export { SearchResultsScreen } from './SearchResultsScreen';
 export { AddScheduleBlockScreen } from './AddScheduleBlockScreen';
 export { AddVenueScreen } from './AddVenueScreen';
 export { InvitePeopleScreen } from './InvitePeopleScreen';
-
+export { LoginScreen } from './LoginScreen';
+export { SignUpScreen } from './SignUpScreen';
+export { ForgotPasswordScreen } from './ForgotPasswordScreen';
+export { EmailVerificationScreen } from './EmailVerificationScreen';

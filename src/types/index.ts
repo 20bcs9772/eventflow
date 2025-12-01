@@ -35,6 +35,10 @@ export type RootStackParamList = {
   AddScheduleBlock: { onSave?: (block: any) => void; initialBlock?: any };
   AddVenue: { onSave?: (venue: any) => void; initialVenue?: any };
   InvitePeople: { onSave?: (people: any[]) => void; initialPeople?: any[] };
+  Login: undefined;
+  SignUp: undefined;
+  ForgotPassword: undefined;
+  EmailVerification: { email?: string };
 };
 
 export type MainTabParamList = {
@@ -43,4 +47,3 @@ export type MainTabParamList = {
   Announcements: undefined;
   Profile: undefined;
 };
-
