@@ -1,17 +1,17 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
-  SafeAreaView,
   TouchableOpacity,
 } from 'react-native';
-import { SearchBar, EventCard } from '../components';
+import { EventCard, ScreenLayout } from '../components';
 import { Colors } from '../constants/colors';
 import { Spacing, FontSizes } from '../constants/spacing';
 import { Event } from '../types';
 import FontAwesome6 from '@react-native-vector-icons/fontawesome6';
+import { useNavigation } from '@react-navigation/native';
 
 interface HomeScreenProps {
   onNavigate: (route: string) => void;
@@ -43,11 +43,15 @@ const mockEvents: Event[] = [
 ];
 
 export const HomeScreen: React.FC<HomeScreenProps> = () => {
-  const [searchQuery, setSearchQuery] = useState('');
+  const navigation = useNavigation<any>();
+
+  const handleSearchPress = () => {
+    navigation.navigate('SearchResults', { query: '' });
+  };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={[styles.header, { paddingTop: 50 }]}>
+    <ScreenLayout backgroundColor={Colors.backgroundLight}>
+      <View style={styles.header}>
         <View style={styles.headerContent}>
           {/* Profile Picture */}
           <TouchableOpacity style={styles.profilePicture}>
@@ -74,24 +78,27 @@ export const HomeScreen: React.FC<HomeScreenProps> = () => {
             </View>
           </TouchableOpacity>
 
+          {/* Search Icon */}
+          <TouchableOpacity
+            style={styles.iconButton}
+            activeOpacity={0.7}
+            onPress={handleSearchPress}
+          >
+            <View style={styles.iconCircle}>
+              <FontAwesome6 name="magnifying-glass" size={20} iconStyle="solid" color={Colors.text} />
+            </View>
+          </TouchableOpacity>
+
           {/* Notification Icon */}
           <TouchableOpacity
-            style={styles.notificationButton}
+            style={styles.iconButton}
             activeOpacity={0.7}
           >
-            <View style={styles.notificationCircle}>
-              <View style={styles.bellIcon}>
-                <FontAwesome6 name="bell" size={25} iconStyle="regular" />
-              </View>
+            <View style={styles.iconCircle}>
+              <FontAwesome6 name="bell" size={20} iconStyle="regular" color={Colors.text} />
             </View>
           </TouchableOpacity>
         </View>
-        <SearchBar
-          placeholder="Search events..."
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-          onFilterPress={() => {}}
-        />
       </View>
 
       <ScrollView
@@ -101,7 +108,13 @@ export const HomeScreen: React.FC<HomeScreenProps> = () => {
       >
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>What's Happening Now</Text>
-          <EventCard event={mockEvents[0]} variant="large" onPress={() => {}} />
+          <EventCard
+            event={mockEvents[0]}
+            variant="large"
+            onPress={() =>
+              navigation.navigate('EventDetails', { event: mockEvents[0] })
+            }
+          />
         </View>
 
         <View style={styles.section}>
@@ -112,11 +125,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = () => {
             </TouchableOpacity>
           </View>
           <View style={styles.eventsRow}>
-            <EventCard
-              event={mockEvents[1]}
-              variant="small"
-              onPress={() => {}}
-            />
+            <EventCard event={mockEvents[1]} variant="small" />
             <EventCard
               event={mockEvents[2]}
               variant="small"
@@ -125,20 +134,16 @@ export const HomeScreen: React.FC<HomeScreenProps> = () => {
           </View>
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </ScreenLayout>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.background,
-  },
   header: {
     paddingHorizontal: Spacing.md,
     paddingTop: Spacing.md,
     paddingBottom: Spacing.sm,
-    backgroundColor: Colors.background,
+    backgroundColor: Colors.backgroundLight,
   },
   headerContent: {
     flexDirection: 'row',
@@ -189,58 +194,24 @@ const styles = StyleSheet.create({
     fontSize: FontSizes.xs,
     color: Colors.textSecondary,
   },
-  notificationButton: {
-    width: 40,
-    height: 40,
+  iconButton: {
+    marginLeft: Spacing.sm,
+  },
+  iconCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: Colors.white,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  notificationCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: Colors.backgroundLight,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  bellIcon: {
-    width: 20,
-    height: 20,
-    alignItems: 'center',
-    justifyContent: 'flex-start',
-  },
-  bellTop: {
-    width: 4,
-    height: 4,
-    borderWidth: 1.5,
-    borderRadius: 2,
-    borderBottomWidth: 0,
-    marginBottom: -1,
-    alignSelf: 'center',
-  },
-  bellBody: {
-    width: 14,
-    height: 12,
-    borderWidth: 1.5,
-    borderRadius: 7,
-    borderTopWidth: 0,
-    position: 'relative',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  bellClapper: {
-    width: 2,
-    height: 2,
-    borderRadius: 1,
-    position: 'absolute',
-    bottom: -2,
   },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
     paddingHorizontal: Spacing.md,
-    paddingBottom: 100, // Extra padding for floating navigation bar
+    paddingBottom: 100,
+    marginTop: 10
   },
   section: {
     marginBottom: Spacing.xl,

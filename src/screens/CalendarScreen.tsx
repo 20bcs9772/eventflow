@@ -4,12 +4,12 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  SafeAreaView,
   TouchableOpacity,
 } from 'react-native';
-import { Header, SegmentedControl, Card } from '../components';
+import { Header, SegmentedControl, Card, ScreenLayout } from '../components';
 import { Colors } from '../constants/colors';
 import { Spacing, FontSizes, BorderRadius } from '../constants/spacing';
+import FontAwesome6 from '@react-native-vector-icons/fontawesome6';
 
 interface CalendarScreenProps {
   onNavigate: (route: string) => void;
@@ -48,12 +48,9 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = () => {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={{ paddingTop: 50 }}>
-        <Header title="Timeline" subtitle="October 18-20, 2024" />
-      </View>
-
-      <View style={[styles.content, { paddingTop: 0 }]}>
+    <ScreenLayout backgroundColor={Colors.backgroundLight}>
+      <Header title="Timeline" subtitle="October 18-20, 2024" />
+      <View style={styles.content}>
         <SegmentedControl
           options={['Timeline', 'Calendar']}
           selectedIndex={selectedView}
@@ -107,73 +104,73 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = () => {
                 })}
               </View>
             </View>
+          </>
+        )}
 
+        {selectedView === 0 && (
+          <ScrollView style={styles.timelineView}>
             <View style={styles.eventsSection}>
               <Text style={styles.eventsSectionTitle}>Friday, October 18</Text>
               {events.map(event => (
                 <Card key={event.id} style={styles.eventCard}>
                   <Text style={styles.eventTitle}>{event.title}</Text>
                   <View style={styles.eventInfo}>
-                    <Text style={styles.eventInfoText}>🕐 {event.time}</Text>
+                    <Text style={styles.eventInfoText}>
+                      <FontAwesome6 name="clock" size={15} /> {event.time}
+                    </Text>
                   </View>
                   <View style={styles.eventInfo}>
                     <Text style={styles.eventInfoText}>
-                      📍 {event.location}
+                      <FontAwesome6
+                        name="map-pin"
+                        iconStyle="solid"
+                        size={15}
+                      />{' '}
+                      {event.location}
                     </Text>
                   </View>
                 </Card>
               ))}
             </View>
-          </>
-        )}
-
-        {selectedView === 0 && (
-          <ScrollView style={styles.timelineView}>
-            <Text style={styles.timelinePlaceholder}>
-              Timeline view coming soon
-            </Text>
           </ScrollView>
         )}
       </View>
-    </SafeAreaView>
+    </ScreenLayout>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.background,
-  },
   content: {
     flex: 1,
     paddingHorizontal: Spacing.md,
-    paddingBottom: 100, // Extra padding for floating navigation bar
+    paddingBottom: 100,
   },
   calendarContainer: {
-    backgroundColor: Colors.cardBackground,
+    backgroundColor: Colors.white,
     borderRadius: BorderRadius.lg,
     padding: Spacing.md,
     marginBottom: Spacing.lg,
+    marginHorizontal: Spacing.md,
   },
   monthTitle: {
     fontSize: FontSizes.xl,
     fontWeight: 'bold',
     color: Colors.text,
-    marginBottom: Spacing.md,
+    marginBottom: Spacing.lg,
     textAlign: 'center',
   },
   weekDaysRow: {
     flexDirection: 'row',
-    marginBottom: Spacing.sm,
+    marginBottom: Spacing.md,
   },
   weekDay: {
     flex: 1,
     alignItems: 'center',
   },
   weekDayText: {
-    fontSize: FontSizes.sm,
+    fontSize: FontSizes.xs,
     color: Colors.textSecondary,
-    fontWeight: '600',
+    fontWeight: '500',
   },
   calendarGrid: {
     flexDirection: 'row',
@@ -191,8 +188,9 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.full,
   },
   calendarDayText: {
-    fontSize: FontSizes.md,
+    fontSize: FontSizes.sm,
     color: Colors.text,
+    fontWeight: '400',
   },
   calendarDayTextSelected: {
     color: Colors.white,
@@ -200,14 +198,19 @@ const styles = StyleSheet.create({
   },
   eventDot: {
     position: 'absolute',
-    bottom: 4,
+    bottom: -4,
     width: 4,
     height: 4,
-    borderRadius: 2,
+    borderRadius: 50,
     backgroundColor: Colors.primary,
   },
   eventDotSelected: {
     backgroundColor: Colors.white,
+    borderWidth: 1.5,
+    borderColor: Colors.primary,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
   },
   eventsSection: {
     marginTop: Spacing.lg,
@@ -236,11 +239,5 @@ const styles = StyleSheet.create({
   },
   timelineView: {
     flex: 1,
-  },
-  timelinePlaceholder: {
-    fontSize: FontSizes.md,
-    color: Colors.textSecondary,
-    textAlign: 'center',
-    marginTop: Spacing.xl,
   },
 });

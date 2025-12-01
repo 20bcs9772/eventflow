@@ -10,7 +10,7 @@ import {
 } from '../screens';
 import { Colors } from '../constants/colors';
 
-import { FontAwesome6 } from "@react-native-vector-icons/fontawesome6";
+import { FontAwesome6 } from '@react-native-vector-icons/fontawesome6';
 
 const Tab = createBottomTabNavigator();
 
@@ -20,7 +20,7 @@ export const MainTabNavigator = () => {
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: '#1A1A1A',
+          backgroundColor: Colors.navigationBar,
           borderTopWidth: 0,
           borderRadius: 50,
           height: 75,
@@ -45,9 +45,14 @@ export const MainTabNavigator = () => {
         name="Home"
         component={HomeScreenWrapper}
         options={{
-          tabBarIcon: ({ focused, color }) => (
+          tabBarIcon: ({ focused }) => (
             <TabIconContainer focused={focused}>
-              <FontAwesome6 name="house" size={22} color={color} iconStyle='solid' />
+              <FontAwesome6
+                name="house"
+                size={22}
+                color={Colors.white}
+                iconStyle="solid"
+              />
             </TabIconContainer>
           ),
         }}
@@ -58,9 +63,13 @@ export const MainTabNavigator = () => {
         name="Event"
         component={CalendarScreenWrapper}
         options={{
-          tabBarIcon: ({ focused, color }) => (
+          tabBarIcon: ({ focused }) => (
             <TabIconContainer focused={focused}>
-              <FontAwesome6 name="calendar-days" size={22} color={color} />
+              <FontAwesome6
+                name="calendar-days"
+                size={22}
+                color={Colors.white}
+              />
             </TabIconContainer>
           ),
         }}
@@ -71,9 +80,14 @@ export const MainTabNavigator = () => {
         name="Announcements"
         component={AnnouncementsScreenWrapper}
         options={{
-          tabBarIcon: ({ focused, color }) => (
+          tabBarIcon: ({ focused }) => (
             <TabIconContainer focused={focused}>
-              <FontAwesome6 name="bullhorn" size={22} color={color} iconStyle='solid' />
+              <FontAwesome6
+                name="bullhorn"
+                size={22}
+                color={Colors.white}
+                iconStyle="solid"
+              />
             </TabIconContainer>
           ),
         }}
@@ -84,9 +98,9 @@ export const MainTabNavigator = () => {
         name="Profile"
         component={SettingsScreenWrapper}
         options={{
-          tabBarIcon: ({ focused, color }) => (
+          tabBarIcon: ({ focused }) => (
             <TabIconContainer focused={focused}>
-              <FontAwesome6 name="user" size={22} color={color} />
+              <FontAwesome6 name="user" size={22} color={Colors.white} />
             </TabIconContainer>
           ),
         }}
@@ -123,13 +137,13 @@ const TabIconContainer = ({ focused, children }) => (
 
 const styles = StyleSheet.create({
   tabIconContainer: {
-    width: 44,
-    height: 44,
+    width: 40,
+    height: 40,
     alignItems: 'center',
     justifyContent: 'center',
   },
   tabIconContainerFocused: {
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.primary,
     borderRadius: 22,
   },
 });

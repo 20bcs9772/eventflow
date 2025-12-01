@@ -11,6 +11,7 @@ import { Colors } from '../constants/colors';
 import { Spacing, BorderRadius, FontSizes } from '../constants/spacing';
 import { Event } from '../types';
 import FontAwesome6 from '@react-native-vector-icons/fontawesome6';
+import { useNavigation } from '@react-navigation/native';
 
 interface EventCardProps {
   event: Event;
@@ -23,11 +24,20 @@ export const EventCard: React.FC<EventCardProps> = ({
   onPress,
   variant = 'large',
 }) => {
+  const navigation = useNavigation<any>();
+
+  // Default navigation if onPress not provided
+  const handlePress = () => {
+    if (onPress) return onPress();
+
+    navigation.navigate('EventDetails', { event });
+  };
+
   if (variant === 'large') {
     return (
       <TouchableOpacity
         style={styles.largeCard}
-        onPress={onPress}
+        onPress={handlePress}
         activeOpacity={0.9}
       >
         <ImageBackground
@@ -35,7 +45,7 @@ export const EventCard: React.FC<EventCardProps> = ({
             event.image
               ? { uri: event.image }
               : {
-                  uri: 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+                  uri: 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?q=80',
                 }
           }
           style={styles.largeImage}
@@ -43,26 +53,29 @@ export const EventCard: React.FC<EventCardProps> = ({
         >
           <View style={styles.largeOverlay}>
             <Text style={styles.largeTitle}>{event.title}</Text>
+
             <View style={styles.largeInfo}>
               <Text style={styles.largeInfoText}>
                 <FontAwesome6
                   name="calendar-day"
                   color={Colors.background}
-                  iconStyle="solid"
                   size={20}
-                />{' '}
+                  iconStyle="solid"
+                />
                 {event.date}
               </Text>
+
               <Text style={styles.largeInfoText}>
                 <FontAwesome6
                   name="map-location"
                   color={Colors.background}
-                  iconStyle="solid"
                   size={20}
-                />{' '}
+                  iconStyle="solid"
+                />
                 {event.location}
               </Text>
             </View>
+
             <View style={styles.largeFooter}>
               <View style={styles.attendeesContainer}>
                 {event.attendeesAvatars?.slice(0, 3).map((avatar, index) => (
@@ -81,6 +94,7 @@ export const EventCard: React.FC<EventCardProps> = ({
                   </View>
                 )}
               </View>
+
               <TouchableOpacity style={styles.joinButton} activeOpacity={0.7}>
                 <Text style={styles.joinButtonText}>Join</Text>
               </TouchableOpacity>
@@ -94,7 +108,7 @@ export const EventCard: React.FC<EventCardProps> = ({
   return (
     <TouchableOpacity
       style={styles.smallCard}
-      onPress={onPress}
+      onPress={handlePress}
       activeOpacity={0.8}
     >
       <View style={styles.smallImageContainer}>
@@ -110,6 +124,7 @@ export const EventCard: React.FC<EventCardProps> = ({
           </View>
         )}
       </View>
+
       <View style={styles.smallContent}>
         <Text style={styles.smallTitle}>{event.title}</Text>
         <Text style={styles.smallDate}>{event.date}</Text>
@@ -125,13 +140,8 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.md,
     height: 280,
   },
-  largeImage: {
-    width: '100%',
-    height: '100%',
-  },
-  largeImageStyle: {
-    borderRadius: BorderRadius.lg,
-  },
+  largeImage: { width: '100%', height: '100%' },
+  largeImageStyle: { borderRadius: BorderRadius.lg },
   largeOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.4)',
@@ -144,23 +154,14 @@ const styles = StyleSheet.create({
     color: Colors.white,
     marginBottom: Spacing.sm,
   },
-  largeInfo: {
-    gap: Spacing.xs,
-  },
-  largeInfoText: {
-    fontSize: FontSizes.md,
-    color: Colors.white,
-    gap: 10,
-  },
+  largeInfo: { gap: Spacing.xs },
+  largeInfoText: { fontSize: FontSizes.md, color: Colors.white, gap: 10 },
   largeFooter: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  attendeesContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
+  attendeesContainer: { flexDirection: 'row', alignItems: 'center' },
   avatar: {
     width: 32,
     height: 32,
@@ -203,14 +204,8 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     marginRight: Spacing.md,
   },
-  smallImageContainer: {
-    width: '100%',
-    height: 120,
-  },
-  smallImage: {
-    width: '100%',
-    height: '100%',
-  },
+  smallImageContainer: { width: '100%', height: 120 },
+  smallImage: { width: '100%', height: '100%' },
   smallImagePlaceholder: {
     width: '100%',
     height: '100%',
@@ -218,20 +213,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  smallImageIcon: {
-    fontSize: 40,
-  },
-  smallContent: {
-    padding: Spacing.md,
-  },
+  smallImageIcon: { fontSize: 40 },
+  smallContent: { padding: Spacing.md },
   smallTitle: {
     fontSize: FontSizes.md,
     fontWeight: '600',
     color: Colors.text,
     marginBottom: Spacing.xs,
   },
-  smallDate: {
-    fontSize: FontSizes.sm,
-    color: Colors.textSecondary,
-  },
+  smallDate: { fontSize: FontSizes.sm, color: Colors.textSecondary },
 });

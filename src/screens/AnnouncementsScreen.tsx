@@ -1,6 +1,6 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, SafeAreaView } from 'react-native';
-import { Header, Card } from '../components';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { Header, Card, ScreenLayout } from '../components';
 import { Colors } from '../constants/colors';
 import { Spacing, FontSizes, BorderRadius } from '../constants/spacing';
 import { Announcement } from '../types';
@@ -42,11 +42,8 @@ const mockAnnouncements: Announcement[] = [
 
 export const AnnouncementsScreen: React.FC<AnnouncementsScreenProps> = () => {
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={{ paddingTop: 50 }}>
-        <Header title="Announcements" />
-      </View>
-
+    <ScreenLayout backgroundColor={Colors.backgroundLight}>
+      <Header title="Announcements" />
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
@@ -73,15 +70,11 @@ export const AnnouncementsScreen: React.FC<AnnouncementsScreenProps> = () => {
           </Card>
         ))}
       </ScrollView>
-    </SafeAreaView>
+    </ScreenLayout>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.backgroundLight,
-  },
   scrollView: {
     flex: 1,
   },

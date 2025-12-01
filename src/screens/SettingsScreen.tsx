@@ -4,13 +4,14 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  SafeAreaView,
   TouchableOpacity,
   Switch,
 } from 'react-native';
-import { Header, Card, Button } from '../components';
+import { Header, Card, Button, ScreenLayout } from '../components';
 import { Colors } from '../constants/colors';
 import { Spacing, FontSizes, BorderRadius } from '../constants/spacing';
+import FontAwesome6 from '@react-native-vector-icons/fontawesome6';
+import { useNavigation } from '@react-navigation/native';
 
 interface SettingsScreenProps {
   onNavigate: (route: string) => void;
@@ -19,13 +20,11 @@ interface SettingsScreenProps {
 
 export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onLogout }) => {
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+  const navigation = useNavigation<any>();
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={{ paddingTop: 50 }}>
-        <Header title="Settings" onBack={() => {}} />
-      </View>
-
+    <ScreenLayout backgroundColor={Colors.backgroundLight}>
+      <Header title="Settings" />
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
@@ -39,7 +38,9 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onLogout }) => {
           >
             <View style={styles.avatarContainer}>
               <View style={styles.avatar}>
-                <Text style={styles.avatarText}>👩</Text>
+                <Text style={styles.avatarText}>
+                  <FontAwesome6 name="user" size={30} iconStyle="solid" />
+                </Text>
               </View>
             </View>
             <View style={styles.profileInfo}>
@@ -50,6 +51,18 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onLogout }) => {
           </TouchableOpacity>
         </Card>
 
+        {/* Create Event Button */}
+        <TouchableOpacity
+          style={styles.createEventButton}
+          activeOpacity={0.8}
+          onPress={() => navigation.navigate('CreateEvent')}
+        >
+          <View style={styles.createEventIcon}>
+            <FontAwesome6 name="plus" size={20} color={Colors.white} iconStyle="solid" />
+          </View>
+          <Text style={styles.createEventText}>Create Event</Text>
+        </TouchableOpacity>
+
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>GENERAL</Text>
           <Card style={styles.settingsCard}>
@@ -59,7 +72,9 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onLogout }) => {
               onPress={() => {}}
             >
               <View style={styles.settingLeft}>
-                <Text style={styles.settingIcon}>🔔</Text>
+                <Text style={styles.settingIcon}>
+                  <FontAwesome6 name="bell" size={20} iconStyle="solid" />
+                </Text>
                 <Text style={styles.settingLabel}>Notifications</Text>
               </View>
               <Switch
@@ -81,7 +96,9 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onLogout }) => {
               onPress={() => {}}
             >
               <View style={styles.settingLeft}>
-                <Text style={styles.settingIcon}>🎫</Text>
+                <Text style={styles.settingIcon}>
+                  <FontAwesome6 name="calendar" size={20} iconStyle="solid" />
+                </Text>
                 <Text style={styles.settingLabel}>Joined Events</Text>
               </View>
               <View style={styles.settingRight}>
@@ -133,21 +150,39 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onLogout }) => {
           />
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </ScreenLayout>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.backgroundLight,
-  },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
     padding: Spacing.md,
-    paddingBottom: 100, // Extra padding for floating navigation bar
+    paddingBottom: 100,
+  },
+  createEventButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.primary,
+    padding: Spacing.md,
+    borderRadius: BorderRadius.lg,
+    marginBottom: Spacing.lg,
+  },
+  createEventIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: Spacing.md,
+  },
+  createEventText: {
+    fontSize: FontSizes.lg,
+    fontWeight: '700',
+    color: Colors.white,
   },
   profileCard: {
     marginBottom: Spacing.lg,

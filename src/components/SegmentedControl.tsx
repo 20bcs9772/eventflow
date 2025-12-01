@@ -1,10 +1,5 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-} from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Colors } from '../constants/colors';
 import { Spacing, BorderRadius, FontSizes } from '../constants/spacing';
 
@@ -33,12 +28,14 @@ export const SegmentedControl: React.FC<SegmentedControlProps> = ({
               index === options.length - 1 && styles.segmentLast,
             ]}
             onPress={() => onSelect(index)}
-            activeOpacity={0.7}>
+            activeOpacity={0.7}
+          >
             <Text
               style={[
                 styles.segmentText,
                 isSelected && styles.segmentTextSelected,
-              ]}>
+              ]}
+            >
               {option}
             </Text>
           </TouchableOpacity>
@@ -52,7 +49,9 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     backgroundColor: Colors.backgroundLight,
-    borderRadius: BorderRadius.md,
+    borderColor: Colors.textLight,
+    borderRadius: 50,
+    borderWidth: 1,
     padding: Spacing.xs,
     marginVertical: Spacing.md,
   },
@@ -63,19 +62,17 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   segmentFirst: {
-    borderTopLeftRadius: BorderRadius.sm,
-    borderBottomLeftRadius: BorderRadius.sm,
+    borderRadius: 50,
   },
   segmentLast: {
-    borderTopRightRadius: BorderRadius.sm,
-    borderBottomRightRadius: BorderRadius.sm,
+    borderRadius: 50,
   },
   segmentSelected: {
     backgroundColor: Colors.primary,
-    borderRadius: BorderRadius.sm,
+    borderRadius: 50,
   },
   segmentText: {
-    fontSize: FontSizes.sm,
+    fontSize: FontSizes.md,
     color: Colors.textSecondary,
     fontWeight: '500',
   },
@@ -84,4 +81,3 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 });
-

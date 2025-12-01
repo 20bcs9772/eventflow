@@ -29,6 +29,9 @@ export interface User {
 export type RootStackParamList = {
   Welcome: undefined;
   Main: undefined;
+  EventDetails: { event: Event };
+  CreateEvent: undefined;
+  SearchResults: { query?: string };
 };
 
 export type MainTabParamList = {

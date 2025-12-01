@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { WelcomeScreen } from '../screens';
+import { WelcomeScreen, EventDetailsScreen, CreateEventScreen, SearchResultsScreen } from '../screens';
 import { MainTabNavigator } from './MainTabNavigator';
 
 const Stack = createNativeStackNavigator();
@@ -22,7 +22,12 @@ export const AppNavigator = () => {
             )}
           </Stack.Screen>
         ) : (
-          <Stack.Screen name="Main" component={MainTabNavigator} />
+          <>
+            <Stack.Screen name="Main" component={MainTabNavigator} />
+            <Stack.Screen name="EventDetails" component={EventDetailsScreen} />
+            <Stack.Screen name="CreateEvent" component={CreateEventScreen} />
+            <Stack.Screen name="SearchResults" component={SearchResultsScreen} />
+          </>
         )}
       </Stack.Navigator>
     </NavigationContainer>
