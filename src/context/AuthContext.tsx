@@ -1,0 +1,286 @@
+/**
+ * Auth Context
+ *
+ * Provides authentication state and methods throughout the app.
+ * Handles Firebase auth state changes and syncs with backend.
+ */
+
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useRef,
+} from 'react';
+import { authService, apiService, AuthUser, BackendUser } from '../services';
+import { API_ENDPOINTS } from '../config';
+
+interface AuthContextType {
+  // State
+  user: AuthUser | null;
+  backendUser: BackendUser | null;
+  isLoading: boolean;
+  isAuthenticated: boolean;
+
+  // Auth methods
+  signUpWithEmail: (
+    email: string,
+    password: string,
+    name?: string,
+  ) => Promise<{ success: boolean; error?: string }>;
+  signInWithEmail: (
+    email: string,
+    password: string,
+  ) => Promise<{ success: boolean; error?: string }>;
+  signInWithGoogle: () => Promise<{ success: boolean; error?: string }>;
+  signInWithApple: () => Promise<{ success: boolean; error?: string }>;
+  signOut: () => Promise<{ success: boolean; error?: string }>;
+
+  // Utility methods
+  refreshUser: () => Promise<void>;
+}
+
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+export const useAuth = (): AuthContextType => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
+
+interface AuthProviderProps {
+  children: React.ReactNode;
+}
+
+export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+  const [user, setUser] = useState<AuthUser | null>(null);
+  const [backendUser, setBackendUser] = useState<BackendUser | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Track if we're currently syncing to prevent duplicate requests
+  const isSyncingRef = useRef(false);
+  // Track the last synced Firebase UID to prevent re-syncing
+  const lastSyncedUidRef = useRef<string | null>(null);
+
+  /**
+   * Sync user with backend after Firebase auth
+   * Returns the backend user if successful
+   */
+  const syncWithBackend = async (
+    displayName?: string | null,
+  ): Promise<BackendUser | null> => {
+    // Prevent duplicate sync requests
+    if (isSyncingRef.current) {
+      console.log('Already syncing, skipping duplicate request');
+      return null;
+    }
+
+    isSyncingRef.current = true;
+
+    try {
+      const response = await apiService.post<BackendUser>(
+        API_ENDPOINTS.AUTH.LOGIN,
+        { name: displayName },
+      );
+
+      if (response.success && response.data) {
+        setBackendUser(response.data);
+        return response.data;
+      }
+      return null;
+    } catch (error) {
+      console.error('Backend sync error:', error);
+      return null;
+    } finally {
+      isSyncingRef.current = false;
+    }
+  };
+
+  /**
+   * Listen to Firebase auth state changes
+   */
+  useEffect(() => {
+    const unsubscribe = authService.onAuthStateChanged(async firebaseUser => {
+      if (firebaseUser) {
+        const authUser: AuthUser = {
+          uid: firebaseUser.uid,
+          email: firebaseUser.email,
+          displayName: firebaseUser.displayName,
+          photoURL: firebaseUser.photoURL,
+          emailVerified: firebaseUser.emailVerified,
+        };
+        setUser(authUser);
+
+        // Only sync if this is a different user than last synced
+        // This handles app restart/refresh scenarios
+        if (lastSyncedUidRef.current !== firebaseUser.uid && !isSyncingRef.current) {
+          lastSyncedUidRef.current = firebaseUser.uid;
+          await syncWithBackend(firebaseUser.displayName);
+        }
+      } else {
+        setUser(null);
+        setBackendUser(null);
+        lastSyncedUidRef.current = null;
+      }
+      setIsLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  /**
+   * Sign up with email
+   */
+  const signUpWithEmail = async (
+    email: string,
+    password: string,
+    name?: string,
+  ): Promise<{ success: boolean; error?: string }> => {
+    setIsLoading(true);
+    try {
+      const result = await authService.signUpWithEmail(email, password, name);
+
+      if (result.success && result.user) {
+        setUser(result.user);
+        lastSyncedUidRef.current = result.user.uid;
+
+        // Sync with backend
+        await syncWithBackend(name || result.user.displayName);
+      }
+
+      return result;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  /**
+   * Sign in with email
+   */
+  const signInWithEmail = async (
+    email: string,
+    password: string,
+  ): Promise<{ success: boolean; error?: string }> => {
+    setIsLoading(true);
+    try {
+      const result = await authService.signInWithEmail(email, password);
+
+      if (result.success && result.user) {
+        setUser(result.user);
+        lastSyncedUidRef.current = result.user.uid;
+
+        // Sync with backend
+        await syncWithBackend(result.user.displayName);
+      }
+
+      return result;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  /**
+   * Sign in with Google
+   */
+  const signInWithGoogle = async (): Promise<{
+    success: boolean;
+    error?: string;
+  }> => {
+    setIsLoading(true);
+    try {
+      const result = await authService.signInWithGoogle();
+
+      if (result.success && result.user) {
+        setUser(result.user);
+        lastSyncedUidRef.current = result.user.uid;
+
+        // Sync with backend
+        await syncWithBackend(result.user.displayName);
+      }
+
+      return result;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  /**
+   * Sign in with Apple
+   */
+  const signInWithApple = async (): Promise<{
+    success: boolean;
+    error?: string;
+  }> => {
+    setIsLoading(true);
+    try {
+      const result = await authService.signInWithApple();
+
+      if (result.success && result.user) {
+        setUser(result.user);
+        lastSyncedUidRef.current = result.user.uid;
+
+        // Sync with backend
+        await syncWithBackend(result.user.displayName);
+      }
+
+      return result;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  /**
+   * Sign out
+   */
+  const signOut = async (): Promise<{ success: boolean; error?: string }> => {
+    setIsLoading(true);
+    try {
+      const result = await authService.signOut();
+
+      if (result.success) {
+        setUser(null);
+        setBackendUser(null);
+        lastSyncedUidRef.current = null;
+      }
+
+      return result;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  /**
+   * Refresh user data from backend
+   */
+  const refreshUser = async (): Promise<void> => {
+    if (!user) return;
+
+    try {
+      const response = await apiService.get<BackendUser>(API_ENDPOINTS.AUTH.ME);
+      if (response.success && response.data) {
+        setBackendUser(response.data);
+      }
+    } catch (error) {
+      console.error('Refresh user error:', error);
+    }
+  };
+
+  const value: AuthContextType = {
+    user,
+    backendUser,
+    isLoading,
+    isAuthenticated: !!user,
+    signUpWithEmail,
+    signInWithEmail,
+    signInWithGoogle,
+    signInWithApple,
+    signOut,
+    refreshUser,
+  };
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+};
+
+export default AuthContext;

@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React from 'react';
+import { ActivityIndicator, View, StyleSheet } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import {
@@ -13,14 +14,27 @@ import {
   EventDetailsScreen,
   InvitePeopleScreen,
   SearchResultsScreen,
+  JoinEventScreen,
+  JoinedEventsScreen,
 } from '../screens';
 import { MainTabNavigator } from './MainTabNavigator';
 import { RootStackParamList } from '../types';
+import { useAuth } from '../context';
+import { Colors } from '../constants/colors';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export const AppNavigator = () => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const { isAuthenticated, isLoading } = useAuth();
+
+  // Show loading screen while checking auth state
+  if (isLoading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={Colors.primary} />
+      </View>
+    );
+  }
 
   return (
     <NavigationContainer>
@@ -30,8 +44,20 @@ export const AppNavigator = () => {
             <Stack.Screen name="Welcome">
               {({ navigation }) => (
                 <WelcomeScreen
-                  onJoinEvent={() => setIsAuthenticated(true)}
+                  onJoinEvent={() => navigation.navigate('JoinEvent')}
                   onSignIn={() => navigation.navigate('Login')}
+                />
+              )}
+            </Stack.Screen>
+
+            <Stack.Screen name="JoinEvent">
+              {({ navigation }) => (
+                <JoinEventScreen
+                  onJoinEvent={() => {
+                    navigation.navigate('Login');
+                  }}
+                  onScanQR={() => console.log('Open QR Scanner')}
+                  onBack={() => navigation.goBack()}
                 />
               )}
             </Stack.Screen>
@@ -39,11 +65,10 @@ export const AppNavigator = () => {
             <Stack.Screen name="Login">
               {({ navigation }) => (
                 <LoginScreen
-                  onLogin={() =>
-                    navigation.navigate('EmailVerification', {
-                      email: 'user@example.com',
-                    })
-                  }
+                  onLogin={() => {
+                    // Auth state will automatically update via context
+                    // Navigation will switch to authenticated stack
+                  }}
                   onSignUp={() => navigation.navigate('SignUp')}
                   onForgotPassword={() => navigation.navigate('ForgotPassword')}
                 />
@@ -53,11 +78,10 @@ export const AppNavigator = () => {
             <Stack.Screen name="SignUp">
               {({ navigation }) => (
                 <SignUpScreen
-                  onSignUp={() =>
-                    navigation.navigate('EmailVerification', {
-                      email: 'user@example.com',
-                    })
-                  }
+                  onSignUp={() => {
+                    // Auth state will automatically update via context
+                    // Navigation will switch to authenticated stack
+                  }}
                   onLogin={() => navigation.navigate('Login')}
                 />
               )}
@@ -76,7 +100,9 @@ export const AppNavigator = () => {
               {({ navigation, route }) => (
                 <EmailVerificationScreen
                   email={route.params?.email}
-                  onVerify={() => setIsAuthenticated(true)}
+                  onVerify={() => {
+                    // Auth state will automatically update via context
+                  }}
                   onResend={() => console.log('Resend code')}
                   onBack={() => navigation.goBack()}
                 />
@@ -98,9 +124,28 @@ export const AppNavigator = () => {
             />
             <Stack.Screen name="AddVenue" component={AddVenueScreen} />
             <Stack.Screen name="InvitePeople" component={InvitePeopleScreen} />
+            <Stack.Screen name="JoinedEvents">
+              {({ navigation }) => (
+                <JoinedEventsScreen
+                  onBack={() => navigation.goBack()}
+                  onEventPress={event =>
+                    navigation.navigate('EventDetails', { event })
+                  }
+                />
+              )}
+            </Stack.Screen>
           </>
         )}
       </Stack.Navigator>
     </NavigationContainer>
   );
 };
+
+const styles = StyleSheet.create({
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: Colors.background,
+  },
+});

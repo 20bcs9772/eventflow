@@ -43,9 +43,10 @@ export const TextInput: React.FC<CustomTextInputProps> = ({
         {icon && (
           <View style={styles.iconContainer}>
             <FontAwesome6
-              name={icon}
+              name={icon as any}
               size={18}
               color={error ? Colors.red : isFocused ? Colors.primary : Colors.textSecondary}
+              iconStyle='solid'
             />
           </View>
         )}

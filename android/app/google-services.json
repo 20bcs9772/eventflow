@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "1042448137326",
+    "project_id": "eventflow-3ecdb",
+    "storage_bucket": "eventflow-3ecdb.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1042448137326:android:c07c6f1e3ca6ec295d7a7f",
+        "android_client_info": {
+          "package_name": "com.eventflow"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1042448137326-0e7ip3noh0uhba8aqk3ua3d3dvjs5bjp.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.eventflow",
+            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
+          }
+        },
+        {
+          "client_id": "1042448137326-jbn2ejd15qahh7sh0v7bgf7srvj02cpi.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBR2OApqtvnsVwu1H90GfJ2duXUVC51GMU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1042448137326-jbn2ejd15qahh7sh0v7bgf7srvj02cpi.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

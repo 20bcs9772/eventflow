@@ -39,6 +39,8 @@ export type RootStackParamList = {
   SignUp: undefined;
   ForgotPassword: undefined;
   EmailVerification: { email?: string };
+  JoinEvent: undefined;
+  JoinedEvents: undefined;
 };
 
 export type MainTabParamList = {

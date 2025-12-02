@@ -3,12 +3,11 @@ import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   ScrollView,
   TextInput,
   TouchableOpacity,
 } from 'react-native';
-import { Button } from '../components';
+import { Button, ScreenLayout } from '../components';
 import { Colors } from '../constants/colors';
 import { Spacing, BorderRadius, FontSizes } from '../constants/spacing';
 import FontAwesome6 from '@react-native-vector-icons/fontawesome6';
@@ -61,7 +60,7 @@ export const EmailVerificationScreen: React.FC<
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <ScreenLayout backgroundColor={Colors.background}>
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
@@ -132,15 +131,11 @@ export const EmailVerificationScreen: React.FC<
           </TouchableOpacity>
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </ScreenLayout>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.background,
-  },
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: Spacing.xl,

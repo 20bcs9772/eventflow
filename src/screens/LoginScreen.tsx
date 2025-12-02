@@ -3,15 +3,16 @@ import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   ScrollView,
   KeyboardAvoidingView,
   Platform,
   TouchableOpacity,
+  ActivityIndicator,
 } from 'react-native';
-import { Button, TextInput, SocialButton } from '../components';
+import { Button, TextInput, SocialButton, ScreenLayout } from '../components';
 import { Colors } from '../constants/colors';
 import { Spacing, BorderRadius, FontSizes } from '../constants/spacing';
+import { useAuth } from '../context';
 
 interface LoginScreenProps {
   onLogin: () => void;
@@ -24,26 +25,94 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
   onSignUp,
   onForgotPassword,
 }) => {
+  const { signInWithEmail, signInWithGoogle, signInWithApple, isLoading } = useAuth();
+  
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleLogin = () => {
-    // UI only - no validation
-    onLogin();
+  const validateForm = (): boolean => {
+    if (!email.trim()) {
+      setError('Please enter your email');
+      return false;
+    }
+    if (!password) {
+      setError('Please enter your password');
+      return false;
+    }
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email.trim())) {
+      setError('Please enter a valid email address');
+      return false;
+    }
+    return true;
   };
 
-  const handleGoogleLogin = () => {
-    // Placeholder for Google login
-    console.log('Google login pressed');
+  const handleLogin = async () => {
+    setError(null);
+    
+    if (!validateForm()) return;
+    
+    setIsSubmitting(true);
+    try {
+      const result = await signInWithEmail(email.trim(), password);
+      
+      if (result.success) {
+        onLogin();
+      } else {
+        setError(result.error || 'Failed to sign in');
+      }
+    } catch (err) {
+      setError('An unexpected error occurred');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const handleAppleLogin = () => {
-    // Placeholder for Apple login
-    console.log('Apple login pressed');
+  const handleGoogleLogin = async () => {
+    setError(null);
+    setIsSubmitting(true);
+    
+    try {
+      const result = await signInWithGoogle();
+      
+      if (result.success) {
+        onLogin();
+      } else if (result.error !== 'Sign-in was cancelled') {
+        setError(result.error || 'Failed to sign in with Google');
+      }
+    } catch (err) {
+      setError('An unexpected error occurred');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
+
+  const handleAppleLogin = async () => {
+    setError(null);
+    setIsSubmitting(true);
+    
+    try {
+      const result = await signInWithApple();
+      
+      if (result.success) {
+        onLogin();
+      } else if (result.error !== 'Sign-in was cancelled') {
+        setError(result.error || 'Failed to sign in with Apple');
+      }
+    } catch (err) {
+      setError('An unexpected error occurred');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const isFormDisabled = isLoading || isSubmitting;
 
   return (
-    <SafeAreaView style={styles.container}>
+    <ScreenLayout backgroundColor={Colors.background}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardView}
@@ -61,18 +130,29 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
             </Text>
           </View>
 
+          {/* Error Message */}
+          {error && (
+            <View style={styles.errorContainer}>
+              <Text style={styles.errorText}>{error}</Text>
+            </View>
+          )}
+
           {/* Social Login Buttons */}
           <View style={styles.socialContainer}>
             <SocialButton
               provider="google"
               onPress={handleGoogleLogin}
               style={styles.socialButton}
+              disabled={isFormDisabled}
             />
-            <SocialButton
-              provider="apple"
-              onPress={handleAppleLogin}
-              style={styles.socialButton}
-            />
+            {Platform.OS === 'ios' && (
+              <SocialButton
+                provider="apple"
+                onPress={handleAppleLogin}
+                style={styles.socialButton}
+                disabled={isFormDisabled}
+              />
+            )}
           </View>
 
           {/* Divider */}
@@ -88,19 +168,28 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
               label="Email"
               placeholder="Enter your email"
               value={email}
-              onChangeText={setEmail}
+              onChangeText={(text) => {
+                setEmail(text);
+                setError(null);
+              }}
               keyboardType="email-address"
               autoCapitalize="none"
+              autoCorrect={false}
               icon="envelope"
+              editable={!isFormDisabled}
             />
 
             <TextInput
               label="Password"
               placeholder="Enter your password"
               value={password}
-              onChangeText={setPassword}
+              onChangeText={(text) => {
+                setPassword(text);
+                setError(null);
+              }}
               isPassword
               icon="lock"
+              editable={!isFormDisabled}
             />
 
             {/* Forgot Password */}
@@ -108,6 +197,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
               onPress={onForgotPassword}
               style={styles.forgotPasswordContainer}
               activeOpacity={0.7}
+              disabled={isFormDisabled}
             >
               <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
             </TouchableOpacity>
@@ -115,31 +205,35 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
 
           {/* Login Button */}
           <Button
-            title="Sign In"
+            title={isSubmitting ? '' : 'Sign In'}
             onPress={handleLogin}
             variant="primary"
             size="large"
             style={styles.loginButton}
+            disabled={isFormDisabled}
+            icon={isSubmitting ? (
+              <ActivityIndicator color={Colors.white} size="small" />
+            ) : undefined}
           />
 
           {/* Sign Up Link */}
           <View style={styles.signUpContainer}>
             <Text style={styles.signUpText}>Don't have an account? </Text>
-            <TouchableOpacity onPress={onSignUp} activeOpacity={0.7}>
+            <TouchableOpacity 
+              onPress={onSignUp} 
+              activeOpacity={0.7}
+              disabled={isFormDisabled}
+            >
               <Text style={styles.signUpLink}>Sign Up</Text>
             </TouchableOpacity>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </ScreenLayout>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.background,
-  },
   keyboardView: {
     flex: 1,
   },
@@ -147,38 +241,7 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     paddingHorizontal: Spacing.xl,
     paddingVertical: Spacing.lg,
-  },
-  logoContainer: {
-    alignItems: 'center',
-    marginTop: Spacing.xl,
-    marginBottom: Spacing.lg,
-  },
-  logoOuter: {
-    width: 100,
-    height: 100,
-    borderRadius: BorderRadius.full,
-    backgroundColor: Colors.white,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: Colors.black,
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 5,
-  },
-  logoInner: {
-    width: 76,
-    height: 76,
-    borderRadius: BorderRadius.full,
-    backgroundColor: Colors.primaryLight,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  logoIcon: {
-    fontSize: 42,
+    marginTop: Spacing.lg,
   },
   headerContainer: {
     alignItems: 'center',
@@ -193,6 +256,19 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: FontSizes.md,
     color: Colors.textSecondary,
+    textAlign: 'center',
+  },
+  errorContainer: {
+    backgroundColor: `${Colors.red}15`,
+    borderRadius: BorderRadius.md,
+    padding: Spacing.md,
+    marginBottom: Spacing.lg,
+    borderWidth: 1,
+    borderColor: `${Colors.red}30`,
+  },
+  errorText: {
+    color: Colors.red,
+    fontSize: FontSizes.sm,
     textAlign: 'center',
   },
   socialContainer: {

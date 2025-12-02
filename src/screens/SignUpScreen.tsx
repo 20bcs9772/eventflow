@@ -3,15 +3,16 @@ import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   ScrollView,
   KeyboardAvoidingView,
   Platform,
   TouchableOpacity,
+  ActivityIndicator,
 } from 'react-native';
-import { Button, TextInput, SocialButton } from '../components';
+import { Button, TextInput, SocialButton, ScreenLayout } from '../components';
 import { Colors } from '../constants/colors';
 import { Spacing, BorderRadius, FontSizes } from '../constants/spacing';
+import { useAuth } from '../context';
 
 interface SignUpScreenProps {
   onSignUp: () => void;
@@ -22,28 +23,103 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
   onSignUp,
   onLogin,
 }) => {
+  const { signUpWithEmail, signInWithGoogle, signInWithApple, isLoading } = useAuth();
+  
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSignUp = () => {
-    // UI only - no validation
-    onSignUp();
+  const validateForm = (): boolean => {
+    if (!name.trim()) {
+      setError('Please enter your name');
+      return false;
+    }
+    if (!email.trim()) {
+      setError('Please enter your email');
+      return false;
+    }
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email.trim())) {
+      setError('Please enter a valid email address');
+      return false;
+    }
+    if (!password) {
+      setError('Please create a password');
+      return false;
+    }
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters');
+      return false;
+    }
+    return true;
   };
 
-  const handleGoogleSignUp = () => {
-    // Placeholder for Google signup
-    console.log('Google signup pressed');
+  const handleSignUp = async () => {
+    setError(null);
+    
+    if (!validateForm()) return;
+    
+    setIsSubmitting(true);
+    try {
+      const result = await signUpWithEmail(email.trim(), password, name.trim());
+      
+      if (result.success) {
+        onSignUp();
+      } else {
+        setError(result.error || 'Failed to create account');
+      }
+    } catch (err) {
+      setError('An unexpected error occurred');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const handleAppleSignUp = () => {
-    // Placeholder for Apple signup
-    console.log('Apple signup pressed');
+  const handleGoogleSignUp = async () => {
+    setError(null);
+    setIsSubmitting(true);
+    
+    try {
+      const result = await signInWithGoogle();
+      
+      if (result.success) {
+        onSignUp();
+      } else if (result.error !== 'Sign-in was cancelled') {
+        setError(result.error || 'Failed to sign up with Google');
+      }
+    } catch (err) {
+      setError('An unexpected error occurred');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
+
+  const handleAppleSignUp = async () => {
+    setError(null);
+    setIsSubmitting(true);
+    
+    try {
+      const result = await signInWithApple();
+      
+      if (result.success) {
+        onSignUp();
+      } else if (result.error !== 'Sign-in was cancelled') {
+        setError(result.error || 'Failed to sign up with Apple');
+      }
+    } catch (err) {
+      setError('An unexpected error occurred');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const isFormDisabled = isLoading || isSubmitting;
 
   return (
-    <SafeAreaView style={styles.container}>
+    <ScreenLayout backgroundColor={Colors.background}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardView}
@@ -61,18 +137,29 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
             </Text>
           </View>
 
+          {/* Error Message */}
+          {error && (
+            <View style={styles.errorContainer}>
+              <Text style={styles.errorText}>{error}</Text>
+            </View>
+          )}
+
           {/* Social Signup Buttons */}
           <View style={styles.socialContainer}>
             <SocialButton
               provider="google"
               onPress={handleGoogleSignUp}
               style={styles.socialButton}
+              disabled={isFormDisabled}
             />
-            <SocialButton
-              provider="apple"
-              onPress={handleAppleSignUp}
-              style={styles.socialButton}
-            />
+            {Platform.OS === 'ios' && (
+              <SocialButton
+                provider="apple"
+                onPress={handleAppleSignUp}
+                style={styles.socialButton}
+                disabled={isFormDisabled}
+              />
+            )}
           </View>
 
           {/* Divider */}
@@ -88,36 +175,41 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
               label="Full Name"
               placeholder="Enter your full name"
               value={name}
-              onChangeText={setName}
+              onChangeText={(text) => {
+                setName(text);
+                setError(null);
+              }}
               icon="user"
+              autoCapitalize="words"
+              editable={!isFormDisabled}
             />
 
             <TextInput
               label="Email"
               placeholder="Enter your email"
               value={email}
-              onChangeText={setEmail}
+              onChangeText={(text) => {
+                setEmail(text);
+                setError(null);
+              }}
               keyboardType="email-address"
               autoCapitalize="none"
+              autoCorrect={false}
               icon="envelope"
+              editable={!isFormDisabled}
             />
 
             <TextInput
               label="Password"
-              placeholder="Create a password"
+              placeholder="Create a password (min. 6 characters)"
               value={password}
-              onChangeText={setPassword}
+              onChangeText={(text) => {
+                setPassword(text);
+                setError(null);
+              }}
               isPassword
               icon="lock"
-            />
-
-            <TextInput
-              label="Confirm Password"
-              placeholder="Confirm your password"
-              value={confirmPassword}
-              onChangeText={setConfirmPassword}
-              isPassword
-              icon="lock"
+              editable={!isFormDisabled}
             />
           </View>
 
@@ -130,31 +222,35 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
 
           {/* Sign Up Button */}
           <Button
-            title="Sign Up"
+            title={isSubmitting ? '' : 'Sign Up'}
             onPress={handleSignUp}
             variant="primary"
             size="large"
             style={styles.signUpButton}
+            disabled={isFormDisabled}
+            icon={isSubmitting ? (
+              <ActivityIndicator color={Colors.white} size="small" />
+            ) : undefined}
           />
 
           {/* Login Link */}
           <View style={styles.loginContainer}>
             <Text style={styles.loginText}>Already have an account? </Text>
-            <TouchableOpacity onPress={onLogin} activeOpacity={0.7}>
+            <TouchableOpacity 
+              onPress={onLogin} 
+              activeOpacity={0.7}
+              disabled={isFormDisabled}
+            >
               <Text style={styles.loginLink}>Sign In</Text>
             </TouchableOpacity>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </ScreenLayout>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.background,
-  },
   keyboardView: {
     flex: 1,
   },
@@ -162,38 +258,6 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     paddingHorizontal: Spacing.xl,
     paddingVertical: Spacing.lg,
-  },
-  logoContainer: {
-    alignItems: 'center',
-    marginTop: Spacing.lg,
-    marginBottom: Spacing.md,
-  },
-  logoOuter: {
-    width: 90,
-    height: 90,
-    borderRadius: BorderRadius.full,
-    backgroundColor: Colors.white,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: Colors.black,
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 5,
-  },
-  logoInner: {
-    width: 68,
-    height: 68,
-    borderRadius: BorderRadius.full,
-    backgroundColor: Colors.primaryLight,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  logoIcon: {
-    fontSize: 38,
   },
   headerContainer: {
     alignItems: 'center',
@@ -208,6 +272,19 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: FontSizes.md,
     color: Colors.textSecondary,
+    textAlign: 'center',
+  },
+  errorContainer: {
+    backgroundColor: `${Colors.red}15`,
+    borderRadius: BorderRadius.md,
+    padding: Spacing.md,
+    marginBottom: Spacing.lg,
+    borderWidth: 1,
+    borderColor: `${Colors.red}30`,
+  },
+  errorText: {
+    color: Colors.red,
+    fontSize: FontSizes.sm,
     textAlign: 'center',
   },
   socialContainer: {

@@ -14,12 +14,14 @@ interface SocialButtonProps {
   provider: 'google' | 'apple';
   onPress: () => void;
   style?: ViewStyle;
+  disabled?: boolean;
 }
 
 export const SocialButton: React.FC<SocialButtonProps> = ({
   provider,
   onPress,
   style,
+  disabled = false,
 }) => {
   const getProviderConfig = () => {
     if (provider === 'google') {
@@ -51,13 +53,20 @@ export const SocialButton: React.FC<SocialButtonProps> = ({
           backgroundColor: config.backgroundColor,
           borderColor: config.borderColor,
         },
+        disabled && styles.disabled,
         style,
       ]}
       onPress={onPress}
       activeOpacity={0.7}
+      disabled={disabled}
     >
       <View style={styles.content}>
-        <FontAwesome6 name={config.icon} size={20} color={config.textColor} />
+        <FontAwesome6
+          name={config.icon as 'apple' | 'google'}
+          size={20}
+          color={config.textColor}
+          iconStyle="brand"
+        />
         <Text style={[styles.text, { color: config.textColor }]}>
           {config.text}
         </Text>
@@ -92,5 +101,8 @@ const styles = StyleSheet.create({
     fontSize: FontSizes.md,
     fontWeight: '600',
     marginLeft: Spacing.md,
+  },
+  disabled: {
+    opacity: 0.5,
   },
 });
