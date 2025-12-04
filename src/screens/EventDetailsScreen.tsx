@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,7 @@ import {
   Image,
   Share,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 
 import { Colors } from '../constants/colors';
@@ -16,182 +17,341 @@ import FontAwesome6 from '@react-native-vector-icons/fontawesome6';
 import { RouteProp, useRoute, useNavigation } from '@react-navigation/native';
 import { RootStackParamList } from '../types';
 import { ScreenLayout, FloatingActionButton } from '../components';
+import { eventService, guestService } from '../services';
+import { useAuth } from '../context/AuthContext';
+import dayjs from 'dayjs';
+import relativeTime from 'dayjs/plugin/relativeTime';
+
+dayjs.extend(relativeTime);
 
 type EventDetailsRouteProp = RouteProp<RootStackParamList, 'EventDetails'>;
 
 type TabKey = 'schedule' | 'activity' | 'about' | 'members';
 
 export const EventDetailsScreen = () => {
-  const [openFAQ, setOpenFAQ] = useState('');
-  const [activeTab, setActiveTab] = useState<TabKey>('schedule');
+  const [activeTab, setActiveTab] = useState<TabKey>('about');
   const [isSaved, setIsSaved] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [eventData, setEventData] = useState<any>(null);
+  const [isJoining, setIsJoining] = useState(false);
+  const [hasJoined, setHasJoined] = useState(false);
   const route = useRoute<EventDetailsRouteProp>();
   const navigation = useNavigation();
+  const { backendUser } = useAuth();
   const { event } = route.params;
 
-  const toggleFAQ = (key: string) => {
-    setOpenFAQ(prev => (prev === key ? '' : key));
+  useEffect(() => {
+    fetchEventDetails();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [event.id, event.shortCode]);
+
+  const fetchEventDetails = async () => {
+    setIsLoading(true);
+    try {
+      let response;
+      if (event.id) {
+        response = await eventService.getEventById(event.id);
+      } else if (event.shortCode) {
+        response = await eventService.getEventByShortCode(event.shortCode);
+      } else {
+        Alert.alert('Error', 'Invalid event');
+        navigation.goBack();
+        return;
+      }
+
+      if (response.success && response.data) {
+        setEventData(response.data);
+        
+        // Check if user has joined this event
+        if (backendUser && response.data.guestEvents) {
+          const userJoined = response.data.guestEvents.some(
+            (ge: any) => ge.user?.id === backendUser.id
+          );
+          setHasJoined(userJoined);
+        }
+      } else {
+        Alert.alert('Error', response.message || 'Failed to load event details');
+        navigation.goBack();
+      }
+    } catch (error: any) {
+      console.error('Error fetching event:', error);
+      Alert.alert('Error', 'Failed to load event details');
+      navigation.goBack();
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleSave = () => {
     setIsSaved(!isSaved);
     Alert.alert(
       isSaved ? 'Removed from saved' : 'Saved!',
-      isSaved ? 'Event removed from your saved list.' : 'Event saved to your list.',
+      isSaved
+        ? 'Event removed from your saved list.'
+        : 'Event saved to your list.',
     );
   };
 
   const handleShare = async () => {
     try {
+      const eventTitle = eventData?.name || event.title;
+      const eventDate = eventData
+        ? dayjs(eventData.startDate).format('MMM D, YYYY')
+        : event.date;
+      const eventLocation = eventData?.location || event.location;
+
       await Share.share({
-        message: `Check out this event: ${event.title} on ${event.date} at ${event.location}`,
-        title: event.title,
+        message: `Check out this event: ${eventTitle} on ${eventDate} at ${eventLocation}`,
+        title: eventTitle,
       });
     } catch (error) {
       console.error('Error sharing:', error);
     }
   };
 
+  const handleJoinEvent = async () => {
+    if (!eventData) return;
+
+    if (hasJoined) {
+      // Leave event
+      handleLeaveEvent();
+      return;
+    }
+
+    setIsJoining(true);
+    try {
+      const response = await guestService.joinEvent({
+        eventId: eventData.id,
+        userId: backendUser?.id,
+      });
+
+      if (response.success) {
+        setHasJoined(true);
+        // Clear event cache to force refresh
+        eventService.clearCache(eventData.id);
+        Alert.alert('Success', 'You have joined the event!', [
+          {
+            text: 'OK',
+            onPress: () => fetchEventDetails(), // Refresh event data
+          },
+        ]);
+      } else {
+        Alert.alert('Error', response.message || 'Failed to join event');
+      }
+    } catch (error: any) {
+      console.error('Error joining event:', error);
+      Alert.alert(
+        'Error',
+        error.message || 'Failed to join event. Please try again.',
+      );
+    } finally {
+      setIsJoining(false);
+    }
+  };
+
+  const handleLeaveEvent = async () => {
+    if (!eventData || !backendUser) return;
+
+    Alert.alert(
+      'Leave Event',
+      'Are you sure you want to leave this event?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Leave',
+          style: 'destructive',
+          onPress: async () => {
+            setIsJoining(true);
+            try {
+              const response = await guestService.leaveEvent(eventData.id);
+
+              if (response.success) {
+                setHasJoined(false);
+                // Clear event cache to force refresh
+                eventService.clearCache(eventData.id);
+                Alert.alert('Success', 'You have left the event');
+                fetchEventDetails(); // Refresh event data
+              } else {
+                Alert.alert('Error', response.message || 'Failed to leave event');
+              }
+            } catch (error: any) {
+              console.error('Error leaving event:', error);
+              Alert.alert('Error', 'Failed to leave event. Please try again.');
+            } finally {
+              setIsJoining(false);
+            }
+          },
+        },
+      ]
+    );
+  };
+
   const tabs: { key: TabKey; label: string }[] = [
+    { key: 'about', label: 'About' },
     { key: 'schedule', label: 'Schedule' },
     { key: 'activity', label: 'Activity' },
-    { key: 'about', label: 'About' },
     { key: 'members', label: 'Members' },
   ];
 
-  const renderScheduleSection = () => (
-    <>
-      <Text style={styles.sectionTitle}>Schedule</Text>
-      <View style={styles.card}>
-        {scheduleItems.map((item, index) => (
-          <View key={index} style={styles.scheduleItem}>
-            <View style={[styles.iconCircle, { backgroundColor: item.color }]}>
-              <FontAwesome6
-                name={item.icon}
-                size={16}
-                color={Colors.primary}
-                iconStyle="solid"
-              />
-            </View>
-            {index < scheduleItems.length - 1 && (
-              <View style={styles.verticalLine} />
-            )}
-            <View style={styles.scheduleContent}>
-              <Text style={styles.scheduleTitle}>{item.title}</Text>
-              <Text style={styles.scheduleSubtitle}>
-                {item.time} • {item.location}
-              </Text>
-            </View>
-          </View>
-        ))}
-      </View>
-    </>
-  );
+  const renderScheduleSection = () => {
+    const scheduleItems = eventData?.scheduleItems || [];
 
-  const renderActivitySection = () => (
-    <>
-      <Text style={styles.sectionTitle}>Activity</Text>
-      {activityFeed.map((item, idx) => (
-        <View key={idx} style={styles.card}>
-          <View style={styles.activityRow}>
-            <Image source={{ uri: item.avatar }} style={styles.avatar} />
-            <View>
-              <Text style={styles.activityName}>{item.name}</Text>
-              <Text style={styles.activityRole}>
-                Organizer • {item.timeAgo}
-              </Text>
-            </View>
+    if (scheduleItems.length === 0) {
+      return (
+        <>
+          <Text style={styles.sectionTitle}>Schedule</Text>
+          <View style={styles.card}>
+            <Text style={styles.emptyText}>No schedule items yet</Text>
           </View>
-          <Text style={styles.activityMessage}>{item.message}</Text>
+        </>
+      );
+    }
+
+    return (
+      <>
+        <Text style={styles.sectionTitle}>Schedule</Text>
+        <View style={styles.card}>
+          {scheduleItems.map((item: any, index: number) => (
+            <View key={index} style={styles.scheduleItem}>
+              <View
+                style={[styles.iconCircle, { backgroundColor: item.color }]}
+              >
+                <FontAwesome6
+                  name={"circle"}
+                  size={16}
+                  color={Colors.primary}
+                  iconStyle="solid"
+                />
+              </View>
+              {index < scheduleItems.length - 1 && (
+                <View style={styles.verticalLine} />
+              )}
+              <View style={styles.scheduleContent}>
+                <Text style={styles.scheduleTitle}>{item.title}</Text>
+                <Text style={styles.scheduleSubtitle}>
+                  {dayjs(item.startTime).format('h:mm A')} •{' '}
+                  {item.location || 'TBA'}
+                </Text>
+              </View>
+            </View>
+          ))}
         </View>
-      ))}
-    </>
-  );
+      </>
+    );
+  };
 
-  const renderAboutSection = () => (
-    <>
-      <Text style={styles.sectionTitle}>About</Text>
-      <View style={styles.card}>
-        <Text style={styles.aboutText}>
-          Join us in celebrating the union of Alex and Jordan! This will be an
-          unforgettable evening filled with love, laughter, and wonderful
-          memories. We can't wait to share this special day with you.
-        </Text>
+  const renderActivitySection = () => {
+    const announcements = eventData?.announcements || [];
 
-        <TouchableOpacity
-          style={styles.faqRow}
-          onPress={() => toggleFAQ('dress')}
-        >
-          <Text style={styles.faqQuestion}>What is the dress code?</Text>
-          <FontAwesome6
-            name={openFAQ === 'dress' ? 'chevron-up' : 'chevron-down'}
-            size={14}
-            iconStyle="solid"
-            color={Colors.textSecondary}
-          />
-        </TouchableOpacity>
-        {openFAQ === 'dress' && (
-          <Text style={styles.faqAnswer}>Formal / Black Tie Optional.</Text>
-        )}
+    if (announcements.length === 0) {
+      return (
+        <>
+          <Text style={styles.sectionTitle}>Activity</Text>
+          <View style={styles.card}>
+            <Text style={styles.emptyText}>No announcements yet</Text>
+          </View>
+        </>
+      );
+    }
 
-        <TouchableOpacity
-          style={styles.faqRow}
-          onPress={() => toggleFAQ('parking')}
-        >
-          <Text style={styles.faqQuestion}>Is there parking available?</Text>
-          <FontAwesome6
-            name={openFAQ === 'parking' ? 'chevron-up' : 'chevron-down'}
-            size={14}
-            iconStyle="solid"
-            color={Colors.textSecondary}
-          />
-        </TouchableOpacity>
-        {openFAQ === 'parking' && (
-          <Text style={styles.faqAnswer}>
-            Yes, valet parking is available at the venue.
-          </Text>
-        )}
-
-        <TouchableOpacity
-          style={styles.faqRow}
-          onPress={() => toggleFAQ('gifts')}
-        >
-          <Text style={styles.faqQuestion}>Where is the gift registry?</Text>
-          <FontAwesome6
-            name={openFAQ === 'gifts' ? 'chevron-up' : 'chevron-down'}
-            size={14}
-            iconStyle="solid"
-            color={Colors.textSecondary}
-          />
-        </TouchableOpacity>
-        {openFAQ === 'gifts' && (
-          <Text style={styles.faqAnswer}>
-            Please visit our website for registry details.
-          </Text>
-        )}
-      </View>
-    </>
-  );
-
-  const renderMembersSection = () => (
-    <>
-      <Text style={styles.sectionTitle}>Members ({membersList.length + 61})</Text>
-      <View style={styles.card}>
-        {membersList.map((m, i) => (
-          <View key={i} style={styles.memberRow}>
-            <Image source={{ uri: m.avatar }} style={styles.memberAvatar} />
-            <View style={styles.memberInfo}>
-              <Text style={styles.memberName}>{m.name}</Text>
-              <Text style={styles.memberRole}>{m.role}</Text>
+    return (
+      <>
+        <Text style={styles.sectionTitle}>Activity</Text>
+        {announcements.map((item: any, idx: number) => (
+          <View key={idx} style={styles.card}>
+            <View style={styles.activityRow}>
+              <View
+                style={[
+                  styles.avatar,
+                  {
+                    backgroundColor: Colors.primaryLight + '30',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                  },
+                ]}
+              >
+                <Text style={{ color: Colors.primary, fontWeight: '600' }}>
+                  {item.sender?.name?.charAt(0) || 'A'}
+                </Text>
+              </View>
+              <View>
+                <Text style={styles.activityName}>
+                  {item.sender?.name || 'Organizer'}
+                </Text>
+                <Text style={styles.activityRole}>
+                  Organizer • {dayjs(item.createdAt).fromNow()}
+                </Text>
+              </View>
             </View>
+            <Text style={styles.activityMessage}>{item.title}</Text>
+            {item.message && (
+              <Text style={styles.activityMessage}>{item.message}</Text>
+            )}
           </View>
         ))}
-        <TouchableOpacity style={styles.viewAllButton}>
-          <Text style={styles.viewAllText}>View All Members</Text>
-        </TouchableOpacity>
-      </View>
-    </>
-  );
+      </>
+    );
+  };
+
+  const renderAboutSection = () => {
+    const description = eventData?.description || 'No description available.';
+
+    return (
+      <>
+        <Text style={styles.sectionTitle}>About</Text>
+        <View style={styles.card}>
+          <Text style={styles.aboutText}>{description}</Text>
+        </View>
+      </>
+    );
+  };
+
+  const renderMembersSection = () => {
+    const guests = eventData?.guestEvents || [];
+    const totalCount = guests.length;
+
+    return (
+      <>
+        <Text style={styles.sectionTitle}>Members ({totalCount})</Text>
+        <View style={styles.card}>
+          {guests.slice(0, 10).map((guest: any, i: number) => (
+            <View key={i} style={styles.memberRow}>
+              <View
+                style={[
+                  styles.memberAvatar,
+                  {
+                    backgroundColor: Colors.primaryLight + '30',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                  },
+                ]}
+              >
+                <Text style={{ color: Colors.primary, fontWeight: '600' }}>
+                  {guest.user?.name?.charAt(0) || 'G'}
+                </Text>
+              </View>
+              <View style={styles.memberInfo}>
+                <Text style={styles.memberName}>
+                  {guest.user?.name || 'Guest'}
+                </Text>
+                <Text style={styles.memberRole}>{guest.status}</Text>
+              </View>
+            </View>
+          ))}
+          {totalCount > 10 && (
+            <TouchableOpacity style={styles.viewAllButton}>
+              <Text style={styles.viewAllText}>
+                View All {totalCount} Members
+              </Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      </>
+    );
+  };
 
   const renderContent = () => {
     switch (activeTab) {
@@ -207,6 +367,37 @@ export const EventDetailsScreen = () => {
         return renderScheduleSection();
     }
   };
+
+  if (isLoading) {
+    return (
+      <ScreenLayout backgroundColor={Colors.backgroundLight}>
+        <View
+          style={[
+            styles.container,
+            { justifyContent: 'center', alignItems: 'center' },
+          ]}
+        >
+          <ActivityIndicator size="large" color={Colors.primary} />
+        </View>
+      </ScreenLayout>
+    );
+  }
+
+  if (!eventData) {
+    return (
+      <ScreenLayout backgroundColor={Colors.backgroundLight}>
+        <View style={styles.container}>
+          <Text>Event not found</Text>
+        </View>
+      </ScreenLayout>
+    );
+  }
+
+  const displayTitle = eventData.name || event.title;
+  const displayDate = eventData.startDate
+    ? dayjs(eventData.startDate).format('MMM D, YYYY')
+    : event.date;
+  const displayLocation = eventData.location || event.location;
 
   return (
     <ScreenLayout backgroundColor={Colors.backgroundLight}>
@@ -253,7 +444,7 @@ export const EventDetailsScreen = () => {
           </View>
 
           {/* Title */}
-          <Text style={styles.title}>{event.title}</Text>
+          <Text style={styles.title}>{displayTitle}</Text>
 
           {/* Sub Info */}
           <View style={styles.subInfoRow}>
@@ -263,7 +454,7 @@ export const EventDetailsScreen = () => {
               color={Colors.textSecondary}
             />
             <Text style={styles.subInfoText}>
-              {event.date} • {event.location}
+              {displayDate} • {displayLocation}
             </Text>
           </View>
 
@@ -294,77 +485,27 @@ export const EventDetailsScreen = () => {
         </ScrollView>
 
         {/* FLOATING JOIN BUTTON */}
-        <FloatingActionButton
-          title="Join Event"
-          onPress={() => {
-            // Handle join event
-            console.log('Join event');
-          }}
-        />
+        {backendUser && (
+          <FloatingActionButton
+            title={
+              isJoining 
+                ? (hasJoined ? 'Leaving...' : 'Joining...')
+                : (hasJoined ? 'Leave Event' : 'Join Event')
+            }
+            onPress={handleJoinEvent}
+            disabled={isJoining}
+            icon={
+              isJoining ? (
+                <ActivityIndicator color={Colors.white} size="small" />
+              ) : undefined
+            }
+          />
+        )}
       </View>
     </ScreenLayout>
   );
 };
 
-/* --------------------------
-      MOCK DATA
--------------------------- */
-
-const scheduleItems = [
-  {
-    title: 'Ceremony',
-    time: '4:00 PM',
-    location: 'The Grand Hall',
-    icon: 'heart',
-    color: '#EEE6FF',
-  },
-  {
-    title: 'Cocktail Hour',
-    time: '5:00 PM',
-    location: 'Garden Terrace',
-    icon: 'martini-glass-citrus',
-    color: '#EAF7FF',
-  },
-  {
-    title: 'Dinner',
-    time: '6:30 PM',
-    location: 'The Grand Hall',
-    icon: 'utensils',
-    color: '#FFF3D9',
-  },
-  {
-    title: 'First Dance',
-    time: '8:00 PM',
-    location: 'The Grand Hall',
-    icon: 'music',
-    color: '#F3E8FF',
-  },
-];
-
-const activityFeed = [
-  {
-    name: 'Alex Johnson',
-    avatar: 'https://i.pravatar.cc/300?img=1',
-    timeAgo: '2h ago',
-    message: "Welcome everyone! We're so excited to celebrate with you all! 🎉",
-  },
-  {
-    name: 'Jordan Smith',
-    avatar: 'https://i.pravatar.cc/300?img=2',
-    timeAgo: '30m ago',
-    message: 'Reminder: The photo booth is now open in the garden area! 📸',
-  },
-];
-
-const membersList = [
-  { name: 'Sarah Miller', avatar: 'https://i.pravatar.cc/100?img=12', role: 'Guest' },
-  { name: 'David Chen', avatar: 'https://i.pravatar.cc/100?img=32', role: 'Best Man' },
-  { name: 'Emily Rodriguez', avatar: 'https://i.pravatar.cc/100?img=48', role: 'Bridesmaid' },
-];
-
-/* --------------------------
-         STYLES
--------------------------- */
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -480,8 +621,8 @@ const styles = StyleSheet.create({
 
   verticalLine: {
     position: 'absolute',
-    left: 21,
-    top: 48,
+    left: 20,
+    top: 40,
     width: 2,
     height: 32,
     backgroundColor: '#DDD',
@@ -610,4 +751,10 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 
+  emptyText: {
+    color: Colors.textSecondary,
+    fontSize: FontSizes.sm,
+    textAlign: 'center',
+    padding: Spacing.md,
+  },
 });

@@ -55,25 +55,29 @@ export const EventCard: React.FC<EventCardProps> = ({
             <Text style={styles.largeTitle}>{event.title}</Text>
 
             <View style={styles.largeInfo}>
-              <Text style={styles.largeInfoText}>
+              <View style={styles.largeInfoRow}>
                 <FontAwesome6
                   name="calendar-day"
                   color={Colors.background}
                   size={20}
                   iconStyle="solid"
                 />
-                {event.date}
-              </Text>
+                <Text style={styles.largeInfoText}>
+                  {event.date}
+                </Text>
+              </View>
 
-              <Text style={styles.largeInfoText}>
+              <View style={styles.largeInfoRow}>
                 <FontAwesome6
                   name="map-location"
                   color={Colors.background}
                   size={20}
                   iconStyle="solid"
                 />
-                {event.location}
-              </Text>
+                <Text style={styles.largeInfoText}>
+                  {event.location}
+                </Text>
+              </View>
             </View>
 
             <View style={styles.largeFooter}>
@@ -95,8 +99,15 @@ export const EventCard: React.FC<EventCardProps> = ({
                 )}
               </View>
 
-              <TouchableOpacity style={styles.joinButton} activeOpacity={0.7}>
-                <Text style={styles.joinButtonText}>Join</Text>
+              <TouchableOpacity 
+                style={styles.joinButton} 
+                activeOpacity={0.7}
+                onPress={(e) => {
+                  e.stopPropagation();
+                  handlePress();
+                }}
+              >
+                <Text style={styles.joinButtonText}>View</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -155,7 +166,12 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.sm,
   },
   largeInfo: { gap: Spacing.xs },
-  largeInfoText: { fontSize: FontSizes.md, color: Colors.white, gap: 10 },
+  largeInfoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+  },
+  largeInfoText: { fontSize: FontSizes.md, color: Colors.white },
   largeFooter: {
     flexDirection: 'row',
     justifyContent: 'space-between',

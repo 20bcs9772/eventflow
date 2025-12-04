@@ -7,12 +7,15 @@ import {
   TextInput,
   TouchableOpacity,
   Image,
+  Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import FontAwesome6 from '@react-native-vector-icons/fontawesome6';
 import { ScreenLayout, DateTimePickerModal, FloatingActionButton } from '../components';
 import { Colors } from '../constants/colors';
 import { Spacing, FontSizes, BorderRadius } from '../constants/spacing';
+import { eventService } from '../services';
 import dayjs from 'dayjs';
 
 interface ScheduleBlock {
@@ -55,22 +58,7 @@ export const CreateEventScreen = () => {
     { id: '2', avatar: 'https://i.pravatar.cc/100?img=2' },
     { id: '3', avatar: 'https://i.pravatar.cc/100?img=3' },
   ]);
-  const [scheduleBlocks, setScheduleBlocks] = useState<ScheduleBlock[]>([
-    {
-      id: '1',
-      title: 'Check-in & Welcome',
-      startTime: '9:00 AM',
-      endTime: '9:30 AM',
-      icon: 'clipboard-list',
-    },
-    {
-      id: '2',
-      title: 'Opening Keynote',
-      startTime: '9:30 AM',
-      endTime: '10:30 AM',
-      icon: 'bullhorn',
-    },
-  ]);
+  const [scheduleBlocks, setScheduleBlocks] = useState<ScheduleBlock[]>([]);
 
   const handleAddScheduleBlock = () => {
     navigation.navigate('AddScheduleBlock', {
@@ -97,35 +85,139 @@ export const CreateEventScreen = () => {
     timeZone: string;
   }) => {
     setDateTime(selectedDateTime);
+    setShowDateTimeModal(false)
   };
 
   const formatDateTimeDisplay = () => {
     if (!dateTime.startDate) return 'Set start and end dates';
-    
+
     const startDate = dayjs(dateTime.startDate).format('MMM D, YYYY');
-    const endDate = dateTime.endDate 
+    const endDate = dateTime.endDate
       ? ` - ${dayjs(dateTime.endDate).format('MMM D, YYYY')}`
       : '';
-    const time = dateTime.startTime && dateTime.endTime
-      ? ` • ${dateTime.startTime} - ${dateTime.endTime}`
-      : dateTime.startTime
-      ? ` • ${dateTime.startTime}`
-      : '';
-    
-    return `${startDate}${endDate}${time}`;
+
+    const time =
+      dateTime.startTime && dateTime.endTime
+        ? `${dateTime.startTime} - ${dateTime.endTime}`
+        : dateTime.startTime
+          ? dateTime.startTime
+          : '';
+
+    // If time exists, show on new line
+    return time
+      ? `${startDate}${endDate}\n${time}`
+      : `${startDate}${endDate}`;
   };
 
-  const handlePublish = () => {
-    // Handle publish logic
-    console.log('Publishing event:', {
-      eventTitle,
-      description,
-      dateTime,
-      venue,
-      collaborators: collaborators.length,
-      scheduleBlocks,
-    });
-    navigation.goBack();
+
+  const [isPublishing, setIsPublishing] = useState(false);
+
+  const parseTimeToISO = (dateStr: string, timeStr: string): string => {
+    // Parse time string like "9:00 AM" and combine with date
+    const date = dayjs(dateStr);
+    const timeMatch = timeStr.match(/(\d+):(\d+)\s*(AM|PM)/i);
+
+    if (!timeMatch) {
+      return date.toISOString();
+    }
+
+    let hours = parseInt(timeMatch[1], 10);
+    const minutes = parseInt(timeMatch[2], 10);
+    const period = timeMatch[3].toUpperCase();
+
+    if (period === 'PM' && hours !== 12) {
+      hours += 12;
+    } else if (period === 'AM' && hours === 12) {
+      hours = 0;
+    }
+
+    return date.hour(hours).minute(minutes).second(0).millisecond(0).toISOString();
+  };
+
+  const handlePublish = async () => {
+    if (!eventTitle || !dateTime.startDate) {
+      Alert.alert('Validation Error', 'Please fill in all required fields');
+      return;
+    }
+
+    setIsPublishing(true);
+
+    try {
+      // Prepare schedule items
+      const scheduleItems = scheduleBlocks.map((block, index) => {
+        // Combine event start date with schedule block times
+        const startDateTime = parseTimeToISO(dateTime.startDate!, block.startTime);
+        const endDateTime = parseTimeToISO(dateTime.startDate!, block.endTime);
+
+        return {
+          title: block.title,
+          description: block.description || undefined,
+          startTime: startDateTime,
+          endTime: endDateTime,
+          location: block.location || undefined,
+          orderIndex: index,
+        };
+      });
+
+      // Prepare event data
+      const eventData: any = {
+        name: eventTitle,
+        description: description || undefined,
+        startDate: dayjs(dateTime.startDate).toISOString(),
+        endDate: dateTime.endDate
+          ? dayjs(dateTime.endDate).toISOString()
+          : dayjs(dateTime.startDate).add(1, 'day').toISOString(),
+      };
+
+      // Add time strings if provided
+      if (dateTime.startTime) {
+        eventData.startTime = dateTime.startTime;
+      }
+      if (dateTime.endTime) {
+        eventData.endTime = dateTime.endTime;
+      }
+      if (dateTime.timeZone) {
+        eventData.timeZone = dateTime.timeZone;
+      }
+
+      // Add location/venue
+      if (venue) {
+        if (venue.fullAddress) {
+          eventData.location = venue.fullAddress;
+        } else if (venue.name) {
+          eventData.location = venue.name;
+        }
+        eventData.venue = venue;
+      }
+
+      // Add schedule items
+      if (scheduleItems.length > 0) {
+        eventData.scheduleItems = scheduleItems;
+      }
+
+      const response = await eventService.createEvent(eventData);
+
+      if (response.success) {
+        Alert.alert('Success', 'Event created successfully!', [
+          {
+            text: 'OK',
+            onPress: () => navigation.goBack(),
+          },
+        ]);
+      } else {
+        // Handle validation errors
+        const errorMessage = response.message || response.error || 'Failed to create event';
+
+        console.error('Event creation failed:', errorMessage, response);
+        Alert.alert('Error', errorMessage);
+      }
+    } catch (error: any) {
+      console.error('Error creating event:', error);
+      const errorMessage = error.message || error.toString() || 'Failed to create event. Please try again.';
+      Alert.alert('Error', errorMessage);
+    } finally {
+      setIsPublishing(false);
+    }
   };
 
   return (
@@ -323,7 +415,7 @@ export const CreateEventScreen = () => {
               <View key={block.id} style={styles.scheduleCard}>
                 <View style={styles.scheduleIconContainer}>
                   <FontAwesome6
-                    name={block.icon}
+                    name={block.icon as any}
                     size={18}
                     color={Colors.primary}
                     iconStyle="solid"
@@ -350,9 +442,10 @@ export const CreateEventScreen = () => {
 
         {/* Publish Button */}
         <FloatingActionButton
-          title="Publish Event"
+          title={isPublishing ? 'Publishing...' : 'Publish Event'}
           onPress={handlePublish}
-          disabled={!eventTitle || !dateTime.startDate}
+          disabled={!eventTitle || !dateTime.startDate || isPublishing}
+          icon={isPublishing ? <ActivityIndicator color={Colors.white} size="small" /> : undefined}
         />
       </View>
 
@@ -562,4 +655,6 @@ const styles = StyleSheet.create({
     padding: Spacing.sm,
   },
 });
+
+
 

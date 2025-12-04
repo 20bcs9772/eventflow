@@ -6,6 +6,7 @@ import {
   ActivityIndicator,
   ViewStyle,
   TextStyle,
+  View,
 } from 'react-native';
 import { Colors } from '../constants/colors';
 import { Spacing, BorderRadius, FontSizes } from '../constants/spacing';
@@ -19,6 +20,7 @@ interface ButtonProps {
   loading?: boolean;
   style?: ViewStyle;
   textStyle?: TextStyle;
+  icon?: React.ReactNode;
 }
 
 export const Button: React.FC<ButtonProps> = ({
@@ -30,10 +32,11 @@ export const Button: React.FC<ButtonProps> = ({
   loading = false,
   style,
   textStyle,
+  icon,
 }) => {
   const getButtonStyle = () => {
-    const baseStyle = [styles.button, styles[size]];
-    
+    const baseStyle: any = [styles.button, styles[size]];
+
     if (variant === 'primary') {
       baseStyle.push(styles.primary);
     } else if (variant === 'secondary') {
@@ -43,17 +46,17 @@ export const Button: React.FC<ButtonProps> = ({
     } else if (variant === 'text') {
       baseStyle.push(styles.textVariant);
     }
-    
+
     if (disabled) {
       baseStyle.push(styles.disabled);
     }
-    
+
     return baseStyle;
   };
 
   const getTextStyle = () => {
-    const baseStyle = [styles.buttonText];
-    
+    const baseStyle: any = [styles.buttonText];
+
     if (variant === 'primary') {
       baseStyle.push(styles.primaryText);
     } else if (variant === 'secondary') {
@@ -63,8 +66,37 @@ export const Button: React.FC<ButtonProps> = ({
     } else if (variant === 'text') {
       baseStyle.push(styles.textVariant);
     }
-    
+
     return baseStyle;
+  };
+
+  const renderContent = () => {
+    if (loading) {
+      return (
+        <ActivityIndicator
+          color={variant === 'primary' ? Colors.white : Colors.primary}
+        />
+      );
+    }
+
+    // If icon is provided and title is empty, just show the icon
+    if (icon && !title) {
+      return icon;
+    }
+
+    // If icon is provided with title, show both
+    if (icon) {
+      return (
+        <View style={styles.contentRow}>
+          {icon}
+          {title ? (
+            <Text style={[getTextStyle(), textStyle]}>{title}</Text>
+          ) : null}
+        </View>
+      );
+    }
+
+    return <Text style={[getTextStyle(), textStyle]}>{title}</Text>;
   };
 
   return (
@@ -72,14 +104,9 @@ export const Button: React.FC<ButtonProps> = ({
       style={[getButtonStyle(), style]}
       onPress={onPress}
       disabled={disabled || loading}
-      activeOpacity={0.7}>
-      {loading ? (
-        <ActivityIndicator
-          color={variant === 'primary' ? Colors.white : Colors.primary}
-        />
-      ) : (
-        <Text style={[getTextStyle(), textStyle]}>{title}</Text>
-      )}
+      activeOpacity={0.7}
+    >
+      {renderContent()}
     </TouchableOpacity>
   );
 };
@@ -89,6 +116,12 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.md,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  contentRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.sm,
   },
   small: {
     paddingHorizontal: Spacing.md,
@@ -116,9 +149,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.primary,
   },
-  textVariant: {
-    backgroundColor: 'transparent',
-  },
   disabled: {
     opacity: 0.5,
   },
@@ -139,4 +169,3 @@ const styles = StyleSheet.create({
     color: Colors.primary,
   },
 });
-

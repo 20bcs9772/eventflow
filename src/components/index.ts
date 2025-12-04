@@ -9,4 +9,5 @@ export { SearchResultCard } from './SearchResultCard';
 export { FilterChip } from './FilterChip';
 export { DateTimePickerModal } from './DateTimePickerModal';
 export { FloatingActionButton } from './FloatingActionButton';
-
+export { TextInput } from './TextInput';
+export { SocialButton } from './SocialButton';

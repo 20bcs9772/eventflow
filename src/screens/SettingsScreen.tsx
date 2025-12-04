@@ -6,12 +6,14 @@ import {
   ScrollView,
   TouchableOpacity,
   Switch,
+  Alert,
 } from 'react-native';
 import { Header, Card, Button, ScreenLayout } from '../components';
 import { Colors } from '../constants/colors';
 import { Spacing, FontSizes, BorderRadius } from '../constants/spacing';
 import FontAwesome6 from '@react-native-vector-icons/fontawesome6';
 import { useNavigation } from '@react-navigation/native';
+import { useAuth } from '../context';
 
 interface SettingsScreenProps {
   onNavigate: (route: string) => void;
@@ -21,6 +23,7 @@ interface SettingsScreenProps {
 export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onLogout }) => {
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const navigation = useNavigation<any>();
+  const { signOut, backendUser, user } = useAuth();
 
   return (
     <ScreenLayout backgroundColor={Colors.backgroundLight}>
@@ -44,24 +47,16 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onLogout }) => {
               </View>
             </View>
             <View style={styles.profileInfo}>
-              <Text style={styles.profileName}>Jessica Miller</Text>
-              <Text style={styles.profileDevice}>iPhone 14 Pro</Text>
+              <Text style={styles.profileName}>
+                {backendUser?.name || user?.displayName || 'User'}
+              </Text>
+              <Text style={styles.profileDevice}>
+                {backendUser?.email || user?.email || 'No email'}
+              </Text>
             </View>
             <Text style={styles.chevron}>›</Text>
           </TouchableOpacity>
         </Card>
-
-        {/* Create Event Button */}
-        <TouchableOpacity
-          style={styles.createEventButton}
-          activeOpacity={0.8}
-          onPress={() => navigation.navigate('CreateEvent')}
-        >
-          <View style={styles.createEventIcon}>
-            <FontAwesome6 name="plus" size={20} color={Colors.white} iconStyle="solid" />
-          </View>
-          <Text style={styles.createEventText}>Create Event</Text>
-        </TouchableOpacity>
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>GENERAL</Text>
@@ -93,7 +88,23 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onLogout }) => {
             <TouchableOpacity
               style={styles.settingItem}
               activeOpacity={0.7}
-              onPress={() => {}}
+              onPress={() => navigation.navigate('ManageEvents')}
+            >
+              <View style={styles.settingLeft}>
+                <Text style={styles.settingIcon}>
+                  <FontAwesome6 name="calendar-check" size={20} iconStyle="solid" />
+                </Text>
+                <Text style={styles.settingLabel}>Manage Events</Text>
+              </View>
+              <Text style={styles.chevron}>›</Text>
+            </TouchableOpacity>
+
+            <View style={styles.divider} />
+
+            <TouchableOpacity
+              style={styles.settingItem}
+              activeOpacity={0.7}
+              onPress={() => navigation.navigate('JoinedEvents')}
             >
               <View style={styles.settingLeft}>
                 <Text style={styles.settingIcon}>
@@ -143,7 +154,23 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onLogout }) => {
         <View style={styles.logoutSection}>
           <Button
             title="Log Out"
-            onPress={onLogout || (() => {})}
+            onPress={async () => {
+              Alert.alert(
+                'Log Out',
+                'Are you sure you want to log out?',
+                [
+                  { text: 'Cancel', style: 'cancel' },
+                  {
+                    text: 'Log Out',
+                    style: 'destructive',
+                    onPress: async () => {
+                      await signOut();
+                      onLogout?.();
+                    },
+                  },
+                ]
+              );
+            }}
             variant="text"
             style={styles.logoutButton}
             textStyle={styles.logoutButtonText}
@@ -161,28 +188,6 @@ const styles = StyleSheet.create({
   scrollContent: {
     padding: Spacing.md,
     paddingBottom: 100,
-  },
-  createEventButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.primary,
-    padding: Spacing.md,
-    borderRadius: BorderRadius.lg,
-    marginBottom: Spacing.lg,
-  },
-  createEventIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: Spacing.md,
-  },
-  createEventText: {
-    fontSize: FontSizes.lg,
-    fontWeight: '700',
-    color: Colors.white,
   },
   profileCard: {
     marginBottom: Spacing.lg,

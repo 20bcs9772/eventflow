@@ -74,6 +74,40 @@ export const DateTimePickerModal: React.FC<DateTimePickerModalProps> = ({
     initialDateTime?.timeZone || timeZones[0],
   );
   const [showTimeZonePicker, setShowTimeZonePicker] = useState(false);
+  const [showStartTimePicker, setShowStartTimePicker] = useState(false);
+  const [showEndTimePicker, setShowEndTimePicker] = useState(false);
+
+  // Parse initial time values if provided
+  useEffect(() => {
+    if (initialDateTime?.startTime) {
+      const startMatch = initialDateTime.startTime.match(/(\d+):(\d+)\s*(AM|PM)/i);
+      if (startMatch) {
+        const h = parseInt(startMatch[1], 10);
+        const period = startMatch[3].toUpperCase() as 'AM' | 'PM';
+        // Convert 12-hour to 24-hour for storage
+        let hour24 = h;
+        if (period === 'PM' && h !== 12) hour24 = h + 12;
+        if (period === 'AM' && h === 12) hour24 = 0;
+        setStartHour(String(hour24).padStart(2, '0'));
+        setStartMinute(startMatch[2]);
+        setStartPeriod(period);
+      }
+    }
+    if (initialDateTime?.endTime) {
+      const endMatch = initialDateTime.endTime.match(/(\d+):(\d+)\s*(AM|PM)/i);
+      if (endMatch) {
+        const h = parseInt(endMatch[1], 10);
+        const period = endMatch[3].toUpperCase() as 'AM' | 'PM';
+        // Convert 12-hour to 24-hour for storage
+        let hour24 = h;
+        if (period === 'PM' && h !== 12) hour24 = h + 12;
+        if (period === 'AM' && h === 12) hour24 = 0;
+        setEndHour(String(hour24).padStart(2, '0'));
+        setEndMinute(endMatch[2]);
+        setEndPeriod(period);
+      }
+    }
+  }, [initialDateTime]);
 
   /* ------------------------- Animations ------------------------- */
   useEffect(() => {
@@ -187,6 +221,7 @@ export const DateTimePickerModal: React.FC<DateTimePickerModalProps> = ({
               <Calendar
                 current={selectedStartDate}
                 markingType="period"
+                monthFormat="MMMM yyyy"
                 markedDates={getMarkedDates()}
                 onDayPress={handleDateSelect}
                 theme={{
@@ -198,6 +233,8 @@ export const DateTimePickerModal: React.FC<DateTimePickerModalProps> = ({
                   textDayHeaderFontSize: 12,
                   arrowColor: Colors.text,
                 }}
+                renderArrow={(direction) => <FontAwesome6 name={`chevron-${direction}`} size={15} iconStyle='solid' />}
+                minDate={dayjs().format("YYYY-MM-DD")}
               />
             </View>
 
@@ -208,9 +245,16 @@ export const DateTimePickerModal: React.FC<DateTimePickerModalProps> = ({
                 <Text style={styles.label}>Start Time</Text>
 
                 <View style={styles.timeRow}>
-                  <TouchableOpacity style={styles.timeBox}>
+                  <TouchableOpacity
+                    style={styles.timeBox}
+                    onPress={() => setShowStartTimePicker(true)}
+                  >
                     <Text style={styles.timeText}>
-                      {startHour}:{startMinute}
+                      {(() => {
+                        const h = parseInt(startHour, 10);
+                        const displayHour = h > 12 ? h - 12 : h === 0 ? 12 : h;
+                        return `${displayHour}:${startMinute}`;
+                      })()}
                     </Text>
                   </TouchableOpacity>
 
@@ -230,9 +274,16 @@ export const DateTimePickerModal: React.FC<DateTimePickerModalProps> = ({
                 <Text style={styles.label}>End Time</Text>
 
                 <View style={styles.timeRow}>
-                  <TouchableOpacity style={styles.timeBox}>
+                  <TouchableOpacity
+                    style={styles.timeBox}
+                    onPress={() => setShowEndTimePicker(true)}
+                  >
                     <Text style={styles.timeText}>
-                      {endHour}:{endMinute}
+                      {(() => {
+                        const h = parseInt(endHour, 10);
+                        const displayHour = h > 12 ? h - 12 : h === 0 ? 12 : h;
+                        return `${displayHour}:${endMinute}`;
+                      })()}
                     </Text>
                   </TouchableOpacity>
 
@@ -247,6 +298,39 @@ export const DateTimePickerModal: React.FC<DateTimePickerModalProps> = ({
                 </View>
               </View>
             </View>
+
+            {/* Time Picker Modals */}
+            {showStartTimePicker && (
+              <TimePickerModal
+                visible={showStartTimePicker}
+                hour={startHour}
+                minute={startMinute}
+                period={startPeriod}
+                onClose={() => setShowStartTimePicker(false)}
+                onConfirm={(h, m, p) => {
+                  setStartHour(h);
+                  setStartMinute(m);
+                  setStartPeriod(p);
+                  setShowStartTimePicker(false);
+                }}
+              />
+            )}
+
+            {showEndTimePicker && (
+              <TimePickerModal
+                visible={showEndTimePicker}
+                hour={endHour}
+                minute={endMinute}
+                period={endPeriod}
+                onClose={() => setShowEndTimePicker(false)}
+                onConfirm={(h, m, p) => {
+                  setEndHour(h);
+                  setEndMinute(m);
+                  setEndPeriod(p);
+                  setShowEndTimePicker(false);
+                }}
+              />
+            )}
 
             {/* ---------------- TIME ZONE ---------------- */}
             <View style={styles.timeBlock}>
@@ -274,7 +358,7 @@ export const DateTimePickerModal: React.FC<DateTimePickerModalProps> = ({
                       style={[
                         styles.timeZoneOption,
                         tz === selectedTimeZone &&
-                          styles.timeZoneOptionSelected,
+                        styles.timeZoneOptionSelected,
                       ]}
                       onPress={() => {
                         setSelectedTimeZone(tz);
@@ -285,7 +369,7 @@ export const DateTimePickerModal: React.FC<DateTimePickerModalProps> = ({
                         style={[
                           styles.timeZoneOptionText,
                           tz === selectedTimeZone &&
-                            styles.timeZoneOptionTextSelected,
+                          styles.timeZoneOptionTextSelected,
                         ]}
                       >
                         {tz}
@@ -303,7 +387,32 @@ export const DateTimePickerModal: React.FC<DateTimePickerModalProps> = ({
               <Text style={styles.cancelText}>Cancel</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.confirmBtn} onPress={onConfirm}>
+            <TouchableOpacity
+              style={styles.confirmBtn}
+              onPress={() => {
+                if (!selectedStartDate) {
+                  return; // Don't confirm if no start date selected
+                }
+
+                // Format time strings
+                const formatTime = (hour: string, minute: string, period: 'AM' | 'PM') => {
+                  const h = parseInt(hour, 10);
+                  const displayHour = h > 12 ? h - 12 : h === 0 ? 12 : h;
+                  return `${displayHour}:${minute} ${period}`;
+                };
+
+                const startTimeStr = formatTime(startHour, startMinute, startPeriod);
+                const endTimeStr = formatTime(endHour, endMinute, endPeriod);
+
+                onConfirm({
+                  startDate: selectedStartDate,
+                  endDate: selectedEndDate,
+                  startTime: startTimeStr,
+                  endTime: endTimeStr,
+                  timeZone: selectedTimeZone,
+                });
+              }}
+            >
               <Text style={styles.confirmText}>Set Date & Time</Text>
             </TouchableOpacity>
           </View>
@@ -504,5 +613,291 @@ const styles = StyleSheet.create({
 
   timeColumn: {
     flex: 1,
+  },
+});
+
+// Time Picker Modal Component
+interface TimePickerModalProps {
+  visible: boolean;
+  hour: string;
+  minute: string;
+  period: 'AM' | 'PM';
+  onClose: () => void;
+  onConfirm: (hour: string, minute: string, period: 'AM' | 'PM') => void;
+}
+
+const TimePickerModal: React.FC<TimePickerModalProps> = ({
+  visible,
+  hour,
+  minute,
+  period,
+  onClose,
+  onConfirm,
+}) => {
+  // Convert 24-hour to 12-hour for display
+  const hour24 = parseInt(hour, 10);
+  const hour12 = hour24 > 12 ? hour24 - 12 : hour24 === 0 ? 12 : hour24;
+  const currentPeriod = hour24 >= 12 ? 'PM' : 'AM';
+
+  const [selectedHour, setSelectedHour] = useState(String(hour12).padStart(2, '0'));
+  const [selectedMinute, setSelectedMinute] = useState(minute);
+  const [selectedPeriod, setSelectedPeriod] = useState<'AM' | 'PM'>(currentPeriod);
+
+  useEffect(() => {
+    const hour24 = parseInt(hour, 10);
+    const hour12 = hour24 > 12 ? hour24 - 12 : hour24 === 0 ? 12 : hour24;
+    const currentPeriod = hour24 >= 12 ? 'PM' : 'AM';
+    setSelectedHour(String(hour12).padStart(2, '0'));
+    setSelectedMinute(minute);
+    setSelectedPeriod(currentPeriod);
+  }, [hour, minute, visible]);
+
+  const generateHours = () => {
+    return Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, '0'));
+  };
+
+  const generateMinutes = () => {
+    return ['00', '15', '30', '45'];
+  };
+
+  const hours = generateHours();
+  const minutes = generateMinutes();
+
+  const handleConfirm = () => {
+    // Convert 12-hour back to 24-hour for storage
+    let hour24 = parseInt(selectedHour, 10);
+    if (selectedPeriod === 'PM' && hour24 !== 12) {
+      hour24 += 12;
+    } else if (selectedPeriod === 'AM' && hour24 === 12) {
+      hour24 = 0;
+    }
+    onConfirm(String(hour24).padStart(2, '0'), selectedMinute, selectedPeriod);
+  };
+
+  return (
+    <Modal
+      visible={visible}
+      transparent
+      animationType="slide"
+      onRequestClose={onClose}
+    >
+      <View style={timePickerStyles.overlay}>
+        <TouchableOpacity
+          style={timePickerStyles.backdrop}
+          activeOpacity={1}
+          onPress={onClose}
+        />
+        <View style={timePickerStyles.modalContainer}>
+          <View style={timePickerStyles.header}>
+            <Text style={timePickerStyles.title}>Select Time</Text>
+          </View>
+          <View style={timePickerStyles.pickerContainer}>
+            <ScrollView style={timePickerStyles.pickerColumn}>
+              {hours.map((h) => (
+                <TouchableOpacity
+                  key={h}
+                  style={[
+                    timePickerStyles.pickerItem,
+                    selectedHour === h && timePickerStyles.pickerItemSelected,
+                  ]}
+                  onPress={() => setSelectedHour(h)}
+                >
+                  <Text
+                    style={[
+                      timePickerStyles.pickerText,
+                      selectedHour === h && timePickerStyles.pickerTextSelected,
+                    ]}
+                  >
+                    {h}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+            <Text style={timePickerStyles.separator}>:</Text>
+            <ScrollView style={timePickerStyles.pickerColumn}>
+              {minutes.map((m) => (
+                <TouchableOpacity
+                  key={m}
+                  style={[
+                    timePickerStyles.pickerItem,
+                    selectedMinute === m && timePickerStyles.pickerItemSelected,
+                  ]}
+                  onPress={() => setSelectedMinute(m)}
+                >
+                  <Text
+                    style={[
+                      timePickerStyles.pickerText,
+                      selectedMinute === m && timePickerStyles.pickerTextSelected,
+                    ]}
+                  >
+                    {m}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+            <View style={timePickerStyles.periodContainer}>
+              <TouchableOpacity
+                style={[
+                  timePickerStyles.periodButton,
+                  selectedPeriod === 'AM' && timePickerStyles.periodButtonSelected,
+                ]}
+                onPress={() => setSelectedPeriod('AM')}
+              >
+                <Text
+                  style={[
+                    timePickerStyles.periodText,
+                    selectedPeriod === 'AM' && timePickerStyles.periodTextSelected,
+                  ]}
+                >
+                  AM
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  timePickerStyles.periodButton,
+                  selectedPeriod === 'PM' && timePickerStyles.periodButtonSelected,
+                ]}
+                onPress={() => setSelectedPeriod('PM')}
+              >
+                <Text
+                  style={[
+                    timePickerStyles.periodText,
+                    selectedPeriod === 'PM' && timePickerStyles.periodTextSelected,
+                  ]}
+                >
+                  PM
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+          <View style={timePickerStyles.actions}>
+            <TouchableOpacity style={timePickerStyles.cancelButton} onPress={onClose}>
+              <Text style={timePickerStyles.cancelText}>Cancel</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={timePickerStyles.confirmButton} onPress={handleConfirm}>
+              <Text style={timePickerStyles.confirmText}>Confirm</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+};
+
+const timePickerStyles = StyleSheet.create({
+  overlay: {
+    flex: 1,
+    justifyContent: 'flex-end',
+  },
+  backdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContainer: {
+    backgroundColor: Colors.white,
+    borderTopLeftRadius: BorderRadius.xl,
+    borderTopRightRadius: BorderRadius.xl,
+    paddingBottom: Spacing.lg,
+    maxHeight: '60%',
+  },
+  header: {
+    padding: Spacing.lg,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
+  },
+  title: {
+    fontSize: FontSizes.lg,
+    fontWeight: '700',
+    color: Colors.text,
+    textAlign: 'center',
+  },
+  pickerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: Spacing.lg,
+    paddingHorizontal: Spacing.lg,
+  },
+  pickerColumn: {
+    maxHeight: 200,
+  },
+  pickerItem: {
+    padding: Spacing.md,
+    minWidth: 60,
+    alignItems: 'center',
+  },
+  pickerItemSelected: {
+    backgroundColor: Colors.primaryLight + '30',
+    borderRadius: BorderRadius.md,
+  },
+  pickerText: {
+    fontSize: FontSizes.lg,
+    color: Colors.textSecondary,
+  },
+  pickerTextSelected: {
+    color: Colors.primary,
+    fontWeight: '700',
+  },
+  separator: {
+    fontSize: FontSizes.xl,
+    color: Colors.text,
+    marginHorizontal: Spacing.sm,
+  },
+  periodContainer: {
+    marginLeft: Spacing.md,
+    gap: Spacing.sm,
+  },
+  periodButton: {
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    borderRadius: BorderRadius.md,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    minWidth: 60,
+    alignItems: 'center',
+  },
+  periodButtonSelected: {
+    backgroundColor: Colors.primary,
+    borderColor: Colors.primary,
+  },
+  periodText: {
+    fontSize: FontSizes.md,
+    color: Colors.text,
+    fontWeight: '600',
+  },
+  periodTextSelected: {
+    color: Colors.white,
+  },
+  actions: {
+    flexDirection: 'row',
+    paddingHorizontal: Spacing.lg,
+    gap: Spacing.md,
+    marginTop: Spacing.md,
+  },
+  cancelButton: {
+    flex: 1,
+    backgroundColor: Colors.white,
+    borderRadius: BorderRadius.full,
+    padding: Spacing.md,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  cancelText: {
+    fontSize: FontSizes.md,
+    fontWeight: '600',
+    color: Colors.text,
+  },
+  confirmButton: {
+    flex: 1,
+    backgroundColor: Colors.primary,
+    borderRadius: BorderRadius.full,
+    padding: Spacing.md,
+    alignItems: 'center',
+  },
+  confirmText: {
+    fontSize: FontSizes.md,
+    fontWeight: '600',
+    color: Colors.white,
   },
 });
