@@ -73,7 +73,45 @@ class ApiService {
 
       clearTimeout(timeoutId);
 
-      const data = await response.json();
+      // Check if response is JSON before parsing
+      const contentType = response.headers.get('content-type');
+      const isJson = contentType && contentType.includes('application/json');
+
+      let data: any;
+      
+      if (isJson) {
+        try {
+          data = await response.json();
+        } catch (jsonError) {
+          // If JSON parsing fails, read as text for better error message
+          const text = await response.text();
+          console.error('Failed to parse JSON response:', text.substring(0, 200));
+          return {
+            success: false,
+            message: 'Invalid JSON response from server',
+            error: `HTTP ${response.status}`,
+          };
+        }
+      } else {
+        // If not JSON, read as text (might be HTML error page)
+        const text = await response.text();
+        console.error('Non-JSON response received:', text.substring(0, 200));
+        
+        // Try to extract error message from HTML if possible
+        let errorMessage = 'Request failed';
+        if (text.includes('<title>')) {
+          const titleMatch = text.match(/<title>(.*?)<\/title>/i);
+          if (titleMatch) {
+            errorMessage = titleMatch[1];
+          }
+        }
+        
+        return {
+          success: false,
+          message: errorMessage || `Server returned non-JSON response (${contentType || 'unknown'})`,
+          error: `HTTP ${response.status}`,
+        };
+      }
 
       if (!response.ok) {
         return {

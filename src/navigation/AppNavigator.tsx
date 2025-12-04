@@ -16,6 +16,7 @@ import {
   SearchResultsScreen,
   JoinEventScreen,
   JoinedEventsScreen,
+  ManageEventsScreen,
 } from '../screens';
 import { MainTabNavigator } from './MainTabNavigator';
 import { RootStackParamList } from '../types';
@@ -114,6 +115,7 @@ export const AppNavigator = () => {
             <Stack.Screen name="Main" component={MainTabNavigator} />
             <Stack.Screen name="EventDetails" component={EventDetailsScreen} />
             <Stack.Screen name="CreateEvent" component={CreateEventScreen} />
+            <Stack.Screen name="ManageEvents" component={ManageEventsScreen} />
             <Stack.Screen
               name="SearchResults"
               component={SearchResultsScreen}

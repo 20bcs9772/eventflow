@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,45 +6,107 @@ import {
   ScrollView,
   TouchableOpacity,
   Image,
+  RefreshControl,
+  ActivityIndicator,
 } from 'react-native';
 import { ScreenLayout } from '../components';
 import { Colors } from '../constants/colors';
 import { Spacing, BorderRadius, FontSizes } from '../constants/spacing';
 import FontAwesome6 from '@react-native-vector-icons/fontawesome6';
 import { Event } from '../types';
+import { guestService } from '../services';
+import { mapBackendEventsToFrontend } from '../utils/eventMapper';
+import { useAuth } from '../context/AuthContext';
+import { useNavigation } from '@react-navigation/native';
+import dayjs from 'dayjs';
 
 interface JoinedEventsScreenProps {
-  onBack: () => void;
-  onEventPress: (event: Event) => void;
+  onBack?: () => void;
+  onEventPress?: (event: Event) => void;
 }
-
-// Mock data for joined events
-const mockJoinedEvents: Event[] = [
-  {
-    id: '1',
-    title: 'Innovate & Elevate Tech Summit 2024',
-    date: 'Oct 26, 2024',
-    location: 'Tech Center',
-  },
-  {
-    id: '2',
-    title: 'Sunrise Yoga & Wellness Retreat',
-    date: 'Nov 15, 2024',
-    location: 'Wellness Center',
-  },
-];
 
 export const JoinedEventsScreen: React.FC<JoinedEventsScreenProps> = ({
   onBack,
   onEventPress,
 }) => {
+  const navigation = useNavigation<any>();
+  const { backendUser } = useAuth();
+  const [joinedEvents, setJoinedEvents] = useState<Event[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  useEffect(() => {
+    fetchJoinedEvents();
+  }, []);
+
+  const fetchJoinedEvents = async () => {
+    if (!backendUser) {
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      const response = await guestService.getMyJoinedEvents();
+
+      if (response.success && response.data) {
+        // Map guest events to Event type
+        const events = response.data.map((guestEvent: any) => {
+          const event = guestEvent.event;
+          if (!event) return null;
+
+          const startDate = new Date(event.startDate);
+          return {
+            id: event.id,
+            shortCode: event.shortCode,
+            title: event.name,
+            date: dayjs(startDate).format('MMM D, YYYY'),
+            location: event.location || 'Location TBA',
+            attendees: event._count?.guestEvents || 0,
+            startTime: dayjs(startDate).format('h:mm A'),
+            endTime: event.endDate 
+              ? dayjs(new Date(event.endDate)).format('h:mm A')
+              : undefined,
+          };
+        }).filter(Boolean);
+
+        setJoinedEvents(events);
+      }
+    } catch (error) {
+      console.error('Error fetching joined events:', error);
+    } finally {
+      setIsLoading(false);
+      setIsRefreshing(false);
+    }
+  };
+
+  const handleRefresh = () => {
+    setIsRefreshing(true);
+    fetchJoinedEvents();
+  };
+
+  const handleEventPress = (event: Event) => {
+    if (onEventPress) {
+      onEventPress(event);
+    } else {
+      navigation.navigate('EventDetails', { event });
+    }
+  };
+
+  const handleBack = () => {
+    if (onBack) {
+      onBack();
+    } else {
+      navigation.goBack();
+    }
+  };
   return (
     <ScreenLayout backgroundColor={Colors.background}>
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
-          onPress={onBack}
+          onPress={handleBack}
           activeOpacity={0.7}
         >
           <FontAwesome6
@@ -62,49 +124,73 @@ export const JoinedEventsScreen: React.FC<JoinedEventsScreenProps> = ({
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefreshing}
+            onRefresh={handleRefresh}
+            tintColor={Colors.primary}
+          />
+        }
       >
-        {mockJoinedEvents.map((event) => (
-          <TouchableOpacity
-            key={event.id}
-            style={styles.eventCard}
-            onPress={() => onEventPress(event)}
-            activeOpacity={0.7}
-          >
-            {/* Event Image */}
-            <View style={styles.eventImageContainer}>
-              {event.image ? (
-                <Image source={{ uri: event.image }} style={styles.eventImage} />
-              ) : (
-                <View style={styles.eventImagePlaceholder}>
-                  <FontAwesome6
-                    name="image"
-                    size={24}
-                    color={Colors.textLight}
-                    iconStyle="solid"
-                  />
-                </View>
-              )}
-            </View>
-
-            {/* Event Info */}
-            <View style={styles.eventInfo}>
-              <Text style={styles.eventTitle} numberOfLines={2}>
-                {event.title}
-              </Text>
-              <View style={styles.eventDateRow}>
-                <FontAwesome6
-                  name="calendar"
-                  size={14}
-                  color={Colors.primary}
-                  iconStyle="regular"
-                />
-                <Text style={styles.eventDate}>{event.date}</Text>
+        {isLoading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color={Colors.primary} />
+          </View>
+        ) : joinedEvents.length > 0 ? (
+          joinedEvents.map((event) => (
+            <TouchableOpacity
+              key={event.id}
+              style={styles.eventCard}
+              onPress={() => handleEventPress(event)}
+              activeOpacity={0.7}
+            >
+              {/* Event Image */}
+              <View style={styles.eventImageContainer}>
+                {event.image ? (
+                  <Image source={{ uri: event.image }} style={styles.eventImage} />
+                ) : (
+                  <View style={styles.eventImagePlaceholder}>
+                    <FontAwesome6
+                      name="calendar"
+                      size={24}
+                      color={Colors.primary}
+                      iconStyle="solid"
+                    />
+                  </View>
+                )}
               </View>
-            </View>
-          </TouchableOpacity>
-        ))}
 
-        {mockJoinedEvents.length === 0 && (
+              {/* Event Info */}
+              <View style={styles.eventInfo}>
+                <Text style={styles.eventTitle} numberOfLines={2}>
+                  {event.title}
+                </Text>
+                <View style={styles.eventDateRow}>
+                  <FontAwesome6
+                    name="calendar"
+                    size={14}
+                    color={Colors.primary}
+                    iconStyle="regular"
+                  />
+                  <Text style={styles.eventDate}>{event.date}</Text>
+                </View>
+                {event.location && (
+                  <View style={styles.eventLocationRow}>
+                    <FontAwesome6
+                      name="location-dot"
+                      size={12}
+                      color={Colors.textSecondary}
+                      iconStyle="solid"
+                    />
+                    <Text style={styles.eventLocation} numberOfLines={1}>
+                      {event.location}
+                    </Text>
+                  </View>
+                )}
+              </View>
+            </TouchableOpacity>
+          ))
+        ) : (
           <View style={styles.emptyState}>
             <FontAwesome6
               name="calendar-xmark"
@@ -114,7 +200,9 @@ export const JoinedEventsScreen: React.FC<JoinedEventsScreenProps> = ({
             />
             <Text style={styles.emptyTitle}>No Joined Events</Text>
             <Text style={styles.emptySubtitle}>
-              Events you join will appear here
+              {backendUser 
+                ? 'Events you join will appear here'
+                : 'Please sign in to see your joined events'}
             </Text>
           </View>
         )}
@@ -226,6 +314,24 @@ const styles = StyleSheet.create({
     fontSize: FontSizes.md,
     color: Colors.textSecondary,
     textAlign: 'center',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    minHeight: 200,
+    paddingTop: Spacing.xxl,
+  },
+  eventLocationRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+    marginTop: Spacing.xs,
+  },
+  eventLocation: {
+    fontSize: FontSizes.sm,
+    color: Colors.textSecondary,
+    flex: 1,
   },
 });
 

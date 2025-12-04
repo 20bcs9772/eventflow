@@ -7,16 +7,21 @@ import {
   KeyboardAvoidingView,
   Platform,
   TouchableOpacity,
+  Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { FloatingActionButton, TextInput, ScreenLayout } from '../components';
 import { Colors } from '../constants/colors';
 import { Spacing, BorderRadius, FontSizes } from '../constants/spacing';
 import FontAwesome6 from '@react-native-vector-icons/fontawesome6';
+import { eventService, guestService } from '../services';
+import { useAuth } from '../context/AuthContext';
+import { useNavigation } from '@react-navigation/native';
 
 interface JoinEventScreenProps {
-  onJoinEvent: (code: string, name: string) => void;
-  onScanQR: () => void;
-  onBack: () => void;
+  onJoinEvent?: (code: string, name: string) => void;
+  onScanQR?: () => void;
+  onBack?: () => void;
 }
 
 export const JoinEventScreen: React.FC<JoinEventScreenProps> = ({
@@ -24,11 +29,80 @@ export const JoinEventScreen: React.FC<JoinEventScreenProps> = ({
   onScanQR,
   onBack,
 }) => {
+  const navigation = useNavigation<any>();
+  const { backendUser } = useAuth();
   const [eventCode, setEventCode] = useState('');
-  const [name, setName] = useState('');
+  const [name, setName] = useState(backendUser?.name || '');
+  const [isJoining, setIsJoining] = useState(false);
 
-  const handleJoinEvent = () => {
-    onJoinEvent(eventCode, name);
+  const extractShortCode = (codeOrLink: string): string => {
+    // Extract short code from link or use code directly
+    const linkMatch = codeOrLink.match(/\/code\/([A-Z0-9]+)/i);
+    if (linkMatch) {
+      return linkMatch[1].toUpperCase();
+    }
+    // Remove any whitespace and convert to uppercase
+    return codeOrLink.trim().toUpperCase();
+  };
+
+  const handleJoinEvent = async () => {
+    if (!eventCode.trim()) {
+      Alert.alert('Validation Error', 'Please enter an event code');
+      return;
+    }
+
+    setIsJoining(true);
+
+    try {
+      const shortCode = extractShortCode(eventCode);
+      
+      // First, get the event by short code to get the event ID
+      const eventResponse = await eventService.getEventByShortCode(shortCode);
+
+      if (!eventResponse.success || !eventResponse.data) {
+        Alert.alert('Error', eventResponse.message || 'Event not found. Please check the code and try again.');
+        setIsJoining(false);
+        return;
+      }
+
+      const eventId = eventResponse.data.id;
+
+      // Join the event
+      const joinData: any = {
+        eventId,
+      };
+
+      // Add name if provided and user is not authenticated
+      if (!backendUser && name.trim()) {
+        joinData.name = name.trim();
+      } else if (backendUser) {
+        joinData.userId = backendUser.id;
+      }
+
+      const joinResponse = await guestService.joinEvent(joinData);
+
+      if (joinResponse.success) {
+        Alert.alert('Success', 'You have joined the event!', [
+          {
+            text: 'OK',
+            onPress: () => {
+              if (onBack) {
+                onBack();
+              } else {
+                navigation.goBack();
+              }
+            },
+          },
+        ]);
+      } else {
+        Alert.alert('Error', joinResponse.message || 'Failed to join event');
+      }
+    } catch (error: any) {
+      console.error('Error joining event:', error);
+      Alert.alert('Error', error.message || 'Failed to join event. Please try again.');
+    } finally {
+      setIsJoining(false);
+    }
   };
 
   return (
@@ -46,7 +120,7 @@ export const JoinEventScreen: React.FC<JoinEventScreenProps> = ({
           <View style={styles.header}>
             <TouchableOpacity
               style={styles.backButton}
-              onPress={onBack}
+              onPress={onBack || (() => navigation.goBack())}
               activeOpacity={0.7}
             >
               <FontAwesome6
@@ -75,7 +149,7 @@ export const JoinEventScreen: React.FC<JoinEventScreenProps> = ({
                 />
                 <TouchableOpacity
                   style={styles.qrIconButton}
-                  onPress={onScanQR}
+                  onPress={onScanQR || (() => {})}
                   activeOpacity={0.7}
                 >
                   <FontAwesome6
@@ -104,7 +178,7 @@ export const JoinEventScreen: React.FC<JoinEventScreenProps> = ({
             {/* Scan QR Button */}
             <TouchableOpacity
               style={styles.scanQRButton}
-              onPress={onScanQR}
+              onPress={onScanQR || (() => {})}
               activeOpacity={0.7}
             >
               <FontAwesome6
@@ -121,8 +195,10 @@ export const JoinEventScreen: React.FC<JoinEventScreenProps> = ({
 
       {/* Floating Join Button */}
       <FloatingActionButton
-        title="Join Event"
+        title={isJoining ? 'Joining...' : 'Join Event'}
         onPress={handleJoinEvent}
+        disabled={isJoining}
+        icon={isJoining ? <ActivityIndicator color={Colors.white} size="small" /> : undefined}
       />
     </ScreenLayout>
   );
