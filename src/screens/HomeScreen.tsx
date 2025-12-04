@@ -1,10 +1,12 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  RefreshControl,
+  ActivityIndicator,
 } from 'react-native';
 import { EventCard, ScreenLayout } from '../components';
 import { Colors } from '../constants/colors';
@@ -12,38 +14,55 @@ import { Spacing, FontSizes } from '../constants/spacing';
 import { Event } from '../types';
 import FontAwesome6 from '@react-native-vector-icons/fontawesome6';
 import { useNavigation } from '@react-navigation/native';
+import { eventService } from '../services';
+import { mapBackendEventsToFrontend } from '../utils/eventMapper';
+import { useAuth } from '../context/AuthContext';
 
 interface HomeScreenProps {
   onNavigate: (route: string) => void;
 }
 
-const mockEvents: Event[] = [
-  {
-    id: '1',
-    title: 'The Miller Wedding',
-    date: 'Oct 26, 2024',
-    location: 'Grand Hyatt',
-    attendees: 12,
-    attendeesAvatars: ['', '', ''],
-  },
-  {
-    id: '2',
-    title: 'Corporate Gala',
-    date: 'Dec 15, 2024',
-    location: 'Convention Center',
-    attendees: 8,
-  },
-  {
-    id: '3',
-    title: 'Birthday Bash',
-    date: 'Nov 5, 2024',
-    location: 'Private Venue',
-    attendees: 5,
-  },
-];
-
 export const HomeScreen: React.FC<HomeScreenProps> = () => {
   const navigation = useNavigation<any>();
+  const { backendUser } = useAuth();
+  const [happeningNowEvents, setHappeningNowEvents] = useState<Event[]>([]);
+  const [discoverEvents, setDiscoverEvents] = useState<Event[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  useEffect(() => {
+    fetchEvents();
+  }, []);
+
+  const fetchEvents = async () => {
+    try {
+      setIsLoading(true);
+      
+      // Fetch events happening now
+      const happeningNowResponse = await eventService.getEventsHappeningNow(5);
+      
+      if (happeningNowResponse.success && happeningNowResponse.data) {
+        setHappeningNowEvents(mapBackendEventsToFrontend(happeningNowResponse.data));
+      }
+
+      // Fetch public events for discovery
+      const discoverResponse = await eventService.getPublicEvents(6, 0);
+      
+      if (discoverResponse.success && discoverResponse.data) {
+        setDiscoverEvents(mapBackendEventsToFrontend(discoverResponse.data));
+      }
+    } catch (error) {
+      console.error('Error fetching events:', error);
+    } finally {
+      setIsLoading(false);
+      setIsRefreshing(false);
+    }
+  };
+
+  const handleRefresh = () => {
+    setIsRefreshing(true);
+    fetchEvents();
+  };
 
   const handleSearchPress = () => {
     navigation.navigate('SearchResults', { query: '' });
@@ -105,34 +124,67 @@ export const HomeScreen: React.FC<HomeScreenProps> = () => {
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
-      >
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>What's Happening Now</Text>
-          <EventCard
-            event={mockEvents[0]}
-            variant="large"
-            onPress={() =>
-              navigation.navigate('EventDetails', { event: mockEvents[0] })
-            }
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefreshing}
+            onRefresh={handleRefresh}
+            tintColor={Colors.primary}
           />
-        </View>
+        }
+      >
+        {isLoading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color={Colors.primary} />
+          </View>
+        ) : (
+          <>
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>What's Happening Now</Text>
+              {happeningNowEvents.length > 0 ? (
+                <EventCard
+                  event={happeningNowEvents[0]}
+                  variant="large"
+                  onPress={() =>
+                    navigation.navigate('EventDetails', { 
+                      event: happeningNowEvents[0] 
+                    })
+                  }
+                />
+              ) : (
+                <View style={styles.emptySection}>
+                  <Text style={styles.emptyText}>No events happening soon</Text>
+                </View>
+              )}
+            </View>
 
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Discover Events</Text>
-            <TouchableOpacity onPress={() => {}}>
-              <Text style={styles.seeAll}>See All</Text>
-            </TouchableOpacity>
-          </View>
-          <View style={styles.eventsRow}>
-            <EventCard event={mockEvents[1]} variant="small" />
-            <EventCard
-              event={mockEvents[2]}
-              variant="small"
-              onPress={() => {}}
-            />
-          </View>
-        </View>
+            <View style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>Discover Events</Text>
+                <TouchableOpacity onPress={() => navigation.navigate('SearchResults', { query: '' })}>
+                  <Text style={styles.seeAll}>See All</Text>
+                </TouchableOpacity>
+              </View>
+              {discoverEvents.length > 0 ? (
+                <View style={styles.eventsRow}>
+                  {discoverEvents.slice(0, 2).map((event) => (
+                    <EventCard
+                      key={event.id}
+                      event={event}
+                      variant="small"
+                      onPress={() =>
+                        navigation.navigate('EventDetails', { event })
+                      }
+                    />
+                  ))}
+                </View>
+              ) : (
+                <View style={styles.emptySection}>
+                  <Text style={styles.emptyText}>No events to discover</Text>
+                </View>
+              )}
+            </View>
+          </>
+        )}
       </ScrollView>
     </ScreenLayout>
   );
@@ -235,5 +287,21 @@ const styles = StyleSheet.create({
   },
   eventsRow: {
     flexDirection: 'row',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    minHeight: 200,
+  },
+  emptySection: {
+    padding: Spacing.lg,
+    alignItems: 'center',
+    backgroundColor: Colors.white,
+    borderRadius: 12,
+  },
+  emptyText: {
+    fontSize: FontSizes.md,
+    color: Colors.textSecondary,
   },
 });

@@ -25,6 +25,10 @@ export const API_ENDPOINTS = {
   // Events
   EVENTS: {
     LIST: '/api/events',
+    PUBLIC: '/api/events/public',
+    HAPPENING_NOW: '/api/events/happening-now',
+    CALENDAR: '/api/events/calendar',
+    ADMIN: '/api/events/admin',
     DETAIL: (id: string) => `/api/events/${id}`,
     CREATE: '/api/events',
     UPDATE: (id: string) => `/api/events/${id}`,

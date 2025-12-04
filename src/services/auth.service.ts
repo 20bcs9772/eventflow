@@ -23,7 +23,7 @@ import { Platform } from 'react-native';
 export const configureGoogleSignIn = () => {
   const webClientId = ENV.GOOGLE_WEB_CLIENT_ID;
   
-  if (!webClientId || webClientId === 'your_web_client_id_here') {
+  if (!webClientId) {
     console.warn(
       '⚠️ GOOGLE_WEB_CLIENT_ID not configured in .env file!\n' +
       'Get it from: Firebase Console > Authentication > Sign-in method > Google'

@@ -58,18 +58,6 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onLogout }) => {
           </TouchableOpacity>
         </Card>
 
-        {/* Create Event Button */}
-        <TouchableOpacity
-          style={styles.createEventButton}
-          activeOpacity={0.8}
-          onPress={() => navigation.navigate('CreateEvent')}
-        >
-          <View style={styles.createEventIcon}>
-            <FontAwesome6 name="plus" size={20} color={Colors.white} iconStyle="solid" />
-          </View>
-          <Text style={styles.createEventText}>Create Event</Text>
-        </TouchableOpacity>
-
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>GENERAL</Text>
           <Card style={styles.settingsCard}>
@@ -93,6 +81,22 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onLogout }) => {
                 }}
                 thumbColor={Colors.white}
               />
+            </TouchableOpacity>
+
+            <View style={styles.divider} />
+
+            <TouchableOpacity
+              style={styles.settingItem}
+              activeOpacity={0.7}
+              onPress={() => navigation.navigate('ManageEvents')}
+            >
+              <View style={styles.settingLeft}>
+                <Text style={styles.settingIcon}>
+                  <FontAwesome6 name="calendar-check" size={20} iconStyle="solid" />
+                </Text>
+                <Text style={styles.settingLabel}>Manage Events</Text>
+              </View>
+              <Text style={styles.chevron}>›</Text>
             </TouchableOpacity>
 
             <View style={styles.divider} />
@@ -184,28 +188,6 @@ const styles = StyleSheet.create({
   scrollContent: {
     padding: Spacing.md,
     paddingBottom: 100,
-  },
-  createEventButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.primary,
-    padding: Spacing.md,
-    borderRadius: BorderRadius.lg,
-    marginBottom: Spacing.lg,
-  },
-  createEventIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: Spacing.md,
-  },
-  createEventText: {
-    fontSize: FontSizes.lg,
-    fontWeight: '700',
-    color: Colors.white,
   },
   profileCard: {
     marginBottom: Spacing.lg,

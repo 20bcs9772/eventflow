@@ -42,7 +42,16 @@ export const AddVenueScreen: React.FC = () => {
 
   const handleSelectVenue = () => {
     if (onSave && selectedVenue) {
-      onSave(selectedVenue);
+      // Format venue data to match expected structure
+      const venueData = {
+        name: selectedVenue.name,
+        fullAddress: selectedVenue.address || selectedVenue.fullAddress,
+        address: selectedVenue.address,
+        city: selectedVenue.city,
+        state: selectedVenue.state,
+        zipCode: selectedVenue.zipCode,
+      };
+      onSave(venueData);
     }
     navigation.goBack();
   };
