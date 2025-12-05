@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   RefreshControl,
   ActivityIndicator,
+  Image,
 } from 'react-native';
 import { EventCard, ScreenLayout } from '../components';
 import { Colors } from '../constants/colors';
@@ -24,7 +25,7 @@ interface HomeScreenProps {
 
 export const HomeScreen: React.FC<HomeScreenProps> = () => {
   const navigation = useNavigation<any>();
-  const { backendUser } = useAuth();
+  const { backendUser, user } = useAuth();
   const [happeningNowEvents, setHappeningNowEvents] = useState<Event[]>([]);
   const [discoverEvents, setDiscoverEvents] = useState<Event[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -37,17 +38,19 @@ export const HomeScreen: React.FC<HomeScreenProps> = () => {
   const fetchEvents = async () => {
     try {
       setIsLoading(true);
-      
+
       // Fetch events happening now
       const happeningNowResponse = await eventService.getEventsHappeningNow(5);
-      
+
       if (happeningNowResponse.success && happeningNowResponse.data) {
-        setHappeningNowEvents(mapBackendEventsToFrontend(happeningNowResponse.data));
+        setHappeningNowEvents(
+          mapBackendEventsToFrontend(happeningNowResponse.data),
+        );
       }
 
       // Fetch public events for discovery
       const discoverResponse = await eventService.getPublicEvents(6, 0);
-      
+
       if (discoverResponse.success && discoverResponse.data) {
         setDiscoverEvents(mapBackendEventsToFrontend(discoverResponse.data));
       }
@@ -75,11 +78,23 @@ export const HomeScreen: React.FC<HomeScreenProps> = () => {
           {/* Profile Picture */}
           <TouchableOpacity style={styles.profilePicture}>
             <View style={styles.profileImageContainer}>
-              <View style={styles.profileImagePlaceholder}>
-                <Text style={styles.profileImageText}>
-                  <FontAwesome6 name="user" size={25} />
-                </Text>
-              </View>
+              {user?.photoURL || backendUser?.avatarUrl ? (
+                <Image
+                  source={{
+                    uri: user?.photoURL || backendUser?.avatarUrl || '',
+                  }}
+                  style={styles.avatarImage}
+                />
+              ) : (
+                <View style={styles.avatarFallback}>
+                  <FontAwesome6
+                    name="user"
+                    size={30}
+                    color={Colors.white}
+                    iconStyle="solid"
+                  />
+                </View>
+              )}
             </View>
           </TouchableOpacity>
 
@@ -104,17 +119,24 @@ export const HomeScreen: React.FC<HomeScreenProps> = () => {
             onPress={handleSearchPress}
           >
             <View style={styles.iconCircle}>
-              <FontAwesome6 name="magnifying-glass" size={20} iconStyle="solid" color={Colors.text} />
+              <FontAwesome6
+                name="magnifying-glass"
+                size={20}
+                iconStyle="solid"
+                color={Colors.text}
+              />
             </View>
           </TouchableOpacity>
 
           {/* Notification Icon */}
-          <TouchableOpacity
-            style={styles.iconButton}
-            activeOpacity={0.7}
-          >
+          <TouchableOpacity style={styles.iconButton} activeOpacity={0.7}>
             <View style={styles.iconCircle}>
-              <FontAwesome6 name="bell" size={20} iconStyle="regular" color={Colors.text} />
+              <FontAwesome6
+                name="bell"
+                size={20}
+                iconStyle="regular"
+                color={Colors.text}
+              />
             </View>
           </TouchableOpacity>
         </View>
@@ -145,8 +167,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = () => {
                   event={happeningNowEvents[0]}
                   variant="large"
                   onPress={() =>
-                    navigation.navigate('EventDetails', { 
-                      event: happeningNowEvents[0] 
+                    navigation.navigate('EventDetails', {
+                      event: happeningNowEvents[0],
                     })
                   }
                 />
@@ -160,13 +182,17 @@ export const HomeScreen: React.FC<HomeScreenProps> = () => {
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
                 <Text style={styles.sectionTitle}>Discover Events</Text>
-                <TouchableOpacity onPress={() => navigation.navigate('SearchResults', { query: '' })}>
+                <TouchableOpacity
+                  onPress={() =>
+                    navigation.navigate('SearchResults', { query: '' })
+                  }
+                >
                   <Text style={styles.seeAll}>See All</Text>
                 </TouchableOpacity>
               </View>
               {discoverEvents.length > 0 ? (
                 <View style={styles.eventsRow}>
-                  {discoverEvents.slice(0, 2).map((event) => (
+                  {discoverEvents.slice(0, 2).map(event => (
                     <EventCard
                       key={event.id}
                       event={event}
@@ -208,10 +234,23 @@ const styles = StyleSheet.create({
   profileImageContainer: {
     width: 50,
     height: 50,
-    borderRadius: 25,
-    borderColor: Colors.backgroundDark,
-    borderWidth: 1.5,
     overflow: 'hidden',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  avatarImage: {
+    width: 50,
+    height: 50,
+    borderRadius: 35,
+    backgroundColor: Colors.backgroundLight,
+  },
+  avatarFallback: {
+    width: 50,
+    height: 50,
+    borderRadius: 35,
+    backgroundColor: Colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   profileImagePlaceholder: {
     width: '100%',
@@ -263,7 +302,7 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: Spacing.md,
     paddingBottom: 100,
-    marginTop: 10
+    marginTop: 10,
   },
   section: {
     marginBottom: Spacing.xl,

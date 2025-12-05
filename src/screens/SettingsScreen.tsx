@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Switch,
   Alert,
+  Image,
 } from 'react-native';
 import { Header, Card, Button, ScreenLayout } from '../components';
 import { Colors } from '../constants/colors';
@@ -40,12 +41,25 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onLogout }) => {
             onPress={() => {}}
           >
             <View style={styles.avatarContainer}>
-              <View style={styles.avatar}>
-                <Text style={styles.avatarText}>
-                  <FontAwesome6 name="user" size={30} iconStyle="solid" />
-                </Text>
-              </View>
+              {user?.photoURL || backendUser?.avatarUrl ? (
+                <Image
+                  source={{
+                    uri: user?.photoURL || backendUser?.avatarUrl || '',
+                  }}
+                  style={styles.avatarImage}
+                />
+              ) : (
+                <View style={styles.avatarFallback}>
+                  <FontAwesome6
+                    name="user"
+                    size={30}
+                    color={Colors.white}
+                    iconStyle="solid"
+                  />
+                </View>
+              )}
             </View>
+
             <View style={styles.profileInfo}>
               <Text style={styles.profileName}>
                 {backendUser?.name || user?.displayName || 'User'}
@@ -92,7 +106,11 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onLogout }) => {
             >
               <View style={styles.settingLeft}>
                 <Text style={styles.settingIcon}>
-                  <FontAwesome6 name="calendar-check" size={20} iconStyle="solid" />
+                  <FontAwesome6
+                    name="calendar-check"
+                    size={20}
+                    iconStyle="solid"
+                  />
                 </Text>
                 <Text style={styles.settingLabel}>Manage Events</Text>
               </View>
@@ -155,21 +173,17 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onLogout }) => {
           <Button
             title="Log Out"
             onPress={async () => {
-              Alert.alert(
-                'Log Out',
-                'Are you sure you want to log out?',
-                [
-                  { text: 'Cancel', style: 'cancel' },
-                  {
-                    text: 'Log Out',
-                    style: 'destructive',
-                    onPress: async () => {
-                      await signOut();
-                      onLogout?.();
-                    },
+              Alert.alert('Log Out', 'Are you sure you want to log out?', [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                  text: 'Log Out',
+                  style: 'destructive',
+                  onPress: async () => {
+                    await signOut();
+                    onLogout?.();
                   },
-                ]
-              );
+                },
+              ]);
             }}
             variant="text"
             style={styles.logoutButton}
@@ -197,7 +211,26 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   avatarContainer: {
-    marginRight: Spacing.md,
+    width: 70,
+    height: 70,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  avatarImage: {
+    width: 55,
+    height: 55,
+    borderRadius: 35,
+    backgroundColor: Colors.backgroundLight,
+  },
+
+  avatarFallback: {
+    width: 55,
+    height: 55,
+    borderRadius: 35,
+    backgroundColor: Colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   avatar: {
     width: 60,
