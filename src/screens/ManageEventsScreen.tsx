@@ -360,7 +360,7 @@ export const ManageEventsScreen: React.FC<ManageEventsScreenProps> = ({
                             <FontAwesome6
                                 name="calendar"
                                 size={48}
-                                color={Colors.primary}
+                                color={Colors.white}
                                 iconStyle="solid"
                             />
                         </View>
