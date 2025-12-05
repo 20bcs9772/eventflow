@@ -113,16 +113,36 @@ export const EventDetailsScreen = () => {
     if (!eventData) return;
 
     if (hasJoined) {
-      // Leave event
+      // Leave event - only for authenticated users
+      if (!backendUser) {
+        Alert.alert('Error', 'Please sign in to leave an event');
+        return;
+      }
       handleLeaveEvent();
       return;
     }
+
+    // For unauthenticated users, navigate to JoinEvent screen with event code
+    if (!backendUser) {
+      // Navigate to JoinEvent screen with the event code pre-filled
+      navigation.navigate('JoinEvent', {
+        eventCode: eventData.shortCode,
+      });
+      return;
+    }
+
+    // For authenticated users, join directly
+    await performJoinEvent({ userId: backendUser.id });
+  };
+
+  const performJoinEvent = async (joinData: { userId: string }) => {
+    if (!eventData) return;
 
     setIsJoining(true);
     try {
       const response = await guestService.joinEvent({
         eventId: eventData.id,
-        userId: backendUser?.id,
+        ...joinData,
       });
 
       if (response.success) {
@@ -136,7 +156,46 @@ export const EventDetailsScreen = () => {
           },
         ]);
       } else {
-        Alert.alert('Error', response.message || 'Failed to join event');
+        // Check if error is related to authentication/user creation
+        const errorMessage = response.message || response.error || 'Failed to join event';
+        const isAuthError = 
+          errorMessage.includes('firebaseUid') ||
+          errorMessage.includes('firebase') ||
+          errorMessage.includes('authentication') ||
+          errorMessage.includes('User not found');
+
+        if (isAuthError && !backendUser) {
+          // Prompt user to sign in or sign up
+          Alert.alert(
+            'Authentication Required',
+            'To join events, please sign in or create an account. This helps us keep track of your events and provide a better experience.',
+            [
+              {
+                text: 'Cancel',
+                style: 'cancel',
+              },
+              {
+                text: 'Sign In',
+                onPress: () => {
+                  navigation.navigate('Login', {
+                    returnTo: 'EventDetails',
+                  });
+                },
+              },
+              {
+                text: 'Sign Up',
+                style: 'default',
+                onPress: () => {
+                  navigation.navigate('SignUp', {
+                    returnTo: 'EventDetails',
+                  });
+                },
+              },
+            ]
+          );
+        } else {
+          Alert.alert('Error', errorMessage);
+        }
       }
     } catch (error: any) {
       console.error('Error joining event:', error);
@@ -150,7 +209,13 @@ export const EventDetailsScreen = () => {
   };
 
   const handleLeaveEvent = async () => {
-    if (!eventData || !backendUser) return;
+    if (!eventData) return;
+    
+    // Only authenticated users can leave events
+    if (!backendUser) {
+      Alert.alert('Error', 'Please sign in to leave an event');
+      return;
+    }
 
     Alert.alert(
       'Leave Event',
@@ -485,22 +550,20 @@ export const EventDetailsScreen = () => {
         </ScrollView>
 
         {/* FLOATING JOIN BUTTON */}
-        {backendUser && (
-          <FloatingActionButton
-            title={
-              isJoining 
-                ? (hasJoined ? 'Leaving...' : 'Joining...')
-                : (hasJoined ? 'Leave Event' : 'Join Event')
-            }
-            onPress={handleJoinEvent}
-            disabled={isJoining}
-            icon={
-              isJoining ? (
-                <ActivityIndicator color={Colors.white} size="small" />
-              ) : undefined
-            }
-          />
-        )}
+        <FloatingActionButton
+          title={
+            isJoining 
+              ? (hasJoined ? 'Leaving...' : 'Joining...')
+              : (hasJoined ? 'Leave Event' : 'Join Event')
+          }
+          onPress={handleJoinEvent}
+          disabled={isJoining}
+          icon={
+            isJoining ? (
+              <ActivityIndicator color={Colors.white} size="small" />
+            ) : undefined
+          }
+        />
       </View>
     </ScreenLayout>
   );

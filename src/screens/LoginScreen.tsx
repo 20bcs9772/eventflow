@@ -13,6 +13,8 @@ import { Button, TextInput, SocialButton, ScreenLayout } from '../components';
 import { Colors } from '../constants/colors';
 import { Spacing, BorderRadius, FontSizes } from '../constants/spacing';
 import { useAuth } from '../context';
+import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
+import { RootStackParamList } from '../types';
 
 interface LoginScreenProps {
   onLogin: () => void;
@@ -20,12 +22,18 @@ interface LoginScreenProps {
   onForgotPassword: () => void;
 }
 
+type LoginRouteProp = RouteProp<RootStackParamList, 'Login'>;
+
 export const LoginScreen: React.FC<LoginScreenProps> = ({
   onLogin,
   onSignUp,
   onForgotPassword,
 }) => {
-  const { signInWithEmail, signInWithGoogle, signInWithApple, isLoading } = useAuth();
+  const navigation = useNavigation<any>();
+  const route = useRoute<LoginRouteProp>();
+  const { signInWithEmail, signInWithGoogle, signInWithApple, isLoading, setPendingJoinAction } = useAuth();
+  const returnTo = route.params?.returnTo;
+  const eventCode = route.params?.eventCode;
   
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -60,6 +68,10 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
       const result = await signInWithEmail(email.trim(), password);
       
       if (result.success) {
+        // Store pending join action if user was trying to join an event
+        if (returnTo === 'JoinEvent' && eventCode) {
+          setPendingJoinAction(eventCode);
+        }
         onLogin();
       } else {
         setError(result.error || 'Failed to sign in');
@@ -76,6 +88,11 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
     setIsSubmitting(true);
     
     try {
+      // Store pending join action BEFORE auth (if user was trying to join an event)
+      if (returnTo === 'JoinEvent' && eventCode) {
+        setPendingJoinAction(eventCode);
+      }
+      
       const result = await signInWithGoogle();
       
       if (result.success) {
@@ -95,6 +112,11 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
     setIsSubmitting(true);
     
     try {
+      // Store pending join action BEFORE auth (if user was trying to join an event)
+      if (returnTo === 'JoinEvent' && eventCode) {
+        setPendingJoinAction(eventCode);
+      }
+      
       const result = await signInWithApple();
       
       if (result.success) {

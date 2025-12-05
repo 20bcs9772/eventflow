@@ -71,6 +71,10 @@ export const HomeScreen: React.FC<HomeScreenProps> = () => {
     navigation.navigate('SearchResults', { query: '' });
   };
 
+  const handleJoinEventPress = () => {
+    navigation.navigate('JoinEvent');
+  };
+
   return (
     <ScreenLayout backgroundColor={Colors.backgroundLight}>
       <View style={styles.header}>
@@ -128,13 +132,17 @@ export const HomeScreen: React.FC<HomeScreenProps> = () => {
             </View>
           </TouchableOpacity>
 
-          {/* Notification Icon */}
-          <TouchableOpacity style={styles.iconButton} activeOpacity={0.7}>
+          {/* Join Event Icon */}
+          <TouchableOpacity
+            style={styles.iconButton}
+            activeOpacity={0.7}
+            onPress={handleJoinEventPress}
+          >
             <View style={styles.iconCircle}>
               <FontAwesome6
-                name="bell"
+                name="expand"
                 size={20}
-                iconStyle="regular"
+                iconStyle="solid"
                 color={Colors.text}
               />
             </View>

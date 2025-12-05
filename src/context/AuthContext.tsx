@@ -38,6 +38,10 @@ interface AuthContextType {
 
   // Utility methods
   refreshUser: () => Promise<void>;
+  // Pending join action
+  setPendingJoinAction: (eventCode: string, eventId?: string) => void;
+  getPendingJoinAction: () => { eventCode: string; eventId?: string } | null;
+  clearPendingJoinAction: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -58,11 +62,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [backendUser, setBackendUser] = useState<BackendUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-
+  
   // Track if we're currently syncing to prevent duplicate requests
   const isSyncingRef = useRef(false);
   // Track the last synced Firebase UID to prevent re-syncing
   const lastSyncedUidRef = useRef<string | null>(null);
+  // Store pending join action (event code) to execute after authentication
+  const pendingJoinActionRef = useRef<{ eventCode: string; eventId?: string } | null>(null);
 
   /**
    * Sync user with backend after Firebase auth
@@ -267,6 +273,27 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  /**
+   * Set pending join action (to execute after authentication)
+   */
+  const setPendingJoinAction = (eventCode: string, eventId?: string): void => {
+    pendingJoinActionRef.current = { eventCode, eventId };
+  };
+
+  /**
+   * Get pending join action
+   */
+  const getPendingJoinAction = (): { eventCode: string; eventId?: string } | null => {
+    return pendingJoinActionRef.current;
+  };
+
+  /**
+   * Clear pending join action
+   */
+  const clearPendingJoinAction = (): void => {
+    pendingJoinActionRef.current = null;
+  };
+
   const value: AuthContextType = {
     user,
     backendUser,
@@ -278,6 +305,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     signInWithApple,
     signOut,
     refreshUser,
+    setPendingJoinAction,
+    getPendingJoinAction,
+    clearPendingJoinAction,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

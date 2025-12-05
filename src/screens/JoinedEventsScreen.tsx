@@ -15,7 +15,6 @@ import { Spacing, BorderRadius, FontSizes } from '../constants/spacing';
 import FontAwesome6 from '@react-native-vector-icons/fontawesome6';
 import { Event } from '../types';
 import { guestService } from '../services';
-import { mapBackendEventsToFrontend } from '../utils/eventMapper';
 import { useAuth } from '../context/AuthContext';
 import { useNavigation } from '@react-navigation/native';
 import dayjs from 'dayjs';
@@ -37,7 +36,8 @@ export const JoinedEventsScreen: React.FC<JoinedEventsScreenProps> = ({
 
   useEffect(() => {
     fetchJoinedEvents();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [backendUser]);
 
   const fetchJoinedEvents = async () => {
     if (!backendUser) {
@@ -49,28 +49,35 @@ export const JoinedEventsScreen: React.FC<JoinedEventsScreenProps> = ({
       setIsLoading(true);
       const response = await guestService.getMyJoinedEvents();
 
-      if (response.success && response.data) {
+      if (response.success && response.data) {        
         // Map guest events to Event type
-        const events = response.data.map((guestEvent: any) => {
-          const event = guestEvent.event;
-          if (!event) return null;
+        const events = response.data
+          .map((guestEvent: any) => {
+            const event = guestEvent.event;
+            if (!event) {
+              console.warn('Guest event missing event data:', guestEvent);
+              return null;
+            }
 
-          const startDate = new Date(event.startDate);
-          return {
-            id: event.id,
-            shortCode: event.shortCode,
-            title: event.name,
-            date: dayjs(startDate).format('MMM D, YYYY'),
-            location: event.location || 'Location TBA',
-            attendees: event._count?.guestEvents || 0,
-            startTime: dayjs(startDate).format('h:mm A'),
-            endTime: event.endDate 
-              ? dayjs(new Date(event.endDate)).format('h:mm A')
-              : undefined,
-          };
-        }).filter(Boolean);
+            const startDate = new Date(event.startDate);
+            return {
+              id: event.id,
+              shortCode: event.shortCode,
+              title: event.name,
+              date: dayjs(startDate).format('MMM D, YYYY'),
+              location: event.location || 'Location TBA',
+              attendees: event._count?.guestEvents || 0,
+              startTime: dayjs(startDate).format('h:mm A'),
+              endTime: event.endDate 
+                ? dayjs(new Date(event.endDate)).format('h:mm A')
+                : undefined,
+            };
+          })
+          .filter(Boolean) as Event[];
 
         setJoinedEvents(events);
+      } else {
+        console.log('Failed to fetch joined events:', response.message || response.error);
       }
     } catch (error) {
       console.error('Error fetching joined events:', error);

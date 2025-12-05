@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { ActivityIndicator, View, StyleSheet } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -26,7 +26,30 @@ import { Colors } from '../constants/colors';
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export const AppNavigator = () => {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, backendUser, getPendingJoinAction, clearPendingJoinAction } = useAuth();
+  const navigationRef = useRef<any>(null);
+  const hasHandledPendingJoinRef = useRef(false);
+
+  // Handle pending join action after authentication
+  useEffect(() => {
+    // Wait for both authentication and backend user to be ready
+    if (isAuthenticated && !isLoading && backendUser && navigationRef.current) {
+      const pendingJoin = getPendingJoinAction();
+      if (pendingJoin && !hasHandledPendingJoinRef.current) {
+        hasHandledPendingJoinRef.current = true;
+        // Small delay to ensure navigation is ready and backend user is fully loaded
+        setTimeout(() => {
+          navigationRef.current?.navigate('JoinEvent', {
+            eventCode: pendingJoin.eventCode,
+            autoJoin: true, // Flag to auto-join
+          });
+          clearPendingJoinAction();
+        }, 500);
+      }
+    } else if (!isAuthenticated) {
+      hasHandledPendingJoinRef.current = false;
+    }
+  }, [isAuthenticated, isLoading, backendUser, getPendingJoinAction, clearPendingJoinAction]);
 
   // Show loading screen while checking auth state
   if (isLoading) {
@@ -38,7 +61,7 @@ export const AppNavigator = () => {
   }
 
   return (
-    <NavigationContainer>
+    <NavigationContainer ref={navigationRef}>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         {!isAuthenticated ? (
           <>
@@ -126,6 +149,7 @@ export const AppNavigator = () => {
             />
             <Stack.Screen name="AddVenue" component={AddVenueScreen} />
             <Stack.Screen name="InvitePeople" component={InvitePeopleScreen} />
+            <Stack.Screen name="JoinEvent" component={JoinEventScreen} />
             <Stack.Screen name="JoinedEvents">
               {({ navigation }) => (
                 <JoinedEventsScreen

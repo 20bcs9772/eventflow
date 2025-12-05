@@ -37,11 +37,11 @@ export type RootStackParamList = {
   AddScheduleBlock: { onSave?: (block: any) => void; initialBlock?: any };
   AddVenue: { onSave?: (venue: any) => void; initialVenue?: any };
   InvitePeople: { onSave?: (people: any[]) => void; initialPeople?: any[] };
-  Login: undefined;
-  SignUp: undefined;
+  Login: { returnTo?: string; eventCode?: string } | undefined;
+  SignUp: { returnTo?: string; eventCode?: string } | undefined;
   ForgotPassword: undefined;
   EmailVerification: { email?: string };
-  JoinEvent: undefined;
+  JoinEvent: { eventCode?: string; autoJoin?: boolean } | undefined;
   JoinedEvents: undefined;
 };
 
