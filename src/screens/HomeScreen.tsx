@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,8 @@ import {
   RefreshControl,
   ActivityIndicator,
   Image,
+  Dimensions,
+  FlatList,
 } from 'react-native';
 import { EventCard, ScreenLayout } from '../components';
 import { Colors } from '../constants/colors';
@@ -30,6 +32,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = () => {
   const [discoverEvents, setDiscoverEvents] = useState<Event[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const carouselRef = useRef<FlatList>(null);
 
   useEffect(() => {
     fetchEvents();
@@ -74,6 +77,29 @@ export const HomeScreen: React.FC<HomeScreenProps> = () => {
   const handleJoinEventPress = () => {
     navigation.navigate('JoinEvent');
   };
+
+  // Calculate carousel width based on screen dimensions
+  const screenWidth = Dimensions.get('window').width;
+  const carouselWidth = screenWidth - Spacing.md * 2; // Account for horizontal padding
+  const [currentCarouselIndex, setCurrentCarouselIndex] = useState(0);
+
+  // Auto-play carousel
+  useEffect(() => {
+    if (happeningNowEvents.length > 1) {
+      const interval = setInterval(() => {
+        setCurrentCarouselIndex(prev => {
+          const nextIndex = (prev + 1) % happeningNowEvents.length;
+          carouselRef.current?.scrollToIndex({
+            index: nextIndex,
+            animated: true,
+          });
+          return nextIndex;
+        });
+      }, 10000);
+
+      return () => clearInterval(interval);
+    }
+  }, [happeningNowEvents.length]);
 
   return (
     <ScreenLayout backgroundColor={Colors.backgroundLight}>
@@ -171,15 +197,60 @@ export const HomeScreen: React.FC<HomeScreenProps> = () => {
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>What's Happening Now</Text>
               {happeningNowEvents.length > 0 ? (
-                <EventCard
-                  event={happeningNowEvents[0]}
-                  variant="large"
-                  onPress={() =>
-                    navigation.navigate('EventDetails', {
-                      event: happeningNowEvents[0],
-                    })
-                  }
-                />
+                <View style={styles.carouselContainer}>
+                  <FlatList
+                    ref={carouselRef}
+                    data={happeningNowEvents}
+                    horizontal
+                    pagingEnabled
+                    showsHorizontalScrollIndicator={false}
+                    snapToInterval={carouselWidth}
+                    decelerationRate="fast"
+                    scrollEnabled={true}
+                    nestedScrollEnabled={true}
+                    keyExtractor={(item, index) => item.id || `event-${index}`}
+                    onMomentumScrollEnd={(event) => {
+                      const index = Math.round(
+                        event.nativeEvent.contentOffset.x / carouselWidth,
+                      );
+                      if (index >= 0 && index < happeningNowEvents.length) {
+                        setCurrentCarouselIndex(index);
+                      }
+                    }}
+                    renderItem={({ item }) => (
+                      <View style={[styles.carouselItem, { width: carouselWidth }]}>
+                        <EventCard
+                          event={item}
+                          variant="large"
+                          onPress={() =>
+                            navigation.navigate('EventDetails', {
+                              event: item,
+                            })
+                          }
+                        />
+                      </View>
+                    )}
+                    getItemLayout={(data, index) => ({
+                      length: carouselWidth,
+                      offset: carouselWidth * index,
+                      index,
+                    })}
+                  />
+                  {/* Carousel Indicators */}
+                  {happeningNowEvents.length > 1 && (
+                    <View style={styles.indicatorContainer}>
+                      {happeningNowEvents.map((_, index) => (
+                        <View
+                          key={index}
+                          style={[
+                            styles.indicator,
+                            index === currentCarouselIndex && styles.indicatorActive,
+                          ]}
+                        />
+                      ))}
+                    </View>
+                  )}
+                </View>
               ) : (
                 <View style={styles.emptySection}>
                   <Text style={styles.emptyText}>No events happening soon</Text>
@@ -350,5 +421,31 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: FontSizes.md,
     color: Colors.textSecondary,
+  },
+  carouselContainer: {
+    marginHorizontal: -Spacing.md, // Offset parent padding
+    paddingHorizontal: Spacing.md,
+  },
+  carouselItem: {
+    paddingHorizontal: Spacing.xs,
+  },
+  indicatorContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: Spacing.md,
+    gap: Spacing.xs,
+  },
+  indicator: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: Colors.textSecondary,
+    opacity: 0.3,
+  },
+  indicatorActive: {
+    backgroundColor: Colors.primary,
+    opacity: 1,
+    width: 24,
   },
 });
