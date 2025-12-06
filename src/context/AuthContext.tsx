@@ -62,13 +62,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [backendUser, setBackendUser] = useState<BackendUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  
+
   // Track if we're currently syncing to prevent duplicate requests
   const isSyncingRef = useRef(false);
   // Track the last synced Firebase UID to prevent re-syncing
   const lastSyncedUidRef = useRef<string | null>(null);
+  // Track if we're in the middle of an explicit sign-up operation
+  const isSigningUpRef = useRef(false);
   // Store pending join action (event code) to execute after authentication
-  const pendingJoinActionRef = useRef<{ eventCode: string; eventId?: string } | null>(null);
+  const pendingJoinActionRef = useRef<{
+    eventCode: string;
+    eventId?: string;
+  } | null>(null);
 
   /**
    * Sync user with backend after Firebase auth
@@ -120,8 +125,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setUser(authUser);
 
         // Only sync if this is a different user than last synced
-        // This handles app restart/refresh scenarios
-        if (lastSyncedUidRef.current !== firebaseUser.uid && !isSyncingRef.current) {
+        // Skip automatic sync if we're in the middle of an explicit sign-up
+        // (the sign-up method will handle the sync with the correct name)
+        if (
+          lastSyncedUidRef.current !== firebaseUser.uid &&
+          !isSyncingRef.current &&
+          !isSigningUpRef.current
+        ) {
           lastSyncedUidRef.current = firebaseUser.uid;
           await syncWithBackend(firebaseUser.displayName);
         }
@@ -129,11 +139,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setUser(null);
         setBackendUser(null);
         lastSyncedUidRef.current = null;
+        isSigningUpRef.current = false;
       }
       setIsLoading(false);
     });
 
     return () => unsubscribe();
+     
   }, []);
 
   /**
@@ -145,6 +157,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     name?: string,
   ): Promise<{ success: boolean; error?: string }> => {
     setIsLoading(true);
+    // Set flag to prevent automatic sync in auth state listener
+    isSigningUpRef.current = true;
+
     try {
       const result = await authService.signUpWithEmail(email, password, name);
 
@@ -152,13 +167,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setUser(result.user);
         lastSyncedUidRef.current = result.user.uid;
 
-        // Sync with backend
+        // Wait a bit for Firebase to update the displayName profile
+        // This ensures the auth state listener doesn't interfere
+        await new Promise<void>(resolve => setTimeout(() => resolve(), 100));
+
+        // Sync with backend using the name parameter (most reliable)
+        // This will create/update the user in the backend with the correct name
         await syncWithBackend(name || result.user.displayName);
       }
 
       return result;
     } finally {
       setIsLoading(false);
+      // Clear the sign-up flag after sync completes
+      isSigningUpRef.current = false;
     }
   };
 
@@ -283,7 +305,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   /**
    * Get pending join action
    */
-  const getPendingJoinAction = (): { eventCode: string; eventId?: string } | null => {
+  const getPendingJoinAction = (): {
+    eventCode: string;
+    eventId?: string;
+  } | null => {
     return pendingJoinActionRef.current;
   };
 

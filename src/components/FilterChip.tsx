@@ -23,7 +23,9 @@ export const FilterChip: React.FC<FilterChipProps> = ({
       onPress={onPress}
       activeOpacity={0.7}
     >
-      <Text style={[styles.label, isActive && styles.labelActive]}>{label}</Text>
+      <Text style={[styles.label, isActive && styles.labelActive]}>
+        {label}
+      </Text>
       {showDropdown && (
         <FontAwesome6
           name="caret-down"
@@ -66,10 +68,3 @@ const styles = StyleSheet.create({
     marginLeft: 6,
   },
 });
-
-
-
-
-
-
-

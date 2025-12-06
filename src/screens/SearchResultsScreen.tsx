@@ -50,7 +50,7 @@ export const SearchResultsScreen = () => {
   const navigation = useNavigation<any>();
   const route = useRoute<SearchResultsRouteProp>();
   const initialQuery = route.params?.query || '';
-  
+
   const [searchQuery, setSearchQuery] = useState(initialQuery);
   const [activeFilter, setActiveFilter] = useState<FilterType>('date');
 
@@ -62,9 +62,10 @@ export const SearchResultsScreen = () => {
     navigation.navigate('EventDetails', { event });
   };
 
-  const filteredResults = mockSearchResults.filter(event =>
-    event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    event.location.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredResults = mockSearchResults.filter(
+    event =>
+      event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      event.location.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   return (
@@ -256,12 +257,3 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
   },
 });
-
-
-
-
-
-
-
-
-
