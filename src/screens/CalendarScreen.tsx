@@ -17,8 +17,6 @@ import { useNavigation } from '@react-navigation/native';
 import { eventService } from '../services';
 import { useAuth } from '../context/AuthContext';
 import dayjs from 'dayjs';
-import { Event } from '../types';
-import { mapBackendEventToFrontend } from '../utils/eventMapper';
 
 interface CalendarScreenProps {
   onNavigate?: (route: string) => void;
@@ -68,7 +66,6 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = () => {
     try {
       setIsLoading(true);
 
-      // Get events for current month and next month
       const startDate = dayjs().startOf('month').toISOString();
       const endDate = dayjs().add(2, 'month').endOf('month').toISOString();
 
@@ -176,22 +173,6 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = () => {
   const handleDateSelect = (day: DateData) => {
     setSelectedDate(day.dateString);
     setSelectedView(0); // Switch to timeline view when date is selected
-  };
-
-  const handleEventPress = (event: CalendarEvent) => {
-    // Convert CalendarEvent to format expected by EventDetails
-    const frontendEvent = {
-      id: event.id,
-      shortCode: event.shortCode,
-      title: event.name,
-      date: dayjs(event.startDate).format('MMM D, YYYY'),
-      location: event.location || 'Location TBA',
-      startTime: dayjs(event.startDate).format('h:mm A'),
-      endTime: event.endDate 
-        ? dayjs(new Date(event.endDate)).format('h:mm A')
-        : undefined,
-    };
-    navigation.navigate('EventDetails', { event: frontendEvent });
   };
 
   const handleScheduleItemPress = (eventId: string) => {
