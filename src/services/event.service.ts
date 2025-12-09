@@ -219,7 +219,7 @@ class EventService {
       try {
         const response = await apiService.get<Event>(
           API_ENDPOINTS.EVENTS.DETAIL(id),
-          false // Public endpoint
+          true
         );
 
         if (response.success && response.data) {

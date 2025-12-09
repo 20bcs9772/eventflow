@@ -5,7 +5,6 @@ import {
   ScrollView,
   StyleSheet,
   TouchableOpacity,
-  Image,
   Share,
   Alert,
   ActivityIndicator,
@@ -61,16 +60,19 @@ export const EventDetailsScreen = () => {
 
       if (response.success && response.data) {
         setEventData(response.data);
-        
+
         // Check if user has joined this event
         if (backendUser && response.data.guestEvents) {
           const userJoined = response.data.guestEvents.some(
-            (ge: any) => ge.user?.id === backendUser.id
+            (ge: any) => ge.user?.id === backendUser.id,
           );
           setHasJoined(userJoined);
         }
       } else {
-        Alert.alert('Error', response.message || 'Failed to load event details');
+        Alert.alert(
+          'Error',
+          response.message || 'Failed to load event details',
+        );
         navigation.goBack();
       }
     } catch (error: any) {
@@ -157,8 +159,9 @@ export const EventDetailsScreen = () => {
         ]);
       } else {
         // Check if error is related to authentication/user creation
-        const errorMessage = response.message || response.error || 'Failed to join event';
-        const isAuthError = 
+        const errorMessage =
+          response.message || response.error || 'Failed to join event';
+        const isAuthError =
           errorMessage.includes('firebaseUid') ||
           errorMessage.includes('firebase') ||
           errorMessage.includes('authentication') ||
@@ -191,7 +194,7 @@ export const EventDetailsScreen = () => {
                   });
                 },
               },
-            ]
+            ],
           );
         } else {
           Alert.alert('Error', errorMessage);
@@ -210,48 +213,44 @@ export const EventDetailsScreen = () => {
 
   const handleLeaveEvent = async () => {
     if (!eventData) return;
-    
+
     // Only authenticated users can leave events
     if (!backendUser) {
       Alert.alert('Error', 'Please sign in to leave an event');
       return;
     }
 
-    Alert.alert(
-      'Leave Event',
-      'Are you sure you want to leave this event?',
-      [
-        {
-          text: 'Cancel',
-          style: 'cancel',
-        },
-        {
-          text: 'Leave',
-          style: 'destructive',
-          onPress: async () => {
-            setIsJoining(true);
-            try {
-              const response = await guestService.leaveEvent(eventData.id);
+    Alert.alert('Leave Event', 'Are you sure you want to leave this event?', [
+      {
+        text: 'Cancel',
+        style: 'cancel',
+      },
+      {
+        text: 'Leave',
+        style: 'destructive',
+        onPress: async () => {
+          setIsJoining(true);
+          try {
+            const response = await guestService.leaveEvent(eventData.id);
 
-              if (response.success) {
-                setHasJoined(false);
-                // Clear event cache to force refresh
-                eventService.clearCache(eventData.id);
-                Alert.alert('Success', 'You have left the event');
-                fetchEventDetails(); // Refresh event data
-              } else {
-                Alert.alert('Error', response.message || 'Failed to leave event');
-              }
-            } catch (error: any) {
-              console.error('Error leaving event:', error);
-              Alert.alert('Error', 'Failed to leave event. Please try again.');
-            } finally {
-              setIsJoining(false);
+            if (response.success) {
+              setHasJoined(false);
+              // Clear event cache to force refresh
+              eventService.clearCache(eventData.id);
+              Alert.alert('Success', 'You have left the event');
+              fetchEventDetails(); // Refresh event data
+            } else {
+              Alert.alert('Error', response.message || 'Failed to leave event');
             }
-          },
+          } catch (error: any) {
+            console.error('Error leaving event:', error);
+            Alert.alert('Error', 'Failed to leave event. Please try again.');
+          } finally {
+            setIsJoining(false);
+          }
         },
-      ]
-    );
+      },
+    ]);
   };
 
   const tabs: { key: TabKey; label: string }[] = [
@@ -281,16 +280,16 @@ export const EventDetailsScreen = () => {
         <View style={styles.card}>
           {scheduleItems.map((item: any, index: number) => (
             <View key={index} style={styles.scheduleItem}>
-              <View
-                style={[styles.iconCircle, { backgroundColor: item.color }]}
-              >
+              <View style={styles.iconCircle}>
+                {/* Use icon color instead of backgroundColor to avoid inline styles */}
                 <FontAwesome6
-                  name={"circle"}
-                  size={16}
-                  color={Colors.primary}
+                  name="circle"
+                  size={18}
+                  color={item.color || Colors.primary}
                   iconStyle="solid"
                 />
               </View>
+
               {index < scheduleItems.length - 1 && (
                 <View style={styles.verticalLine} />
               )}
@@ -328,17 +327,8 @@ export const EventDetailsScreen = () => {
         {announcements.map((item: any, idx: number) => (
           <View key={idx} style={styles.card}>
             <View style={styles.activityRow}>
-              <View
-                style={[
-                  styles.avatar,
-                  {
-                    backgroundColor: Colors.primaryLight + '30',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                  },
-                ]}
-              >
-                <Text style={{ color: Colors.primary, fontWeight: '600' }}>
+              <View style={styles.avatar}>
+                <Text style={styles.activityInitial}>
                   {item.sender?.name?.charAt(0) || 'A'}
                 </Text>
               </View>
@@ -377,35 +367,36 @@ export const EventDetailsScreen = () => {
   const renderMembersSection = () => {
     const guests = eventData?.guestEvents || [];
     const totalCount = guests.length;
+    const slice = guests.slice(0, 10);
 
     return (
       <>
         <Text style={styles.sectionTitle}>Members ({totalCount})</Text>
         <View style={styles.card}>
-          {guests.slice(0, 10).map((guest: any, i: number) => (
-            <View key={i} style={styles.memberRow}>
+          {slice.map((guest: any, i: number) => {
+            const isLast = i === slice.length - 1;
+            return (
               <View
+                key={i}
                 style={[
-                  styles.memberAvatar,
-                  {
-                    backgroundColor: Colors.primaryLight + '30',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                  },
+                  styles.memberRow,
+                  !isLast && styles.memberRowBorder, // only add border for in-between members
                 ]}
               >
-                <Text style={{ color: Colors.primary, fontWeight: '600' }}>
-                  {guest.user?.name?.charAt(0) || 'G'}
-                </Text>
+                <View style={styles.memberAvatar}>
+                  <Text style={styles.memberInitial}>
+                    {guest.user?.name?.charAt(0) || 'G'}
+                  </Text>
+                </View>
+                <View style={styles.memberInfo}>
+                  <Text style={styles.memberName}>
+                    {guest.user?.name || 'Guest'}
+                  </Text>
+                  <Text style={styles.memberRole}>{guest.status}</Text>
+                </View>
               </View>
-              <View style={styles.memberInfo}>
-                <Text style={styles.memberName}>
-                  {guest.user?.name || 'Guest'}
-                </Text>
-                <Text style={styles.memberRole}>{guest.status}</Text>
-              </View>
-            </View>
-          ))}
+            );
+          })}
           {totalCount > 10 && (
             <TouchableOpacity style={styles.viewAllButton}>
               <Text style={styles.viewAllText}>
@@ -436,12 +427,7 @@ export const EventDetailsScreen = () => {
   if (isLoading) {
     return (
       <ScreenLayout backgroundColor={Colors.backgroundLight}>
-        <View
-          style={[
-            styles.container,
-            { justifyContent: 'center', alignItems: 'center' },
-          ]}
-        >
+        <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={Colors.primary} />
         </View>
       </ScreenLayout>
@@ -552,9 +538,13 @@ export const EventDetailsScreen = () => {
         {/* FLOATING JOIN BUTTON */}
         <FloatingActionButton
           title={
-            isJoining 
-              ? (hasJoined ? 'Leaving...' : 'Joining...')
-              : (hasJoined ? 'Leave Event' : 'Join Event')
+            isJoining
+              ? hasJoined
+                ? 'Leaving...'
+                : 'Joining...'
+              : hasJoined
+              ? 'Leave Event'
+              : 'Join Event'
           }
           onPress={handleJoinEvent}
           disabled={isJoining}
@@ -573,6 +563,13 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.backgroundLight,
+  },
+
+  loadingContainer: {
+    flex: 1,
+    backgroundColor: Colors.backgroundLight,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 
   scrollContent: {
@@ -720,6 +717,14 @@ const styles = StyleSheet.create({
     width: 42,
     height: 42,
     borderRadius: 21,
+    backgroundColor: Colors.primaryLight + '30', // static background
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  activityInitial: {
+    color: Colors.primary,
+    fontWeight: '600',
   },
 
   activityName: {
@@ -777,6 +782,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 12,
     gap: 12,
+  },
+
+  memberRowBorder: {
     borderBottomWidth: 1,
     borderBottomColor: '#F5F5F5',
   },
@@ -785,6 +793,14 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
+    backgroundColor: Colors.primaryLight + '30',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  memberInitial: {
+    color: Colors.primary,
+    fontWeight: '600',
   },
 
   memberInfo: {

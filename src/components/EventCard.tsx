@@ -62,9 +62,7 @@ export const EventCard: React.FC<EventCardProps> = ({
                   size={20}
                   iconStyle="solid"
                 />
-                <Text style={styles.largeInfoText}>
-                  {event.date}
-                </Text>
+                <Text style={styles.largeInfoText}>{event.date}</Text>
               </View>
 
               <View style={styles.largeInfoRow}>
@@ -74,9 +72,7 @@ export const EventCard: React.FC<EventCardProps> = ({
                   size={20}
                   iconStyle="solid"
                 />
-                <Text style={styles.largeInfoText}>
-                  {event.location}
-                </Text>
+                <Text style={styles.largeInfoText}>{event.location}</Text>
               </View>
             </View>
 
@@ -99,10 +95,10 @@ export const EventCard: React.FC<EventCardProps> = ({
                 )}
               </View>
 
-              <TouchableOpacity 
-                style={styles.joinButton} 
+              <TouchableOpacity
+                style={styles.joinButton}
                 activeOpacity={0.7}
-                onPress={(e) => {
+                onPress={e => {
                   e.stopPropagation();
                   handlePress();
                 }}
@@ -214,7 +210,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   smallCard: {
-    width: 160,
+    width: 170,
     borderRadius: BorderRadius.lg,
     backgroundColor: Colors.cardBackground,
     overflow: 'hidden',

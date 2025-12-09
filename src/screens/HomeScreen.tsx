@@ -209,7 +209,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = () => {
                     scrollEnabled={true}
                     nestedScrollEnabled={true}
                     keyExtractor={(item, index) => item.id || `event-${index}`}
-                    onMomentumScrollEnd={(event) => {
+                    onMomentumScrollEnd={event => {
                       const index = Math.round(
                         event.nativeEvent.contentOffset.x / carouselWidth,
                       );
@@ -218,7 +218,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = () => {
                       }
                     }}
                     renderItem={({ item }) => (
-                      <View style={[styles.carouselItem, { width: carouselWidth }]}>
+                      <View
+                        style={[styles.carouselItem, { width: carouselWidth }]}
+                      >
                         <EventCard
                           event={item}
                           variant="large"
@@ -244,7 +246,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = () => {
                           key={index}
                           style={[
                             styles.indicator,
-                            index === currentCarouselIndex && styles.indicatorActive,
+                            index === currentCarouselIndex &&
+                              styles.indicatorActive,
                           ]}
                         />
                       ))}
@@ -271,7 +274,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = () => {
               </View>
               {discoverEvents.length > 0 ? (
                 <View style={styles.eventsRow}>
-                  {discoverEvents.slice(0, 2).map(event => (
+                  {discoverEvents.slice(0, 4).map(event => (
                     <EventCard
                       key={event.id}
                       event={event}
@@ -405,6 +408,8 @@ const styles = StyleSheet.create({
   },
   eventsRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
   },
   loadingContainer: {
     flex: 1,

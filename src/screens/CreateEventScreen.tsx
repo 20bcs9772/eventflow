@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -12,7 +12,11 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import FontAwesome6 from '@react-native-vector-icons/fontawesome6';
-import { ScreenLayout, DateTimePickerModal, FloatingActionButton } from '../components';
+import {
+  ScreenLayout,
+  DateTimePickerModal,
+  FloatingActionButton,
+} from '../components';
 import { Colors } from '../constants/colors';
 import { Spacing, FontSizes, BorderRadius } from '../constants/spacing';
 import { eventService } from '../services';
@@ -59,6 +63,24 @@ export const CreateEventScreen = () => {
     { id: '3', avatar: 'https://i.pravatar.cc/100?img=3' },
   ]);
   const [scheduleBlocks, setScheduleBlocks] = useState<ScheduleBlock[]>([]);
+  const [eventType, setEventType] = useState<
+    'WEDDING' | 'BIRTHDAY' | 'CORPORATE' | 'COLLEGE_FEST' | 'OTHER'
+  >('OTHER');
+  const [visibility, setVisibility] = useState<
+    'PUBLIC' | 'UNLISTED' | 'PRIVATE'
+  >('PUBLIC');
+  const [isTypeDropdownOpen, setIsTypeDropdownOpen] = useState(false);
+
+  const eventTypeOptions = useMemo(
+    () => [
+      { label: 'Wedding', value: 'WEDDING' as const },
+      { label: 'Birthday', value: 'BIRTHDAY' as const },
+      { label: 'Corporate', value: 'CORPORATE' as const },
+      { label: 'College Fest', value: 'COLLEGE_FEST' as const },
+      { label: 'Other', value: 'OTHER' as const },
+    ],
+    [],
+  );
 
   const handleAddScheduleBlock = () => {
     navigation.navigate('AddScheduleBlock', {
@@ -85,7 +107,7 @@ export const CreateEventScreen = () => {
     timeZone: string;
   }) => {
     setDateTime(selectedDateTime);
-    setShowDateTimeModal(false)
+    setShowDateTimeModal(false);
   };
 
   const formatDateTimeDisplay = () => {
@@ -100,15 +122,12 @@ export const CreateEventScreen = () => {
       dateTime.startTime && dateTime.endTime
         ? `${dateTime.startTime} - ${dateTime.endTime}`
         : dateTime.startTime
-          ? dateTime.startTime
-          : '';
+        ? dateTime.startTime
+        : '';
 
     // If time exists, show on new line
-    return time
-      ? `${startDate}${endDate}\n${time}`
-      : `${startDate}${endDate}`;
+    return time ? `${startDate}${endDate}\n${time}` : `${startDate}${endDate}`;
   };
-
 
   const [isPublishing, setIsPublishing] = useState(false);
 
@@ -131,7 +150,12 @@ export const CreateEventScreen = () => {
       hours = 0;
     }
 
-    return date.hour(hours).minute(minutes).second(0).millisecond(0).toISOString();
+    return date
+      .hour(hours)
+      .minute(minutes)
+      .second(0)
+      .millisecond(0)
+      .toISOString();
   };
 
   const handlePublish = async () => {
@@ -146,7 +170,10 @@ export const CreateEventScreen = () => {
       // Prepare schedule items
       const scheduleItems = scheduleBlocks.map((block, index) => {
         // Combine event start date with schedule block times
-        const startDateTime = parseTimeToISO(dateTime.startDate!, block.startTime);
+        const startDateTime = parseTimeToISO(
+          dateTime.startDate!,
+          block.startTime,
+        );
         const endDateTime = parseTimeToISO(dateTime.startDate!, block.endTime);
 
         return {
@@ -167,6 +194,8 @@ export const CreateEventScreen = () => {
         endDate: dateTime.endDate
           ? dayjs(dateTime.endDate).toISOString()
           : dayjs(dateTime.startDate).add(1, 'day').toISOString(),
+        visibility,
+        type: eventType,
       };
 
       // Add time strings if provided
@@ -206,14 +235,18 @@ export const CreateEventScreen = () => {
         ]);
       } else {
         // Handle validation errors
-        const errorMessage = response.message || response.error || 'Failed to create event';
+        const errorMessage =
+          response.message || response.error || 'Failed to create event';
 
         console.error('Event creation failed:', errorMessage, response);
         Alert.alert('Error', errorMessage);
       }
     } catch (error: any) {
       console.error('Error creating event:', error);
-      const errorMessage = error.message || error.toString() || 'Failed to create event. Please try again.';
+      const errorMessage =
+        error.message ||
+        error.toString() ||
+        'Failed to create event. Please try again.';
       Alert.alert('Error', errorMessage);
     } finally {
       setIsPublishing(false);
@@ -285,6 +318,88 @@ export const CreateEventScreen = () => {
             </View>
           </View>
 
+          {/* Event Type & Visibility */}
+          <View style={styles.section}>
+            <Text style={styles.label}>Event Type</Text>
+            <View style={styles.dropdownContainer}>
+              <TouchableOpacity
+                style={styles.dropdownHeader}
+                onPress={() => setIsTypeDropdownOpen(!isTypeDropdownOpen)}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.dropdownHeaderText}>
+                  {eventTypeOptions.find(opt => opt.value === eventType)
+                    ?.label || 'Select type'}
+                </Text>
+                <FontAwesome6
+                  name={isTypeDropdownOpen ? 'chevron-up' : 'chevron-down'}
+                  size={14}
+                  color={Colors.textSecondary}
+                  iconStyle="solid"
+                />
+              </TouchableOpacity>
+              {isTypeDropdownOpen && (
+                <View style={styles.dropdownList}>
+                  {eventTypeOptions.map(option => (
+                    <TouchableOpacity
+                      key={option.value}
+                      style={[
+                        styles.dropdownItem,
+                        option.value === eventType &&
+                          styles.dropdownItemSelected,
+                      ]}
+                      onPress={() => {
+                        setEventType(option.value);
+                        setIsTypeDropdownOpen(false);
+                      }}
+                      activeOpacity={0.8}
+                    >
+                      <Text
+                        style={[
+                          styles.dropdownItemText,
+                          option.value === eventType &&
+                            styles.dropdownItemTextSelected,
+                        ]}
+                      >
+                        {option.label}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
+            </View>
+          </View>
+
+          <View style={styles.section}>
+            <Text style={styles.label}>Visibility</Text>
+            <View style={styles.visibilityPill}>
+              {(['PUBLIC', 'UNLISTED', 'PRIVATE'] as const).map(option => (
+                <TouchableOpacity
+                  key={option}
+                  style={[
+                    styles.visibilityOption,
+                    visibility === option && styles.visibilityOptionActive,
+                  ]}
+                  onPress={() => setVisibility(option)}
+                  activeOpacity={0.85}
+                >
+                  <Text
+                    style={[
+                      styles.visibilityText,
+                      visibility === option && styles.visibilityTextActive,
+                    ]}
+                  >
+                    {option === 'PUBLIC'
+                      ? 'Public'
+                      : option === 'UNLISTED'
+                      ? 'Unlisted'
+                      : 'Private'}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+
           {/* Date & Time */}
           <TouchableOpacity
             style={styles.infoRow}
@@ -300,9 +415,7 @@ export const CreateEventScreen = () => {
             </View>
             <View style={styles.infoContent}>
               <Text style={styles.infoTitle}>Date & Time</Text>
-              <Text style={styles.infoSubtitle}>
-                {formatDateTimeDisplay()}
-              </Text>
+              <Text style={styles.infoSubtitle}>{formatDateTimeDisplay()}</Text>
             </View>
             <FontAwesome6
               name="pen"
@@ -355,13 +468,13 @@ export const CreateEventScreen = () => {
                   navigation.navigate('InvitePeople', {
                     onSave: (people: any[]) => {
                       setCollaborators(
-                        people.map((p) => ({
+                        people.map(p => ({
                           id: p.id,
                           avatar: p.avatar || 'https://i.pravatar.cc/100?img=1',
-                        }))
+                        })),
                       );
                     },
-                    initialPeople: collaborators.map((c) => ({
+                    initialPeople: collaborators.map(c => ({
                       id: c.id,
                       avatar: c.avatar,
                     })),
@@ -388,7 +501,9 @@ export const CreateEventScreen = () => {
                 ))}
               </View>
               <Text style={styles.collaboratorCount}>
-                {collaborators.length} {collaborators.length === 1 ? 'collaborator' : 'collaborators'} invited
+                {collaborators.length}{' '}
+                {collaborators.length === 1 ? 'collaborator' : 'collaborators'}{' '}
+                invited
               </Text>
             </View>
           </View>
@@ -411,7 +526,7 @@ export const CreateEventScreen = () => {
               </TouchableOpacity>
             </View>
 
-            {scheduleBlocks.map((block) => (
+            {scheduleBlocks.map(block => (
               <View key={block.id} style={styles.scheduleCard}>
                 <View style={styles.scheduleIconContainer}>
                   <FontAwesome6
@@ -445,7 +560,11 @@ export const CreateEventScreen = () => {
           title={isPublishing ? 'Publishing...' : 'Publish Event'}
           onPress={handlePublish}
           disabled={!eventTitle || !dateTime.startDate || isPublishing}
-          icon={isPublishing ? <ActivityIndicator color={Colors.white} size="small" /> : undefined}
+          icon={
+            isPublishing ? (
+              <ActivityIndicator color={Colors.white} size="small" />
+            ) : undefined
+          }
         />
       </View>
 
@@ -492,6 +611,73 @@ const styles = StyleSheet.create({
   scrollContent: {
     padding: Spacing.lg,
     paddingBottom: 100,
+  },
+  dropdownContainer: {
+    marginTop: Spacing.xs,
+  },
+  dropdownHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: BorderRadius.md,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    backgroundColor: Colors.cardBackground,
+  },
+  dropdownHeaderText: {
+    fontSize: FontSizes.md,
+    color: Colors.text,
+  },
+  dropdownList: {
+    marginTop: Spacing.xs,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: BorderRadius.md,
+    backgroundColor: Colors.cardBackground,
+    overflow: 'hidden',
+  },
+  dropdownItem: {
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+  },
+  dropdownItemSelected: {
+    backgroundColor: Colors.primary + '22',
+  },
+  dropdownItemText: {
+    fontSize: FontSizes.md,
+    color: Colors.text,
+  },
+  dropdownItemTextSelected: {
+    color: Colors.primary,
+    fontWeight: '600',
+  },
+  visibilityPill: {
+    flexDirection: 'row',
+    borderWidth: 1,
+    borderColor: Colors.primary,
+    borderRadius: BorderRadius.lg,
+    overflow: 'hidden',
+    marginTop: Spacing.sm,
+    backgroundColor: Colors.background,
+  },
+  visibilityOption: {
+    flex: 1,
+    paddingVertical: Spacing.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  visibilityOptionActive: {
+    backgroundColor: Colors.primary,
+  },
+  visibilityText: {
+    fontSize: FontSizes.sm,
+    color: Colors.text,
+  },
+  visibilityTextActive: {
+    color: Colors.white,
+    fontWeight: '700',
   },
   section: {
     marginBottom: Spacing.lg,
@@ -655,6 +841,3 @@ const styles = StyleSheet.create({
     padding: Spacing.sm,
   },
 });
-
-
-
