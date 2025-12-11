@@ -1,13 +1,13 @@
 /**
  * Auth Service
- * 
+ *
  * Handles Firebase Authentication operations.
  * This service manages user authentication state and provides
  * methods for sign in, sign up, and sign out.
- * 
+ *
  * NOTE: You need to install @react-native-firebase/app and @react-native-firebase/auth
  * Run: npm install @react-native-firebase/app @react-native-firebase/auth
- * 
+ *
  * For Google Sign-In, also install: npm install @react-native-google-signin/google-signin
  * For Apple Sign-In, also install: npm install @invertase/react-native-apple-authentication
  */
@@ -22,11 +22,11 @@ import { Platform } from 'react-native';
 // Configure Google Sign-In (call this during app initialization)
 export const configureGoogleSignIn = () => {
   const webClientId = ENV.GOOGLE_WEB_CLIENT_ID;
-  
+
   if (!webClientId) {
     console.warn(
       '⚠️ GOOGLE_WEB_CLIENT_ID not configured in .env file!\n' +
-      'Get it from: Firebase Console > Authentication > Sign-in method > Google'
+        'Get it from: Firebase Console > Authentication > Sign-in method > Google',
     );
     return;
   }
@@ -59,24 +59,28 @@ export interface BackendUser {
 
 class AuthService {
   private currentUser: FirebaseAuthTypes.User | null = null;
-  private authStateListeners: Set<(user: FirebaseAuthTypes.User | null) => void> = new Set();
+  private authStateListeners: Set<
+    (user: FirebaseAuthTypes.User | null) => void
+  > = new Set();
 
   constructor() {
     // Listen to auth state changes
-    auth().onAuthStateChanged((user) => {
+    auth().onAuthStateChanged(user => {
       this.currentUser = user;
-      this.authStateListeners.forEach((listener) => listener(user));
+      this.authStateListeners.forEach(listener => listener(user));
     });
   }
 
   /**
    * Subscribe to auth state changes
    */
-  onAuthStateChanged(callback: (user: FirebaseAuthTypes.User | null) => void): () => void {
+  onAuthStateChanged(
+    callback: (user: FirebaseAuthTypes.User | null) => void,
+  ): () => void {
     this.authStateListeners.add(callback);
     // Immediately call with current state
     callback(this.currentUser);
-    
+
     // Return unsubscribe function
     return () => {
       this.authStateListeners.delete(callback);
@@ -96,7 +100,7 @@ class AuthService {
   async getIdToken(): Promise<string | null> {
     const user = auth().currentUser;
     if (!user) return null;
-    
+
     try {
       return await user.getIdToken();
     } catch (error) {
@@ -111,15 +115,20 @@ class AuthService {
   async signUpWithEmail(
     email: string,
     password: string,
-    name?: string
+    name?: string,
   ): Promise<{ success: boolean; user?: AuthUser; error?: string }> {
     try {
-      const credential = await auth().createUserWithEmailAndPassword(email, password);
-      
+      const credential = await auth().createUserWithEmailAndPassword(
+        email,
+        password,
+      );
+
       // Update display name if provided
       if (name && credential.user) {
         await credential.user.updateProfile({ displayName: name });
       }
+
+      await auth().currentUser?.sendEmailVerification();
 
       return {
         success: true,
@@ -139,11 +148,14 @@ class AuthService {
    */
   async signInWithEmail(
     email: string,
-    password: string
+    password: string,
   ): Promise<{ success: boolean; user?: AuthUser; error?: string }> {
     try {
-      const credential = await auth().signInWithEmailAndPassword(email, password);
-      
+      const credential = await auth().signInWithEmailAndPassword(
+        email,
+        password,
+      );
+
       return {
         success: true,
         user: this.mapFirebaseUser(credential.user),
@@ -160,22 +172,28 @@ class AuthService {
   /**
    * Sign in with Google
    */
-  async signInWithGoogle(): Promise<{ success: boolean; user?: AuthUser; error?: string }> {
+  async signInWithGoogle(): Promise<{
+    success: boolean;
+    user?: AuthUser;
+    error?: string;
+  }> {
     try {
       // Check if Google Play Services are available (Android)
-      await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
-      
+      await GoogleSignin.hasPlayServices({
+        showPlayServicesUpdateDialog: true,
+      });
+
       // Sign in with Google
       const signInResult = await GoogleSignin.signIn();
       const idToken = signInResult.data?.idToken;
-      
+
       if (!idToken) {
         throw new Error('No ID token received from Google');
       }
 
       // Create Firebase credential
       const googleCredential = auth.GoogleAuthProvider.credential(idToken);
-      
+
       // Sign in to Firebase
       const credential = await auth().signInWithCredential(googleCredential);
 
@@ -185,12 +203,12 @@ class AuthService {
       };
     } catch (error: any) {
       console.error('Google sign in error:', error);
-      
+
       // Handle specific Google Sign-In errors
       if (error.code === 'SIGN_IN_CANCELLED') {
         return { success: false, error: 'Sign-in was cancelled' };
       }
-      
+
       return {
         success: false,
         error: getAuthErrorMessage(error.code) || error.message,
@@ -201,11 +219,18 @@ class AuthService {
   /**
    * Sign in with Apple
    */
-  async signInWithApple(): Promise<{ success: boolean; user?: AuthUser; error?: string }> {
+  async signInWithApple(): Promise<{
+    success: boolean;
+    user?: AuthUser;
+    error?: string;
+  }> {
     try {
       // Only available on iOS
       if (Platform.OS !== 'ios') {
-        return { success: false, error: 'Apple Sign-In is only available on iOS' };
+        return {
+          success: false,
+          error: 'Apple Sign-In is only available on iOS',
+        };
       }
 
       // Perform Apple Sign-In
@@ -221,7 +246,10 @@ class AuthService {
 
       // Create Firebase credential
       const { identityToken, nonce } = appleAuthResponse;
-      const appleCredential = auth.AppleAuthProvider.credential(identityToken, nonce);
+      const appleCredential = auth.AppleAuthProvider.credential(
+        identityToken,
+        nonce,
+      );
 
       // Sign in to Firebase
       const credential = await auth().signInWithCredential(appleCredential);
@@ -231,8 +259,10 @@ class AuthService {
         const displayName = [
           appleAuthResponse.fullName.givenName,
           appleAuthResponse.fullName.familyName,
-        ].filter(Boolean).join(' ');
-        
+        ]
+          .filter(Boolean)
+          .join(' ');
+
         if (displayName) {
           await credential.user.updateProfile({ displayName });
         }
@@ -244,11 +274,11 @@ class AuthService {
       };
     } catch (error: any) {
       console.error('Apple sign in error:', error);
-      
+
       if (error.code === appleAuth.Error.CANCELED) {
         return { success: false, error: 'Sign-in was cancelled' };
       }
-      
+
       return {
         success: false,
         error: getAuthErrorMessage(error.code) || error.message,
@@ -269,7 +299,7 @@ class AuthService {
       }
 
       await auth().signOut();
-      
+
       return { success: true };
     } catch (error: any) {
       console.error('Sign out error:', error);
@@ -283,7 +313,9 @@ class AuthService {
   /**
    * Send password reset email
    */
-  async sendPasswordResetEmail(email: string): Promise<{ success: boolean; error?: string }> {
+  async sendPasswordResetEmail(
+    email: string,
+  ): Promise<{ success: boolean; error?: string }> {
     try {
       await auth().sendPasswordResetEmail(email);
       return { success: true };
@@ -312,4 +344,3 @@ class AuthService {
 
 export const authService = new AuthService();
 export default authService;
-

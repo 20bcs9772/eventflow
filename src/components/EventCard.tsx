@@ -42,8 +42,8 @@ export const EventCard: React.FC<EventCardProps> = ({
       >
         <ImageBackground
           source={
-            event.image
-              ? { uri: event.image }
+            event.coverImage
+              ? { uri: event.coverImage }
               : {
                   uri: 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?q=80',
                 }

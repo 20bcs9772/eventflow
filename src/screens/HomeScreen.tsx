@@ -20,6 +20,7 @@ import { useNavigation } from '@react-navigation/native';
 import { eventService } from '../services';
 import { mapBackendEventsToFrontend } from '../utils/eventMapper';
 import { useAuth } from '../context/AuthContext';
+import { EventTypeCard } from '../components/home/EventTypeCard';
 
 interface HomeScreenProps {
   onNavigate: (route: string) => void;
@@ -293,6 +294,13 @@ export const HomeScreen: React.FC<HomeScreenProps> = () => {
             </View>
           </>
         )}
+
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Browse Events</Text>
+          </View>
+          <EventTypeCard />
+        </View>
       </ScrollView>
     </ScreenLayout>
   );

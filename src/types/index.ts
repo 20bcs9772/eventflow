@@ -9,6 +9,9 @@ export interface Event {
   attendeesAvatars?: string[];
   startTime?: string;
   endTime?: string;
+  coverImage?: string;
+  portraitImage?: string;
+  galleryImages?: string[];
 }
 
 export interface Announcement {

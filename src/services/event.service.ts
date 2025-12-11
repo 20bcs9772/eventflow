@@ -1,6 +1,6 @@
 /**
  * Event Service
- * 
+ *
  * Handles all event-related API operations.
  * Provides methods for creating, fetching, updating, and deleting events.
  */
@@ -98,6 +98,9 @@ export interface Event {
   _count?: {
     guestEvents?: number;
   };
+  coverImage?: string;
+  portraitImage?: string;
+  galleryImages?: string[];
 }
 
 interface ServiceResponse<T> {
@@ -151,7 +154,7 @@ class EventService {
    */
   private async deduplicateRequest<T>(
     key: string,
-    requestFn: () => Promise<ServiceResponse<T>>
+    requestFn: () => Promise<ServiceResponse<T>>,
   ): Promise<ServiceResponse<T>> {
     // If request is already pending, return the same promise
     if (this.pendingRequests.has(key)) {
@@ -174,7 +177,7 @@ class EventService {
     try {
       const response = await apiService.post<Event>(
         API_ENDPOINTS.EVENTS.CREATE,
-        data
+        data,
       );
 
       if (response.success && response.data) {
@@ -204,7 +207,10 @@ class EventService {
   /**
    * Get event by ID
    */
-  async getEventById(id: string, useCache = true): Promise<ServiceResponse<Event>> {
+  async getEventById(
+    id: string,
+    useCache = true,
+  ): Promise<ServiceResponse<Event>> {
     const cacheKey = `event:${id}`;
 
     // Check cache first
@@ -219,7 +225,7 @@ class EventService {
       try {
         const response = await apiService.get<Event>(
           API_ENDPOINTS.EVENTS.DETAIL(id),
-          true
+          true,
         );
 
         if (response.success && response.data) {
@@ -253,7 +259,7 @@ class EventService {
    */
   async getEventByShortCode(
     shortCode: string,
-    useCache = true
+    useCache = true,
   ): Promise<ServiceResponse<Event>> {
     const cacheKey = `event:code:${shortCode}`;
 
@@ -269,7 +275,7 @@ class EventService {
       try {
         const response = await apiService.get<Event>(
           API_ENDPOINTS.EVENTS.BY_CODE(shortCode),
-          false // Public endpoint
+          false, // Public endpoint
         );
 
         if (response.success && response.data) {
@@ -315,7 +321,7 @@ class EventService {
     return this.deduplicateRequest(cacheKey, async () => {
       try {
         const response = await apiService.get<Event[]>(
-          API_ENDPOINTS.EVENTS.ADMIN
+          API_ENDPOINTS.EVENTS.ADMIN,
         );
 
         if (response.success && response.data) {
@@ -347,7 +353,7 @@ class EventService {
    */
   async getPublicEvents(
     limit = 10,
-    offset = 0
+    offset = 0,
   ): Promise<ServiceResponse<Event[]>> {
     const cacheKey = `events:public:${limit}:${offset}`;
 
@@ -361,7 +367,7 @@ class EventService {
       try {
         const response = await apiService.get<Event[]>(
           `${API_ENDPOINTS.EVENTS.PUBLIC}?limit=${limit}&offset=${offset}`,
-          false // Public endpoint
+          false, // Public endpoint
         );
 
         if (response.success && response.data) {
@@ -404,10 +410,11 @@ class EventService {
       try {
         const response = await apiService.get<Event[]>(
           `${API_ENDPOINTS.EVENTS.HAPPENING_NOW}?limit=${limit}`,
-          false // Public endpoint
+          false, // Public endpoint
         );
 
         if (response.success && response.data) {
+          console.log(response.data)
           // Shorter cache for "happening now" events (1 minute)
           this.cache.set(cacheKey, {
             data: response.data,
@@ -440,9 +447,11 @@ class EventService {
    */
   async getCalendarEvents(
     startDate?: string,
-    endDate?: string
+    endDate?: string,
   ): Promise<ServiceResponse<Event[]>> {
-    const cacheKey = `events:calendar:${startDate || 'default'}:${endDate || 'default'}`;
+    const cacheKey = `events:calendar:${startDate || 'default'}:${
+      endDate || 'default'
+    }`;
 
     // Check cache
     const cached = this.getCached(cacheKey);
@@ -491,12 +500,12 @@ class EventService {
    */
   async updateEvent(
     eventId: string,
-    data: UpdateEventInput
+    data: UpdateEventInput,
   ): Promise<ServiceResponse<Event>> {
     try {
       const response = await apiService.patch<Event>(
         API_ENDPOINTS.EVENTS.UPDATE(eventId),
-        data
+        data,
       );
 
       if (response.success && response.data) {
@@ -529,7 +538,7 @@ class EventService {
   async deleteEvent(eventId: string): Promise<ServiceResponse<void>> {
     try {
       const response = await apiService.delete(
-        API_ENDPOINTS.EVENTS.DELETE(eventId)
+        API_ENDPOINTS.EVENTS.DELETE(eventId),
       );
 
       if (response.success) {
@@ -554,8 +563,50 @@ class EventService {
       };
     }
   }
+
+  /**
+   * Get all event types
+   */
+  async getAllEventTypes(): Promise<ServiceResponse<string[]>> {
+    const cacheKey = `events:types`;
+
+    // Check cache
+    const cached = this.getCached(cacheKey);
+    if (cached) {
+      return { success: true, data: cached };
+    }
+
+    return this.deduplicateRequest(cacheKey, async () => {
+      try {
+        const response = await apiService.get<string[]>(
+          `${API_ENDPOINTS.EVENTS.TYPES}`,
+          false,
+        );
+
+        if (response.success && response.data) {
+          this.setCache(cacheKey, response.data);
+          return {
+            success: true,
+            data: response.data,
+          };
+        }
+
+        return {
+          success: false,
+          message: response.message || 'Failed to fetch event types',
+          error: response.error,
+        };
+      } catch (error: any) {
+        console.error('Error fetching events types:', error);
+        return {
+          success: false,
+          message: error.message || 'Failed to fetch events types',
+          error: 'FETCH_EVENTS_TYPES_ERROR',
+        };
+      }
+    });
+  }
 }
 
 export const eventService = new EventService();
 export default eventService;
-
