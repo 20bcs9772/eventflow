@@ -119,21 +119,28 @@ export const EventCard: React.FC<EventCardProps> = ({
       activeOpacity={0.8}
     >
       <View style={styles.smallImageContainer}>
-        {event.image ? (
+        {event.portraitImage ? (
           <Image
-            source={{ uri: event.image }}
+            source={{ uri: event.portraitImage }}
             style={styles.smallImage}
             resizeMode="cover"
           />
         ) : (
           <View style={styles.smallImagePlaceholder}>
-            <Text style={styles.smallImageIcon}>🎂</Text>
+            <FontAwesome6
+              name="image"
+              size={24}
+              color={Colors.textLight}
+              iconStyle="solid"
+            />
           </View>
         )}
       </View>
 
       <View style={styles.smallContent}>
-        <Text style={styles.smallTitle}>{event.title}</Text>
+        <Text style={styles.smallTitle} numberOfLines={1}>
+          {event.title}
+        </Text>
         <Text style={styles.smallDate}>{event.date}</Text>
       </View>
     </TouchableOpacity>
@@ -215,9 +222,19 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.cardBackground,
     overflow: 'hidden',
     marginRight: Spacing.md,
+    marginBottom: Spacing.md,
   },
-  smallImageContainer: { width: '100%', height: 120 },
-  smallImage: { width: '100%', height: '100%' },
+
+  smallImageContainer: {
+    width: '100%',
+    height: 160,
+  },
+
+  smallImage: {
+    width: '100%',
+    height: '100%',
+  },
+
   smallImagePlaceholder: {
     width: '100%',
     height: '100%',
@@ -225,13 +242,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  smallImageIcon: { fontSize: 40 },
-  smallContent: { padding: Spacing.md },
+
+  smallContent: {
+    padding: Spacing.md,
+  },
+
   smallTitle: {
     fontSize: FontSizes.md,
     fontWeight: '600',
     color: Colors.text,
     marginBottom: Spacing.xs,
   },
-  smallDate: { fontSize: FontSizes.sm, color: Colors.textSecondary },
+
+  smallDate: {
+    fontSize: FontSizes.sm,
+    color: Colors.textSecondary,
+  },
 });
