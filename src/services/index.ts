@@ -15,4 +15,3 @@ export type {
   CreateAnnouncementInput,
 } from './announcement.service';
 
-

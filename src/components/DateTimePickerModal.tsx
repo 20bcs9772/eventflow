@@ -52,8 +52,8 @@ export const DateTimePickerModal: React.FC<DateTimePickerModalProps> = ({
   onConfirm,
   initialDateTime,
 }) => {
-  const slideAnim = useState(new Animated.Value(SCREEN_HEIGHT))[0];
-  const opacityAnim = useState(new Animated.Value(0))[0];
+  const slideAnim = React.useRef(new Animated.Value(SCREEN_HEIGHT)).current;
+  const opacityAnim = React.useRef(new Animated.Value(0)).current;
 
   const [selectedStartDate, setSelectedStartDate] = useState(
     initialDateTime?.startDate || dayjs().format('YYYY-MM-DD'),
@@ -112,17 +112,29 @@ export const DateTimePickerModal: React.FC<DateTimePickerModalProps> = ({
   /* ------------------------- Animations ------------------------- */
   useEffect(() => {
     if (visible) {
-      Animated.parallel([
-        Animated.spring(slideAnim, {
-          toValue: 0,
-          useNativeDriver: true,
-        }),
-        Animated.timing(opacityAnim, {
-          toValue: 1,
-          duration: 180,
-          useNativeDriver: true,
-        }),
-      ]).start();
+      // Reset animation values when opening
+      slideAnim.setValue(SCREEN_HEIGHT);
+      opacityAnim.setValue(0);
+      
+      // Small delay to ensure values are set before animation starts
+      const timer = setTimeout(() => {
+        // Start animation
+        Animated.parallel([
+          Animated.spring(slideAnim, {
+            toValue: 0,
+            useNativeDriver: true,
+            tension: 50,
+            friction: 8,
+          }),
+          Animated.timing(opacityAnim, {
+            toValue: 1,
+            duration: 200,
+            useNativeDriver: true,
+          }),
+        ]).start();
+      }, 10);
+
+      return () => clearTimeout(timer);
     } else {
       Animated.parallel([
         Animated.timing(slideAnim, {
@@ -137,7 +149,7 @@ export const DateTimePickerModal: React.FC<DateTimePickerModalProps> = ({
         }),
       ]).start();
     }
-  }, [visible]);
+  }, [visible, slideAnim, opacityAnim]);
 
   /* ------------------------- Date Selection ------------------------- */
   const handleDateSelect = (day: any) => {

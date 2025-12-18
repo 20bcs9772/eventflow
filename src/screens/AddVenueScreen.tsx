@@ -9,7 +9,11 @@ import {
 } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import FontAwesome6 from '@react-native-vector-icons/fontawesome6';
-import { ScreenLayout, FloatingActionButton } from '../components';
+import {
+  ScreenLayout,
+  FloatingActionButton,
+  ScreenHeader,
+} from '../components';
 import { Colors } from '../constants/colors';
 import { Spacing, FontSizes, BorderRadius } from '../constants/spacing';
 import { RootStackParamList } from '../types';
@@ -58,21 +62,8 @@ export const AddVenueScreen: React.FC = () => {
 
   return (
     <ScreenLayout backgroundColor={Colors.backgroundLight}>
+      <ScreenHeader title="Add Venue" backIcon="arrow-left" />
       <View style={styles.container}>
-        {/* HEADER */}
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
-            <FontAwesome6
-              name="arrow-left"
-              size={20}
-              iconStyle="solid"
-              color={Colors.text}
-            />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Add Venue</Text>
-          <View style={{ width: 20 }} />
-        </View>
-
         {/* SEARCH */}
         <View style={styles.searchContainer}>
           <FontAwesome6
@@ -167,20 +158,8 @@ export const AddVenueScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: Spacing.lg,
-  },
-
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: Spacing.lg,
-  },
-
-  headerTitle: {
-    fontSize: FontSizes.xl,
-    fontWeight: '700',
-    color: Colors.text,
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.md,
   },
 
   /* SEARCH */
@@ -277,5 +256,4 @@ const styles = StyleSheet.create({
     color: Colors.primary,
     fontWeight: '600',
   },
-
 });

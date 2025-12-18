@@ -35,6 +35,7 @@ export const API_ENDPOINTS = {
     DELETE: (id: string) => `/api/events/${id}`,
     BY_CODE: (code: string) => `/api/events/code/${code}`,
     TYPES: `/api/events/types`,
+    BY_TYPE: (type: string) => `/api/events/types/${type}`,
   },
   // Guest Events
   GUESTS: {

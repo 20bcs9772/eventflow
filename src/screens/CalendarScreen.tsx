@@ -18,9 +18,7 @@ import { eventService } from '../services';
 import { useAuth } from '../context/AuthContext';
 import dayjs from 'dayjs';
 
-interface CalendarScreenProps {
-  onNavigate?: (route: string) => void;
-}
+interface CalendarScreenProps {}
 
 interface CalendarEvent {
   id: string;

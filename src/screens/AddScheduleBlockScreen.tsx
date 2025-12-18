@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import FontAwesome6 from '@react-native-vector-icons/fontawesome6';
-import { ScreenLayout, FloatingActionButton } from '../components';
+import { ScreenLayout, FloatingActionButton, ScreenHeader } from '../components';
 import { Colors } from '../constants/colors';
 import { Spacing, FontSizes, BorderRadius } from '../constants/spacing';
 import { RootStackParamList } from '../types';
@@ -90,34 +90,11 @@ export const AddScheduleBlockScreen: React.FC = () => {
 
   return (
     <ScreenLayout backgroundColor={Colors.backgroundLight}>
+      <ScreenHeader
+        title="Add Schedule Block"
+        backIcon="arrow-left"
+      />
       <View style={styles.container}>
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity
-            style={styles.headerButton}
-            onPress={() => navigation.goBack()}
-          >
-            <FontAwesome6
-              name="arrow-left"
-              size={18}
-              color={Colors.text}
-              iconStyle="solid"
-            />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Add Schedule Block</Text>
-          <TouchableOpacity
-            style={styles.headerButton}
-            onPress={() => navigation.goBack()}
-          >
-            <FontAwesome6
-              name="xmark"
-              size={18}
-              color={Colors.text}
-              iconStyle="solid"
-            />
-          </TouchableOpacity>
-        </View>
-
         <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}
@@ -259,24 +236,6 @@ export const AddScheduleBlockScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.md,
-  },
-  headerButton: {
-    width: 40,
-    height: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  headerTitle: {
-    fontSize: FontSizes.lg,
-    fontWeight: '700',
-    color: Colors.text,
   },
   scrollView: {
     flex: 1,

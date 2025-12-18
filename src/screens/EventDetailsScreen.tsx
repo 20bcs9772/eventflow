@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,8 @@ import {
   Share,
   Alert,
   ActivityIndicator,
+  Image,
+  Animated,
 } from 'react-native';
 
 import { Colors } from '../constants/colors';
@@ -15,7 +17,7 @@ import { Spacing, FontSizes, BorderRadius } from '../constants/spacing';
 import FontAwesome6 from '@react-native-vector-icons/fontawesome6';
 import { RouteProp, useRoute, useNavigation } from '@react-navigation/native';
 import { RootStackParamList } from '../types';
-import { ScreenLayout, FloatingActionButton } from '../components';
+import { FloatingActionButton } from '../components';
 import { eventService, guestService } from '../services';
 import { useAuth } from '../context/AuthContext';
 import dayjs from 'dayjs';
@@ -260,6 +262,12 @@ export const EventDetailsScreen = () => {
     { key: 'members', label: 'Members' },
   ];
 
+  // Animation values for scroll effect
+  const scrollY = useRef(new Animated.Value(0)).current;
+  const HEADER_MAX_HEIGHT = 300;
+  const HEADER_MIN_HEIGHT = 0;
+  const HEADER_SCROLL_DISTANCE = HEADER_MAX_HEIGHT - HEADER_MIN_HEIGHT;
+
   const renderScheduleSection = () => {
     const scheduleItems = eventData?.scheduleItems || [];
 
@@ -353,13 +361,37 @@ export const EventDetailsScreen = () => {
 
   const renderAboutSection = () => {
     const description = eventData?.description || 'No description available.';
+    const galleryImages = eventData?.galleryImages || [];
 
     return (
       <>
         <Text style={styles.sectionTitle}>About</Text>
-        <View style={styles.card}>
+        <View style={styles.aboutCard}>
           <Text style={styles.aboutText}>{description}</Text>
         </View>
+
+        {/* Event Gallery */}
+        {galleryImages.length > 0 && (
+          <>
+            <Text style={styles.sectionTitle}>Event Gallery</Text>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.galleryContainer}
+              style={styles.galleryScrollView}
+            >
+              {galleryImages.map((imageUri: string, index: number) => (
+                <View key={index} style={styles.galleryImageWrapper}>
+                  <Image
+                    source={{ uri: imageUri }}
+                    style={styles.galleryImage}
+                    resizeMode="cover"
+                  />
+                </View>
+              ))}
+            </ScrollView>
+          </>
+        )}
       </>
     );
   };
@@ -426,21 +458,21 @@ export const EventDetailsScreen = () => {
 
   if (isLoading) {
     return (
-      <ScreenLayout backgroundColor={Colors.backgroundLight}>
+      <View style={styles.container}>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={Colors.primary} />
         </View>
-      </ScreenLayout>
+      </View>
     );
   }
 
   if (!eventData) {
     return (
-      <ScreenLayout backgroundColor={Colors.backgroundLight}>
-        <View style={styles.container}>
-          <Text>Event not found</Text>
+      <View style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <Text style={styles.emptyText}>Event not found</Text>
         </View>
-      </ScreenLayout>
+      </View>
     );
   }
 
@@ -449,73 +481,118 @@ export const EventDetailsScreen = () => {
     ? dayjs(eventData.startDate).format('MMM D, YYYY')
     : event.date;
   const displayLocation = eventData.location || event.location;
+  const coverImage = eventData?.coverImage || event?.coverImage;
+
+  // Animated header height
+  const headerHeight = scrollY.interpolate({
+    inputRange: [0, HEADER_SCROLL_DISTANCE],
+    outputRange: [HEADER_MAX_HEIGHT, HEADER_MIN_HEIGHT],
+    extrapolate: 'clamp',
+  });
+
+  // Animated image opacity
+  const imageOpacity = scrollY.interpolate({
+    inputRange: [0, HEADER_SCROLL_DISTANCE / 2, HEADER_SCROLL_DISTANCE],
+    outputRange: [1, 1, 0],
+    extrapolate: 'clamp',
+  });
 
   return (
-    <ScreenLayout backgroundColor={Colors.backgroundLight}>
-      <View style={styles.container}>
-        <ScrollView contentContainerStyle={styles.scrollContent}>
-          {/* Header Row with Back, Save, Share */}
-          <View style={styles.headerRow}>
-            <TouchableOpacity
-              style={styles.headerButton}
-              onPress={() => navigation.goBack()}
-            >
-              <FontAwesome6
-                name="arrow-left"
-                size={18}
-                color={Colors.text}
-                iconStyle="solid"
-              />
-            </TouchableOpacity>
+    <View style={styles.container}>
+      {/* Cover Image with Parallax Effect */}
+      <Animated.View
+        style={[
+          styles.headerImageContainer,
+          {
+            height: headerHeight,
+            opacity: imageOpacity,
+          },
+        ]}
+      >
+        <Image
+          source={{
+            uri:
+              coverImage ||
+              'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800',
+          }}
+          style={styles.coverImage}
+          resizeMode="cover"
+        />
+        {/* Gradient overlay for better text readability */}
+        <View style={styles.imageOverlay} />
+      </Animated.View>
 
-            <View style={styles.headerActions}>
-              <TouchableOpacity
-                style={styles.headerButton}
-                onPress={handleSave}
-              >
-                <FontAwesome6
-                  name="bookmark"
-                  size={18}
-                  color={isSaved ? Colors.primary : Colors.text}
-                  iconStyle={isSaved ? 'solid' : 'regular'}
-                />
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.headerButton}
-                onPress={handleShare}
-              >
-                <FontAwesome6
-                  name="share-nodes"
-                  size={18}
-                  color={Colors.text}
-                  iconStyle="solid"
-                />
-              </TouchableOpacity>
-            </View>
-          </View>
+      {/* Floating Header Buttons */}
+      <View style={styles.floatingHeader}>
+        <TouchableOpacity
+          style={styles.headerButton}
+          onPress={() => navigation.goBack()}
+        >
+          <FontAwesome6
+            name="arrow-left"
+            size={18}
+            color={Colors.text}
+            iconStyle="solid"
+          />
+        </TouchableOpacity>
 
-          {/* Title */}
+        <View style={styles.headerActions}>
+          <TouchableOpacity style={styles.headerButton} onPress={handleSave}>
+            <FontAwesome6
+              name="bookmark"
+              size={18}
+              color={isSaved ? Colors.primary : Colors.text}
+              iconStyle={isSaved ? 'solid' : 'regular'}
+            />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.headerButton} onPress={handleShare}>
+            <FontAwesome6
+              name="share-nodes"
+              size={18}
+              color={Colors.text}
+              iconStyle="solid"
+            />
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* Scrollable Content */}
+      <Animated.ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+          { useNativeDriver: false },
+        )}
+        scrollEventThrottle={16}
+      >
+        {/* Content Block with Rounded Top Corners */}
+        <View style={styles.contentBlock}>
+          {/* Event Title */}
           <Text style={styles.title}>{displayTitle}</Text>
 
-          {/* Sub Info */}
+          {/* Date and Location */}
           <View style={styles.subInfoRow}>
             <FontAwesome6
               name="calendar"
               size={14}
               color={Colors.textSecondary}
+              iconStyle="regular"
             />
             <Text style={styles.subInfoText}>
               {displayDate} • {displayLocation}
             </Text>
           </View>
 
-          {/* Tabs */}
+          {/* Navigation Tabs */}
           <View style={styles.tabsRow}>
             {tabs.map(tab => (
               <TouchableOpacity
                 key={tab.key}
                 style={[styles.tab, activeTab === tab.key && styles.tabActive]}
                 onPress={() => setActiveTab(tab.key)}
+                activeOpacity={0.7}
               >
                 <Text
                   style={[
@@ -532,30 +609,31 @@ export const EventDetailsScreen = () => {
           {/* Dynamic Content */}
           {renderContent()}
 
-          <View style={{ height: 100 }} />
-        </ScrollView>
+          {/* Bottom spacing for floating button */}
+          <View style={styles.bottomSpacer} />
+        </View>
+      </Animated.ScrollView>
 
-        {/* FLOATING JOIN BUTTON */}
-        <FloatingActionButton
-          title={
-            isJoining
-              ? hasJoined
-                ? 'Leaving...'
-                : 'Joining...'
-              : hasJoined
-              ? 'Leave Event'
-              : 'Join Event'
-          }
-          onPress={handleJoinEvent}
-          disabled={isJoining}
-          icon={
-            isJoining ? (
-              <ActivityIndicator color={Colors.white} size="small" />
-            ) : undefined
-          }
-        />
-      </View>
-    </ScreenLayout>
+      {/* Floating Join Button */}
+      <FloatingActionButton
+        title={
+          isJoining
+            ? hasJoined
+              ? 'Leaving...'
+              : 'Joining...'
+            : hasJoined
+            ? 'Leave Event'
+            : 'Join Event'
+        }
+        onPress={handleJoinEvent}
+        disabled={isJoining}
+        icon={
+          isJoining ? (
+            <ActivityIndicator color={Colors.white} size="small" />
+          ) : undefined
+        }
+      />
+    </View>
   );
 };
 
@@ -572,17 +650,39 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
 
-  scrollContent: {
-    paddingHorizontal: Spacing.lg,
-    paddingBottom: 40,
-    paddingTop: Spacing.md,
+  /* Cover Image */
+  headerImageContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    overflow: 'hidden',
+    zIndex: 0,
   },
 
-  headerRow: {
+  coverImage: {
+    width: '100%',
+    height: '100%',
+  },
+
+  imageOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.2)',
+  },
+
+  /* Floating Header Buttons */
+  floatingHeader: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: Spacing.lg,
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.xl,
+    paddingBottom: Spacing.md,
+    zIndex: 10,
   },
 
   headerButton: {
@@ -592,6 +692,14 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.white,
     justifyContent: 'center',
     alignItems: 'center',
+    shadowColor: Colors.black,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
 
   headerActions: {
@@ -599,18 +707,37 @@ const styles = StyleSheet.create({
     gap: 12,
   },
 
+  /* Scrollable Content */
+  scrollView: {
+    flex: 1,
+  },
+
+  scrollContent: {
+    paddingTop: 200, // Start content block overlaying image (HEADER_MAX_HEIGHT - 100)
+  },
+
+  /* Content Block */
+  contentBlock: {
+    backgroundColor: Colors.backgroundLight,
+    borderTopLeftRadius: BorderRadius.xl,
+    borderTopRightRadius: BorderRadius.xl,
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.lg,
+    paddingBottom: Spacing.xl,
+  },
+
   title: {
-    fontSize: 26,
-    fontWeight: '700',
+    fontSize: FontSizes.xxl,
+    fontWeight: 'bold',
     color: Colors.text,
-    marginBottom: Spacing.sm,
+    marginBottom: Spacing.md,
   },
 
   subInfoRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    marginBottom: Spacing.xl,
+    gap: Spacing.xs,
+    marginBottom: Spacing.lg,
   },
 
   subInfoText: {
@@ -621,16 +748,15 @@ const styles = StyleSheet.create({
   /* Tabs */
   tabsRow: {
     flexDirection: 'row',
-    gap: 8,
-    marginBottom: Spacing.lg,
-    flexWrap: 'wrap',
+    gap: Spacing.sm,
+    marginBottom: Spacing.xl,
   },
 
   tab: {
-    paddingVertical: 8,
-    paddingHorizontal: 16,
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
     backgroundColor: '#EDEDED',
-    borderRadius: 20,
+    borderRadius: BorderRadius.full,
   },
 
   tabActive: {
@@ -662,6 +788,53 @@ const styles = StyleSheet.create({
     padding: Spacing.md,
     borderRadius: BorderRadius.lg,
     marginBottom: Spacing.xl,
+  },
+
+  /* About Card - Special styling */
+  aboutCard: {
+    backgroundColor: Colors.white,
+    padding: Spacing.lg,
+    borderRadius: BorderRadius.lg,
+    marginBottom: Spacing.xl,
+    shadowColor: Colors.black,
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 1,
+  },
+
+  /* Gallery */
+  galleryScrollView: {
+    marginBottom: Spacing.xl,
+  },
+
+  galleryContainer: {
+    paddingRight: Spacing.lg,
+    gap: Spacing.md,
+  },
+
+  galleryImageWrapper: {
+    width: 280,
+    height: 200,
+    borderRadius: BorderRadius.lg,
+    overflow: 'hidden',
+    backgroundColor: Colors.backgroundLight,
+    shadowColor: Colors.black,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+
+  galleryImage: {
+    width: '100%',
+    height: '100%',
   },
 
   /* Schedule Timeline */
@@ -835,5 +1008,9 @@ const styles = StyleSheet.create({
     fontSize: FontSizes.sm,
     textAlign: 'center',
     padding: Spacing.md,
+  },
+
+  bottomSpacer: {
+    height: 100,
   },
 });

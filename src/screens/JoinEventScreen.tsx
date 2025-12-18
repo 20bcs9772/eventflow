@@ -10,7 +10,12 @@ import {
   Alert,
   ActivityIndicator,
 } from 'react-native';
-import { FloatingActionButton, TextInput, ScreenLayout } from '../components';
+import {
+  FloatingActionButton,
+  TextInput,
+  ScreenLayout,
+  ScreenHeader,
+} from '../components';
 import { Colors } from '../constants/colors';
 import { Spacing, BorderRadius, FontSizes } from '../constants/spacing';
 import FontAwesome6 from '@react-native-vector-icons/fontawesome6';
@@ -225,7 +230,8 @@ export const JoinEventScreen: React.FC<JoinEventScreenProps> = ({
   };
 
   return (
-    <ScreenLayout backgroundColor={Colors.background}>
+    <ScreenLayout backgroundColor={Colors.backgroundLight}>
+      <ScreenHeader title="Join Event" onBack={onBack} />
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardView}
@@ -235,24 +241,6 @@ export const JoinEventScreen: React.FC<JoinEventScreenProps> = ({
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          {/* Header */}
-          <View style={styles.header}>
-            <TouchableOpacity
-              style={styles.backButton}
-              onPress={onBack || (() => navigation.goBack())}
-              activeOpacity={0.7}
-            >
-              <FontAwesome6
-                name="chevron-left"
-                size={20}
-                color={Colors.text}
-                iconStyle="solid"
-              />
-            </TouchableOpacity>
-            <Text style={styles.headerTitle}>Join Event</Text>
-            <View style={styles.headerSpacer} />
-          </View>
-
           {/* Form */}
           <View style={styles.formContainer}>
             {/* Event Code Input */}
@@ -323,29 +311,7 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: Spacing.xl,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: Spacing.md,
-    marginBottom: Spacing.lg,
-  },
-  backButton: {
-    width: 44,
-    height: 44,
-    borderRadius: BorderRadius.md,
-    backgroundColor: Colors.backgroundLight,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerTitle: {
-    fontSize: FontSizes.xl,
-    fontWeight: 'bold',
-    color: Colors.text,
-  },
-  headerSpacer: {
-    width: 44,
+    paddingBottom: Spacing.xl,
   },
   formContainer: {
     flex: 1,

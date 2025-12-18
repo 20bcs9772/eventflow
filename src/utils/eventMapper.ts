@@ -81,3 +81,29 @@ export const mapBackendEventsToFrontend = (
 ): Event[] => {
   return backendEvents.map(mapBackendEventToFrontend);
 };
+
+/**
+ * Get event status based on start and end dates
+ * @param startDate - Event start date (Date, string, or ISO string)
+ * @param endDate - Event end date (Date, string, or ISO string, optional)
+ * @returns EventStatus: 'Draft' | 'Live' | 'Past'
+ */
+export const getEventStatus = (
+  startDate: string | Date,
+  endDate?: string | Date | null,
+): 'Live' | 'Past' | 'Draft' => {
+  const now = new Date();
+  const start = new Date(startDate);
+  const end = endDate ? new Date(endDate) : null;
+
+  if (now < start) {
+    return 'Draft'; // Event hasn't started yet
+  } else if (end && now >= start && now <= end) {
+    return 'Live'; // Event is currently happening
+  } else if (end && now > end) {
+    return 'Past'; // Event has ended
+  } else {
+    // If no endDate, consider it Live if it has started
+    return now >= start ? 'Live' : 'Draft';
+  }
+};

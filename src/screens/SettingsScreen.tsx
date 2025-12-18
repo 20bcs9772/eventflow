@@ -17,7 +17,6 @@ import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../context';
 
 interface SettingsScreenProps {
-  onNavigate: (route: string) => void;
   onLogout?: () => void;
 }
 

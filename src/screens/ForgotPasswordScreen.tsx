@@ -8,7 +8,7 @@ import {
   Platform,
   TouchableOpacity,
 } from 'react-native';
-import { Button, TextInput, ScreenLayout } from '../components';
+import { Button, TextInput, ScreenLayout, ScreenHeader } from '../components';
 import { Colors } from '../constants/colors';
 import { Spacing, BorderRadius, FontSizes } from '../constants/spacing';
 import FontAwesome6 from '@react-native-vector-icons/fontawesome6';
@@ -38,18 +38,7 @@ export const ForgotPasswordScreen: React.FC<ForgotPasswordScreenProps> = ({
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled">
-          {/* Back Button */}
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={onBack}
-            activeOpacity={0.7}>
-            <FontAwesome6
-              name="chevron-left"
-              size={20}
-              color={Colors.text}
-              iconStyle='solid'
-            />
-          </TouchableOpacity>
+          <ScreenHeader title="Forgot Password" onBack={onBack} />
 
           {/* Icon */}
           <View style={styles.iconContainer}>
@@ -115,8 +104,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.xl,
     paddingVertical: Spacing.lg,
   },
-  backButton: {
-    width: 44,
+  iconContainer: {
     height: 44,
     borderRadius: BorderRadius.md,
     backgroundColor: Colors.backgroundLight,

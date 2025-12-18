@@ -16,6 +16,7 @@ import {
   ScreenLayout,
   DateTimePickerModal,
   FloatingActionButton,
+  ScreenHeader,
 } from '../components';
 import { Colors } from '../constants/colors';
 import { Spacing, FontSizes, BorderRadius } from '../constants/spacing';
@@ -254,352 +255,318 @@ export const CreateEventScreen = () => {
   };
 
   return (
-    <ScreenLayout backgroundColor={Colors.backgroundLight}>
-      <View style={styles.container}>
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity
-            style={styles.headerButton}
-            onPress={() => navigation.goBack()}
-          >
-            <FontAwesome6
-              name="arrow-left"
-              size={18}
-              color={Colors.text}
-              iconStyle="solid"
-            />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Create Event</Text>
-          <TouchableOpacity style={styles.headerButton}>
-            <FontAwesome6
-              name="ellipsis"
-              size={18}
-              color={Colors.text}
-              iconStyle="solid"
-            />
-          </TouchableOpacity>
-        </View>
-
+    <>
+      <ScreenLayout backgroundColor={Colors.backgroundLight}>
+        <ScreenHeader title="Create Event" backIcon="arrow-left" />
         <View style={styles.divider} />
-
-        <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-        >
-          {/* Event Title */}
-          <View style={styles.section}>
-            <Text style={styles.label}>Event Title</Text>
-            <View style={styles.inputContainer}>
-              <TextInput
-                style={styles.input}
-                placeholder="e.g., Annual Tech Summit"
-                placeholderTextColor={Colors.textLight}
-                value={eventTitle}
-                onChangeText={setEventTitle}
-              />
-            </View>
-          </View>
-
-          {/* Description */}
-          <View style={styles.section}>
-            <Text style={styles.label}>Description</Text>
-            <View style={[styles.inputContainer, styles.textAreaContainer]}>
-              <TextInput
-                style={[styles.input, styles.textArea]}
-                placeholder="Tell us more about your event..."
-                placeholderTextColor={Colors.textLight}
-                value={description}
-                onChangeText={setDescription}
-                multiline
-                numberOfLines={4}
-                textAlignVertical="top"
-              />
-            </View>
-          </View>
-
-          {/* Event Type & Visibility */}
-          <View style={styles.section}>
-            <Text style={styles.label}>Event Type</Text>
-            <View style={styles.dropdownContainer}>
-              <TouchableOpacity
-                style={styles.dropdownHeader}
-                onPress={() => setIsTypeDropdownOpen(!isTypeDropdownOpen)}
-                activeOpacity={0.8}
-              >
-                <Text style={styles.dropdownHeaderText}>
-                  {eventTypeOptions.find(opt => opt.value === eventType)
-                    ?.label || 'Select type'}
-                </Text>
-                <FontAwesome6
-                  name={isTypeDropdownOpen ? 'chevron-up' : 'chevron-down'}
-                  size={14}
-                  color={Colors.textSecondary}
-                  iconStyle="solid"
+        <View style={styles.container}>
+          <ScrollView
+            style={styles.scrollView}
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+          >
+            {/* Event Title */}
+            <View style={styles.section}>
+              <Text style={styles.label}>Event Title</Text>
+              <View style={styles.inputContainer}>
+                <TextInput
+                  style={styles.input}
+                  placeholder="e.g., Annual Tech Summit"
+                  placeholderTextColor={Colors.textLight}
+                  value={eventTitle}
+                  onChangeText={setEventTitle}
                 />
-              </TouchableOpacity>
-              {isTypeDropdownOpen && (
-                <View style={styles.dropdownList}>
-                  {eventTypeOptions.map(option => (
-                    <TouchableOpacity
-                      key={option.value}
-                      style={[
-                        styles.dropdownItem,
-                        option.value === eventType &&
-                          styles.dropdownItemSelected,
-                      ]}
-                      onPress={() => {
-                        setEventType(option.value);
-                        setIsTypeDropdownOpen(false);
-                      }}
-                      activeOpacity={0.8}
-                    >
-                      <Text
-                        style={[
-                          styles.dropdownItemText,
-                          option.value === eventType &&
-                            styles.dropdownItemTextSelected,
-                        ]}
-                      >
-                        {option.label}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              )}
+              </View>
             </View>
-          </View>
 
-          <View style={styles.section}>
-            <Text style={styles.label}>Visibility</Text>
-            <View style={styles.visibilityPill}>
-              {(['PUBLIC', 'UNLISTED', 'PRIVATE'] as const).map(option => (
+            {/* Description */}
+            <View style={styles.section}>
+              <Text style={styles.label}>Description</Text>
+              <View style={[styles.inputContainer, styles.textAreaContainer]}>
+                <TextInput
+                  style={[styles.input, styles.textArea]}
+                  placeholder="Tell us more about your event..."
+                  placeholderTextColor={Colors.textLight}
+                  value={description}
+                  onChangeText={setDescription}
+                  multiline
+                  numberOfLines={4}
+                  textAlignVertical="top"
+                />
+              </View>
+            </View>
+
+            {/* Event Type & Visibility */}
+            <View style={styles.section}>
+              <Text style={styles.label}>Event Type</Text>
+              <View style={styles.dropdownContainer}>
                 <TouchableOpacity
-                  key={option}
-                  style={[
-                    styles.visibilityOption,
-                    visibility === option && styles.visibilityOptionActive,
-                  ]}
-                  onPress={() => setVisibility(option)}
-                  activeOpacity={0.85}
+                  style={styles.dropdownHeader}
+                  onPress={() => setIsTypeDropdownOpen(!isTypeDropdownOpen)}
+                  activeOpacity={0.8}
                 >
-                  <Text
-                    style={[
-                      styles.visibilityText,
-                      visibility === option && styles.visibilityTextActive,
-                    ]}
-                  >
-                    {option === 'PUBLIC'
-                      ? 'Public'
-                      : option === 'UNLISTED'
-                      ? 'Unlisted'
-                      : 'Private'}
+                  <Text style={styles.dropdownHeaderText}>
+                    {eventTypeOptions.find(opt => opt.value === eventType)
+                      ?.label || 'Select type'}
                   </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-
-          {/* Date & Time */}
-          <TouchableOpacity
-            style={styles.infoRow}
-            onPress={() => setShowDateTimeModal(true)}
-          >
-            <View style={styles.infoIcon}>
-              <FontAwesome6
-                name="calendar"
-                size={18}
-                color={Colors.primary}
-                iconStyle="regular"
-              />
-            </View>
-            <View style={styles.infoContent}>
-              <Text style={styles.infoTitle}>Date & Time</Text>
-              <Text style={styles.infoSubtitle}>{formatDateTimeDisplay()}</Text>
-            </View>
-            <FontAwesome6
-              name="pen"
-              size={16}
-              color={Colors.textSecondary}
-              iconStyle="solid"
-            />
-          </TouchableOpacity>
-
-          {/* Venue */}
-          <TouchableOpacity
-            style={styles.infoRow}
-            onPress={() => {
-              navigation.navigate('AddVenue', {
-                onSave: (savedVenue: any) => {
-                  setVenue(savedVenue);
-                },
-                initialVenue: venue,
-              });
-            }}
-          >
-            <View style={styles.infoIcon}>
-              <FontAwesome6
-                name="location-dot"
-                size={18}
-                color={Colors.primary}
-                iconStyle="solid"
-              />
-            </View>
-            <View style={styles.infoContent}>
-              <Text style={styles.infoTitle}>Venue</Text>
-              <Text style={styles.infoSubtitle}>
-                {venue?.fullAddress || venue?.name || 'Add event location'}
-              </Text>
-            </View>
-            <FontAwesome6
-              name="pen"
-              size={16}
-              color={Colors.textSecondary}
-              iconStyle="solid"
-            />
-          </TouchableOpacity>
-
-          {/* Invite People */}
-          <View style={styles.card}>
-            <View style={styles.cardHeader}>
-              <Text style={styles.cardTitle}>Invite People</Text>
-              <TouchableOpacity
-                onPress={() => {
-                  navigation.navigate('InvitePeople', {
-                    onSave: (people: any[]) => {
-                      setCollaborators(
-                        people.map(p => ({
-                          id: p.id,
-                          avatar: p.avatar || 'https://i.pravatar.cc/100?img=1',
-                        })),
-                      );
-                    },
-                    initialPeople: collaborators.map(c => ({
-                      id: c.id,
-                      avatar: c.avatar,
-                    })),
-                  });
-                }}
-              >
-                <Text style={styles.addLink}>Add</Text>
-              </TouchableOpacity>
-            </View>
-            <Text style={styles.cardDescription}>
-              Add co-hosts or volunteers to help you manage the event.
-            </Text>
-            <View style={styles.collaboratorsRow}>
-              <View style={styles.avatarStack}>
-                {collaborators.slice(0, 3).map((collab, index) => (
-                  <Image
-                    key={collab.id}
-                    source={{ uri: collab.avatar }}
-                    style={[
-                      styles.stackedAvatar,
-                      { marginLeft: index > 0 ? -12 : 0, zIndex: 3 - index },
-                    ]}
+                  <FontAwesome6
+                    name={isTypeDropdownOpen ? 'chevron-up' : 'chevron-down'}
+                    size={14}
+                    color={Colors.textSecondary}
+                    iconStyle="solid"
                   />
+                </TouchableOpacity>
+                {isTypeDropdownOpen && (
+                  <View style={styles.dropdownList}>
+                    {eventTypeOptions.map(option => (
+                      <TouchableOpacity
+                        key={option.value}
+                        style={[
+                          styles.dropdownItem,
+                          option.value === eventType &&
+                            styles.dropdownItemSelected,
+                        ]}
+                        onPress={() => {
+                          setEventType(option.value);
+                          setIsTypeDropdownOpen(false);
+                        }}
+                        activeOpacity={0.8}
+                      >
+                        <Text
+                          style={[
+                            styles.dropdownItemText,
+                            option.value === eventType &&
+                              styles.dropdownItemTextSelected,
+                          ]}
+                        >
+                          {option.label}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                )}
+              </View>
+            </View>
+
+            <View style={styles.section}>
+              <Text style={styles.label}>Visibility</Text>
+              <View style={styles.visibilityPill}>
+                {(['PUBLIC', 'UNLISTED', 'PRIVATE'] as const).map(option => (
+                  <TouchableOpacity
+                    key={option}
+                    style={[
+                      styles.visibilityOption,
+                      visibility === option && styles.visibilityOptionActive,
+                    ]}
+                    onPress={() => setVisibility(option)}
+                    activeOpacity={0.85}
+                  >
+                    <Text
+                      style={[
+                        styles.visibilityText,
+                        visibility === option && styles.visibilityTextActive,
+                      ]}
+                    >
+                      {option === 'PUBLIC'
+                        ? 'Public'
+                        : option === 'UNLISTED'
+                        ? 'Unlisted'
+                        : 'Private'}
+                    </Text>
+                  </TouchableOpacity>
                 ))}
               </View>
-              <Text style={styles.collaboratorCount}>
-                {collaborators.length}{' '}
-                {collaborators.length === 1 ? 'collaborator' : 'collaborators'}{' '}
-                invited
-              </Text>
             </View>
-          </View>
 
-          {/* Schedule */}
-          <View style={styles.scheduleSection}>
-            <View style={styles.scheduleSectionHeader}>
-              <Text style={styles.scheduleSectionTitle}>Schedule</Text>
-              <TouchableOpacity
-                style={styles.addBlockButton}
-                onPress={handleAddScheduleBlock}
-              >
+            {/* Date & Time */}
+            <TouchableOpacity
+              style={styles.infoRow}
+              onPress={() => setShowDateTimeModal(true)}
+              activeOpacity={0.7}
+            >
+              <View style={styles.infoIcon}>
                 <FontAwesome6
-                  name="circle-plus"
-                  size={16}
-                  color={Colors.white}
+                  name="calendar"
+                  size={18}
+                  color={Colors.primary}
+                  iconStyle="regular"
+                />
+              </View>
+              <View style={styles.infoContent}>
+                <Text style={styles.infoTitle}>Date & Time</Text>
+                <Text style={styles.infoSubtitle}>
+                  {formatDateTimeDisplay()}
+                </Text>
+              </View>
+              <FontAwesome6
+                name="pen"
+                size={16}
+                color={Colors.textSecondary}
+                iconStyle="solid"
+              />
+            </TouchableOpacity>
+
+            {/* Venue */}
+            <TouchableOpacity
+              style={styles.infoRow}
+              onPress={() => {
+                navigation.navigate('AddVenue', {
+                  onSave: (savedVenue: any) => {
+                    setVenue(savedVenue);
+                  },
+                  initialVenue: venue,
+                });
+              }}
+            >
+              <View style={styles.infoIcon}>
+                <FontAwesome6
+                  name="location-dot"
+                  size={18}
+                  color={Colors.primary}
                   iconStyle="solid"
                 />
-                <Text style={styles.addBlockText}>Add Block</Text>
-              </TouchableOpacity>
-            </View>
+              </View>
+              <View style={styles.infoContent}>
+                <Text style={styles.infoTitle}>Venue</Text>
+                <Text style={styles.infoSubtitle}>
+                  {venue?.fullAddress || venue?.name || 'Add event location'}
+                </Text>
+              </View>
+              <FontAwesome6
+                name="pen"
+                size={16}
+                color={Colors.textSecondary}
+                iconStyle="solid"
+              />
+            </TouchableOpacity>
 
-            {scheduleBlocks.map(block => (
-              <View key={block.id} style={styles.scheduleCard}>
-                <View style={styles.scheduleIconContainer}>
-                  <FontAwesome6
-                    name={block.icon as any}
-                    size={18}
-                    color={Colors.primary}
-                    iconStyle="solid"
-                  />
-                </View>
-                <View style={styles.scheduleContent}>
-                  <Text style={styles.scheduleTitle}>{block.title}</Text>
-                  <Text style={styles.scheduleTime}>
-                    {block.startTime} - {block.endTime}
-                  </Text>
-                </View>
-                <TouchableOpacity style={styles.dragHandle}>
-                  <FontAwesome6
-                    name="grip-lines"
-                    size={16}
-                    color={Colors.textLight}
-                    iconStyle="solid"
-                  />
+            {/* Invite People */}
+            <View style={styles.card}>
+              <View style={styles.cardHeader}>
+                <Text style={styles.cardTitle}>Invite People</Text>
+                <TouchableOpacity
+                  onPress={() => {
+                    navigation.navigate('InvitePeople', {
+                      onSave: (people: any[]) => {
+                        setCollaborators(
+                          people.map(p => ({
+                            id: p.id,
+                            avatar:
+                              p.avatar || 'https://i.pravatar.cc/100?img=1',
+                          })),
+                        );
+                      },
+                      initialPeople: collaborators.map(c => ({
+                        id: c.id,
+                        avatar: c.avatar,
+                      })),
+                    });
+                  }}
+                >
+                  <Text style={styles.addLink}>Add</Text>
                 </TouchableOpacity>
               </View>
-            ))}
-          </View>
-        </ScrollView>
+              <Text style={styles.cardDescription}>
+                Add co-hosts or volunteers to help you manage the event.
+              </Text>
+              <View style={styles.collaboratorsRow}>
+                <View style={styles.avatarStack}>
+                  {collaborators.slice(0, 3).map((collab, index) => (
+                    <Image
+                      key={collab.id}
+                      source={{ uri: collab.avatar }}
+                      style={[
+                        styles.stackedAvatar,
+                        { marginLeft: index > 0 ? -12 : 0, zIndex: 3 - index },
+                      ]}
+                    />
+                  ))}
+                </View>
+                <Text style={styles.collaboratorCount}>
+                  {collaborators.length}{' '}
+                  {collaborators.length === 1
+                    ? 'collaborator'
+                    : 'collaborators'}{' '}
+                  invited
+                </Text>
+              </View>
+            </View>
 
-        {/* Publish Button */}
-        <FloatingActionButton
-          title={isPublishing ? 'Publishing...' : 'Publish Event'}
-          onPress={handlePublish}
-          disabled={!eventTitle || !dateTime.startDate || isPublishing}
-          icon={
-            isPublishing ? (
-              <ActivityIndicator color={Colors.white} size="small" />
-            ) : undefined
-          }
-        />
-      </View>
+            {/* Schedule */}
+            <View style={styles.scheduleSection}>
+              <View style={styles.scheduleSectionHeader}>
+                <Text style={styles.scheduleSectionTitle}>Schedule</Text>
+                <TouchableOpacity
+                  style={styles.addBlockButton}
+                  onPress={handleAddScheduleBlock}
+                >
+                  <FontAwesome6
+                    name="circle-plus"
+                    size={16}
+                    color={Colors.white}
+                    iconStyle="solid"
+                  />
+                  <Text style={styles.addBlockText}>Add Block</Text>
+                </TouchableOpacity>
+              </View>
 
-      {/* Date & Time Picker Modal */}
+              {scheduleBlocks.map(block => (
+                <View key={block.id} style={styles.scheduleCard}>
+                  <View style={styles.scheduleIconContainer}>
+                    <FontAwesome6
+                      name={block.icon as any}
+                      size={18}
+                      color={Colors.primary}
+                      iconStyle="solid"
+                    />
+                  </View>
+                  <View style={styles.scheduleContent}>
+                    <Text style={styles.scheduleTitle}>{block.title}</Text>
+                    <Text style={styles.scheduleTime}>
+                      {block.startTime} - {block.endTime}
+                    </Text>
+                  </View>
+                  <TouchableOpacity style={styles.dragHandle}>
+                    <FontAwesome6
+                      name="grip-lines"
+                      size={16}
+                      color={Colors.textLight}
+                      iconStyle="solid"
+                    />
+                  </TouchableOpacity>
+                </View>
+              ))}
+            </View>
+          </ScrollView>
+
+          {/* Publish Button */}
+          <FloatingActionButton
+            title={isPublishing ? 'Publishing...' : 'Publish Event'}
+            onPress={handlePublish}
+            disabled={!eventTitle || !dateTime.startDate || isPublishing}
+            icon={
+              isPublishing ? (
+                <ActivityIndicator color={Colors.white} size="small" />
+              ) : undefined
+            }
+          />
+        </View>
+      </ScreenLayout>
+
+      {/* Date & Time Picker Modal - Render outside ScreenLayout */}
       <DateTimePickerModal
         visible={showDateTimeModal}
         onClose={() => setShowDateTimeModal(false)}
         onConfirm={handleDateTimeConfirm}
         initialDateTime={dateTime}
       />
-    </ScreenLayout>
+    </>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.md,
-  },
-  headerButton: {
-    width: 40,
-    height: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  headerTitle: {
-    fontSize: FontSizes.lg,
-    fontWeight: '700',
-    color: Colors.text,
   },
   divider: {
     height: 1,

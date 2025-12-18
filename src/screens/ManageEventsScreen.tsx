@@ -4,19 +4,25 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  TouchableOpacity,
   RefreshControl,
   ActivityIndicator,
 } from 'react-native';
-import { ScreenLayout, FloatingActionButton } from '../components';
+import {
+  ScreenLayout,
+  FloatingActionButton,
+  EventListCard,
+  ScreenHeader,
+} from '../components';
 import { Colors } from '../constants/colors';
-import { Spacing, FontSizes, BorderRadius } from '../constants/spacing';
+import { Spacing, FontSizes } from '../constants/spacing';
 import FontAwesome6 from '@react-native-vector-icons/fontawesome6';
 import { useNavigation } from '@react-navigation/native';
 import { eventService } from '../services';
 import { useAuth } from '../context/AuthContext';
-import dayjs from 'dayjs';
-import { mapBackendEventToFrontend } from '../utils/eventMapper';
+import {
+  mapBackendEventToFrontend,
+  getEventStatus,
+} from '../utils/eventMapper';
 
 interface ManageEventsScreenProps {
   onBack?: () => void;
@@ -42,6 +48,9 @@ interface BackendEvent {
       email?: string | null;
     };
   }>;
+  coverImage?: string;
+  portraitImage?: string;
+  galleryImages?: string[];
 }
 
 export const ManageEventsScreen: React.FC<ManageEventsScreenProps> = ({
@@ -59,7 +68,7 @@ export const ManageEventsScreen: React.FC<ManageEventsScreenProps> = ({
     } else {
       setIsLoading(false);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [backendUser]);
 
   const fetchEvents = async () => {
@@ -85,14 +94,6 @@ export const ManageEventsScreen: React.FC<ManageEventsScreenProps> = ({
     fetchEvents();
   };
 
-  const handleBack = () => {
-    if (onBack) {
-      onBack();
-    } else {
-      navigation.goBack();
-    }
-  };
-
   const handleCreateEvent = () => {
     navigation.navigate('CreateEvent');
   };
@@ -115,171 +116,31 @@ export const ManageEventsScreen: React.FC<ManageEventsScreenProps> = ({
   );
   const pastEvents = events.filter(event => new Date(event.startDate) < now);
 
-  // Get event status
-  const getEventStatus = (event: BackendEvent): 'Live' | 'Draft' | 'Ended' => {
-    const startDate = new Date(event.startDate);
-    const endDate = new Date(event.endDate);
-
-    if (now < startDate) {
-      return 'Draft';
-    } else if (now >= startDate && now <= endDate) {
-      return 'Live';
-    } else {
-      return 'Ended';
-    }
-  };
-
-  // Get event icon based on type
-  const getEventIcon = (type: string): any => {
-    const iconMap: { [key: string]: any } = {
-      WEDDING: 'ring',
-      BIRTHDAY: 'cake-candles',
-      CORPORATE: 'briefcase',
-      COLLEGE_FEST: 'graduation-cap',
-      OTHER: 'calendar-days',
-    };
-    return iconMap[type] || 'calendar-days';
-  };
-
-  // Get event icon color based on type
-  const getEventIconColor = (type: string) => {
-    const colorMap: { [key: string]: string } = {
-      WEDDING: '#E8D5FF',
-      BIRTHDAY: '#FFE5F1',
-      CORPORATE: '#E5F0FF',
-      COLLEGE_FEST: '#FFF5E5',
-      OTHER: '#F0F0F0',
-    };
-    return colorMap[type] || Colors.backgroundLight;
-  };
-
   const renderEventCard = (event: BackendEvent, isPast: boolean = false) => {
-    const status = getEventStatus(event);
+    const status = getEventStatus(event.startDate, event.endDate);
     const attendeeCount =
       event._count?.guestEvents || event.guestEvents?.length || 0;
-    const attendeesAvatars =
-      event.guestEvents
-        ?.slice(0, 3)
-        .map(ge => ge.user?.name?.charAt(0) || '')
-        .filter(Boolean) || [];
+    const imageUri = event.portraitImage || event.coverImage;
 
     return (
-      <TouchableOpacity
+      <EventListCard
         key={event.id}
-        style={styles.eventCard}
+        title={event.name}
+        date={event.startDate}
+        attendeesCount={attendeeCount}
+        imageUri={imageUri}
+        status={status}
         onPress={() => handleEventPress(event)}
-        activeOpacity={0.7}
-      >
-        <View
-          style={[
-            styles.eventIconContainer,
-            { backgroundColor: getEventIconColor(event.type) },
-          ]}
-        >
-          <FontAwesome6
-            name={getEventIcon(event.type)}
-            size={25}
-            iconStyle="solid"
-            color={Colors.primary}
-          />
-        </View>
-
-        <View style={styles.eventContent}>
-          <View style={styles.eventHeader}>
-            <Text style={styles.eventTitle} numberOfLines={1}>
-              {event.name}
-            </Text>
-            {!isPast && (
-              <TouchableOpacity
-                style={styles.editButton}
-                onPress={e => {
-                  e.stopPropagation();
-                  handleEditEvent(event);
-                }}
-                activeOpacity={0.7}
-              >
-                <FontAwesome6
-                  name="pencil"
-                  size={14}
-                  color={Colors.textSecondary}
-                  iconStyle="solid"
-                />
-              </TouchableOpacity>
-            )}
-          </View>
-
-          <Text style={styles.eventDateLocation}>
-            {dayjs(event.startDate).format('MMM D, YYYY')} •{' '}
-            {event.location || 'Location TBA'}
-          </Text>
-
-          {!isPast && (
-            <View style={styles.eventFooter}>
-              <View style={styles.attendeesContainer}>
-                {attendeesAvatars.map((avatar, index) => (
-                  <View
-                    key={index}
-                    style={[styles.avatar, { marginLeft: index > 0 ? -8 : 0 }]}
-                  >
-                    <Text style={styles.avatarText}>{avatar}</Text>
-                  </View>
-                ))}
-                <Text style={styles.attendeesCount}>
-                  {attendeeCount} Joined
-                </Text>
-              </View>
-
-              <View
-                style={[
-                  styles.statusBadge,
-                  status === 'Live' && styles.statusBadgeLive,
-                  status === 'Draft' && styles.statusBadgeDraft,
-                  status === 'Ended' && styles.statusBadgeEnded,
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.statusText,
-                    status === 'Live' && styles.statusTextLive,
-                    status === 'Draft' && styles.statusTextDraft,
-                    status === 'Ended' && styles.statusTextEnded,
-                  ]}
-                >
-                  {status}
-                </Text>
-              </View>
-            </View>
-          )}
-
-          {isPast && (
-            <View style={styles.pastEventBadge}>
-              <Text style={styles.pastEventText}>Ended</Text>
-            </View>
-          )}
-        </View>
-      </TouchableOpacity>
+        onOptionsPress={() => handleEditEvent(event)}
+        showOptions={!isPast}
+      />
     );
   };
 
   if (isLoading) {
     return (
       <ScreenLayout backgroundColor={Colors.backgroundLight}>
-        <View style={styles.header}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={handleBack}
-            activeOpacity={0.7}
-          >
-            <FontAwesome6
-              name="chevron-left"
-              size={20}
-              color={Colors.text}
-              iconStyle="solid"
-            />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>My Events</Text>
-          <View style={styles.headerSpacer} />
-        </View>
+        <ScreenHeader title="My Events" onBack={onBack} />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={Colors.primary} />
         </View>
@@ -290,22 +151,7 @@ export const ManageEventsScreen: React.FC<ManageEventsScreenProps> = ({
   if (!backendUser) {
     return (
       <ScreenLayout backgroundColor={Colors.backgroundLight}>
-        <View style={styles.header}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={handleBack}
-            activeOpacity={0.7}
-          >
-            <FontAwesome6
-              name="chevron-left"
-              size={20}
-              color={Colors.text}
-              iconStyle="solid"
-            />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>My Events</Text>
-          <View style={styles.headerSpacer} />
-        </View>
+        <ScreenHeader title="My Events" onBack={onBack} />
         <View style={styles.emptyContainer}>
           <FontAwesome6
             name="calendar-xmark"
@@ -321,22 +167,7 @@ export const ManageEventsScreen: React.FC<ManageEventsScreenProps> = ({
 
   return (
     <ScreenLayout backgroundColor={Colors.backgroundLight}>
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={handleBack}
-          activeOpacity={0.7}
-        >
-          <FontAwesome6
-            name="chevron-left"
-            size={20}
-            color={Colors.text}
-            iconStyle="solid"
-          />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>My Events</Text>
-        <View style={styles.headerSpacer} />
-      </View>
+      <ScreenHeader title="My Events" onBack={onBack} />
 
       <ScrollView
         style={styles.scrollView}
@@ -402,30 +233,6 @@ export const ManageEventsScreen: React.FC<ManageEventsScreenProps> = ({
 };
 
 const styles = StyleSheet.create({
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: Spacing.xl,
-    paddingVertical: Spacing.md,
-    marginBottom: Spacing.md,
-  },
-  backButton: {
-    width: 44,
-    height: 44,
-    borderRadius: BorderRadius.md,
-    backgroundColor: Colors.backgroundLight,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerTitle: {
-    fontSize: FontSizes.xl,
-    fontWeight: 'bold',
-    color: Colors.text,
-  },
-  headerSpacer: {
-    width: 44,
-  },
   scrollView: {
     flex: 1,
   },
@@ -482,123 +289,5 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.md,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
-  },
-  eventCard: {
-    flexDirection: 'row',
-    backgroundColor: Colors.white,
-    borderRadius: BorderRadius.lg,
-    padding: Spacing.md,
-    marginBottom: Spacing.md,
-    shadowColor: Colors.black,
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
-  },
-  eventIconContainer: {
-    width: 56,
-    height: 56,
-    borderRadius: BorderRadius.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: Spacing.md,
-  },
-  eventIcon: {
-    fontSize: 28,
-  },
-  eventContent: {
-    flex: 1,
-  },
-  eventHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: Spacing.xs,
-  },
-  eventTitle: {
-    fontSize: FontSizes.md,
-    fontWeight: '600',
-    color: Colors.text,
-    flex: 1,
-  },
-  editButton: {
-    padding: Spacing.xs,
-  },
-  eventDateLocation: {
-    fontSize: FontSizes.sm,
-    color: Colors.textSecondary,
-    marginBottom: Spacing.sm,
-  },
-  eventFooter: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  attendeesContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  avatar: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: Colors.primaryLight,
-    borderWidth: 2,
-    borderColor: Colors.white,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  avatarText: {
-    fontSize: FontSizes.xs,
-    color: Colors.primary,
-    fontWeight: '600',
-  },
-  attendeesCount: {
-    fontSize: FontSizes.sm,
-    color: Colors.textSecondary,
-    marginLeft: Spacing.sm,
-  },
-  statusBadge: {
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: 4,
-    borderRadius: BorderRadius.sm,
-  },
-  statusBadgeLive: {
-    backgroundColor: '#E6F7E6',
-  },
-  statusBadgeDraft: {
-    backgroundColor: Colors.backgroundLight,
-  },
-  statusBadgeEnded: {
-    backgroundColor: Colors.backgroundLight,
-  },
-  statusText: {
-    fontSize: FontSizes.xs,
-    fontWeight: '600',
-  },
-  statusTextLive: {
-    color: '#4CAF50',
-  },
-  statusTextDraft: {
-    color: Colors.textSecondary,
-  },
-  statusTextEnded: {
-    color: Colors.textSecondary,
-  },
-  pastEventBadge: {
-    alignSelf: 'flex-start',
-    backgroundColor: Colors.backgroundLight,
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: 4,
-    borderRadius: BorderRadius.sm,
-  },
-  pastEventText: {
-    fontSize: FontSizes.xs,
-    fontWeight: '600',
-    color: Colors.textSecondary,
   },
 });

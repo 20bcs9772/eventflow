@@ -7,42 +7,22 @@ import {
   TouchableOpacity,
   Image,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
 import FontAwesome6 from '@react-native-vector-icons/fontawesome6';
-import { ScreenLayout, FloatingActionButton } from '../components';
+import {
+  ScreenLayout,
+  FloatingActionButton,
+  ScreenHeader,
+} from '../components';
 import { Colors } from '../constants/colors';
 import { Spacing, FontSizes, BorderRadius } from '../constants/spacing';
 
 export const InvitePeopleScreen: React.FC = () => {
-  const navigation = useNavigation();
-
   const [searchQuery, setSearchQuery] = useState('');
 
   return (
     <ScreenLayout backgroundColor={Colors.backgroundLight}>
+      <ScreenHeader title="Invite People" />
       <View style={styles.container}>
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
-            <FontAwesome6
-              name="arrow-left"
-              iconStyle="solid"
-              size={20}
-              color={Colors.text}
-            />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Invite People</Text>
-
-          <TouchableOpacity>
-            <FontAwesome6
-              name="ellipsis-vertical"
-              size={20}
-              color={Colors.text}
-              iconStyle="solid"
-            />
-          </TouchableOpacity>
-        </View>
-
         {/* SEARCH BAR */}
         <View style={styles.searchBar}>
           <FontAwesome6
@@ -101,19 +81,6 @@ export const InvitePeopleScreen: React.FC = () => {
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: Spacing.lg },
-
-  /* HEADER */
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: Spacing.lg,
-  },
-  headerTitle: {
-    fontSize: FontSizes.xl,
-    fontWeight: '700',
-    color: Colors.text,
-  },
 
   /* SEARCH */
   searchBar: {

@@ -5,9 +5,7 @@ import { Colors } from '../constants/colors';
 import { Spacing, FontSizes, BorderRadius } from '../constants/spacing';
 import { Announcement } from '../types';
 
-interface AnnouncementsScreenProps {
-  onNavigate: (route: string) => void;
-}
+interface AnnouncementsScreenProps {}
 
 const mockAnnouncements: Announcement[] = [
   {

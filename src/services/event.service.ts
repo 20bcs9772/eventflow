@@ -565,6 +565,95 @@ class EventService {
   }
 
   /**
+   * Search events using /api/events endpoint with q parameter
+   */
+  async searchEvents(params: {
+    query?: string;
+    type?: string;
+    limit?: number;
+    offset?: number;
+  }): Promise<ServiceResponse<Event[]>> {
+    const { query, type, limit = 20, offset = 0 } = params;
+    const cacheKey = `events:search:${query || ''}:${type || ''}:${limit}:${offset}`;
+
+    // Check cache
+    const cached = this.getCached(cacheKey);
+    if (cached) {
+      return { success: true, data: cached };
+    }
+
+    return this.deduplicateRequest(cacheKey, async () => {
+      try {
+        // If type is specified, use the /api/events/types/:type endpoint
+        if (type) {
+          const response = await apiService.get<Event[]>(
+            API_ENDPOINTS.EVENTS.BY_TYPE(type),
+            false, // Public endpoint
+          );
+
+          if (response.success && response.data) {
+            // Filter by search query if provided
+            let filteredData = response.data;
+            if (query) {
+              const searchLower = query.toLowerCase();
+              filteredData = response.data.filter(
+                event =>
+                  event.name?.toLowerCase().includes(searchLower) ||
+                  event.description?.toLowerCase().includes(searchLower) ||
+                  event.location?.toLowerCase().includes(searchLower),
+              );
+            }
+
+            // Apply pagination
+            const paginatedData = filteredData.slice(offset, offset + limit);
+            this.setCache(cacheKey, paginatedData);
+            return {
+              success: true,
+              data: paginatedData,
+            };
+          }
+
+          return {
+            success: false,
+            message: response.message || 'Failed to fetch events by type',
+            error: response.error,
+          };
+        } else {
+          // Use main /api/events endpoint with q parameter
+          const searchParams = new URLSearchParams();
+          if (query) searchParams.append('q', query);
+          searchParams.append('limit', limit.toString());
+          searchParams.append('offset', offset.toString());
+
+          const url = `${API_ENDPOINTS.EVENTS.LIST}?${searchParams.toString()}`;
+          const response = await apiService.get<Event[]>(url, false); // Public endpoint (optionalAuth)
+
+          if (response.success && response.data) {
+            this.setCache(cacheKey, response.data);
+            return {
+              success: true,
+              data: response.data,
+            };
+          }
+
+          return {
+            success: false,
+            message: response.message || 'Failed to search events',
+            error: response.error,
+          };
+        }
+      } catch (error: any) {
+        console.error('Error searching events:', error);
+        return {
+          success: false,
+          message: error.message || 'Failed to search events',
+          error: 'SEARCH_EVENTS_ERROR',
+        };
+      }
+    });
+  }
+
+  /**
    * Get all event types
    */
   async getAllEventTypes(): Promise<ServiceResponse<string[]>> {
