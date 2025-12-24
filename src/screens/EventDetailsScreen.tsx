@@ -36,6 +36,7 @@ export const EventDetailsScreen = () => {
   const [eventData, setEventData] = useState<any>(null);
   const [isJoining, setIsJoining] = useState(false);
   const [hasJoined, setHasJoined] = useState(false);
+  const [showAllMembers, setShowAllMembers] = useState(false);
   const route = useRoute<EventDetailsRouteProp>();
   const navigation = useNavigation();
   const { backendUser } = useAuth();
@@ -399,17 +400,17 @@ export const EventDetailsScreen = () => {
   const renderMembersSection = () => {
     const guests = eventData?.guestEvents || [];
     const totalCount = guests.length;
-    const slice = guests.slice(0, 10);
+    const displayGuests = showAllMembers ? guests : guests.slice(0, 10);
 
     return (
       <>
         <Text style={styles.sectionTitle}>Members ({totalCount})</Text>
         <View style={styles.card}>
-          {slice.map((guest: any, i: number) => {
-            const isLast = i === slice.length - 1;
+          {displayGuests.map((guest: any, i: number) => {
+            const isLast = i === displayGuests.length - 1;
             return (
               <View
-                key={i}
+                key={guest.id || i}
                 style={[
                   styles.memberRow,
                   !isLast && styles.memberRowBorder, // only add border for in-between members
@@ -429,11 +430,24 @@ export const EventDetailsScreen = () => {
               </View>
             );
           })}
-          {totalCount > 10 && (
-            <TouchableOpacity style={styles.viewAllButton}>
+          {totalCount > 10 && !showAllMembers && (
+            <TouchableOpacity
+              style={styles.viewAllButton}
+              onPress={() => setShowAllMembers(true)}
+              activeOpacity={0.7}
+            >
               <Text style={styles.viewAllText}>
                 View All {totalCount} Members
               </Text>
+            </TouchableOpacity>
+          )}
+          {showAllMembers && totalCount > 10 && (
+            <TouchableOpacity
+              style={styles.viewAllButton}
+              onPress={() => setShowAllMembers(false)}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.viewAllText}>Show Less</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -591,7 +605,13 @@ export const EventDetailsScreen = () => {
               <TouchableOpacity
                 key={tab.key}
                 style={[styles.tab, activeTab === tab.key && styles.tabActive]}
-                onPress={() => setActiveTab(tab.key)}
+                onPress={() => {
+                  setActiveTab(tab.key);
+                  // Reset showAllMembers when switching tabs
+                  if (tab.key !== 'members') {
+                    setShowAllMembers(false);
+                  }
+                }}
                 activeOpacity={0.7}
               >
                 <Text

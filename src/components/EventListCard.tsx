@@ -11,7 +11,7 @@ import { Colors } from '../constants/colors';
 import { Spacing, BorderRadius, FontSizes } from '../constants/spacing';
 import dayjs from 'dayjs';
 
-export type EventStatus = 'Live' | 'Past' | 'Draft';
+export type EventStatus = 'Live' | 'Past' | 'Upcoming';
 
 interface EventListCardProps {
   // Event data
@@ -63,7 +63,7 @@ export const EventListCard: React.FC<EventListCardProps> = ({
           backgroundColor: '#E0E0E0',
           textColor: '#757575',
         };
-      case 'Draft':
+      case 'Upcoming':
         return {
           backgroundColor: '#BBDEFB',
           textColor: '#2196F3',

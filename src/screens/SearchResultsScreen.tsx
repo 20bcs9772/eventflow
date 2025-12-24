@@ -187,7 +187,7 @@ export const SearchResultsScreen = () => {
               const backendEvent = backendEvents[index];
               const status = backendEvent
                 ? getEventStatus(backendEvent.startDate, backendEvent.endDate)
-                : 'Draft';
+                : 'Upcoming';
               const attendeeCount = event.attendees || 0;
               const imageUri = event.coverImage || event.portraitImage;
               // Use original startDate from backend event for proper date parsing

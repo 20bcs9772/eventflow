@@ -82,6 +82,13 @@ export const HomeScreen: React.FC<HomeScreenProps> = () => {
   const carouselWidth = screenWidth - Spacing.md * 2; // Account for horizontal padding
   const [currentCarouselIndex, setCurrentCarouselIndex] = useState(0);
 
+  // Calculate grid card dimensions for centered 2-column layout
+  const containerPadding = Spacing.md * 2; // Left + right padding
+  const gapBetweenCards = 12; // Fixed gap in pixels
+  const availableWidth = screenWidth - containerPadding;
+  const cardWidth = (availableWidth - gapBetweenCards) / 2;
+  const leftMargin = (availableWidth - (cardWidth * 2 + gapBetweenCards)) / 2;
+
   // Auto-play carousel
   useEffect(() => {
     if (happeningNowEvents.length > 1) {
@@ -273,15 +280,25 @@ export const HomeScreen: React.FC<HomeScreenProps> = () => {
               </View>
               {discoverEvents.length > 0 ? (
                 <View style={styles.eventsRow}>
-                  {discoverEvents.slice(0, 4).map(event => (
-                    <EventCard
+                  {discoverEvents.slice(0, 4).map((event, index) => (
+                    <View
                       key={event.id}
-                      event={event}
-                      variant="small"
-                      onPress={() =>
-                        navigation.navigate('EventDetails', { event })
-                      }
-                    />
+                      style={[
+                        {
+                          width: cardWidth,
+                          marginLeft: index % 2 === 0 ? leftMargin : gapBetweenCards,
+                          marginBottom: Spacing.md,
+                        },
+                      ]}
+                    >
+                      <EventCard
+                        event={event}
+                        variant="small"
+                        onPress={() =>
+                          navigation.navigate('EventDetails', { event })
+                        }
+                      />
+                    </View>
                   ))}
                 </View>
               ) : (
@@ -415,7 +432,6 @@ const styles = StyleSheet.create({
   eventsRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'center',
   },
   loadingContainer: {
     flex: 1,
