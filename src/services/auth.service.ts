@@ -295,6 +295,7 @@ class AuthService {
       try {
         await GoogleSignin.signOut();
       } catch (e) {
+        console.error(e)
         // Ignore Google sign out errors
       }
 

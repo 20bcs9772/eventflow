@@ -22,6 +22,11 @@ import { MainTabNavigator } from './MainTabNavigator';
 import { RootStackParamList } from '../types';
 import { useAuth } from '../context';
 import { Colors } from '../constants/colors';
+import {
+  setupForegroundMessageHandler,
+  setupNotificationOpenedHandler,
+  checkInitialNotification,
+} from '../notifications';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -50,6 +55,42 @@ export const AppNavigator = () => {
       hasHandledPendingJoinRef.current = false;
     }
   }, [isAuthenticated, isLoading, backendUser, getPendingJoinAction, clearPendingJoinAction]);
+
+  // Setup Firebase Cloud Messaging handlers
+  useEffect(() => {
+    let unsubscribeForeground: (() => void) | undefined;
+    let unsubscribeOpened: (() => void) | undefined;
+    let retryTimeout: NodeJS.Timeout | undefined;
+    
+    const setupFCMHandlers = () => {
+      unsubscribeForeground = setupForegroundMessageHandler(navigationRef);
+      unsubscribeOpened = setupNotificationOpenedHandler(navigationRef);
+
+      if (navigationRef.current) {
+        checkInitialNotification(navigationRef).catch(err => {
+          console.error('Error checking initial notification:', err);
+        });
+      }
+    };
+    
+    setupFCMHandlers();
+    
+    if (!navigationRef.current) {
+      retryTimeout = setTimeout(() => {
+        if (navigationRef.current) {
+          checkInitialNotification(navigationRef).catch(err => {
+            console.error('Error checking initial notification:', err);
+          });
+        }
+      }, 1000);
+    }
+    
+    return () => {
+      if (retryTimeout) clearTimeout(retryTimeout);
+      if (unsubscribeForeground) unsubscribeForeground();
+      if (unsubscribeOpened) unsubscribeOpened();
+    };
+  }, [isAuthenticated, isLoading]);
 
   // Show loading screen while checking auth state
   if (isLoading) {

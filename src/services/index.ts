@@ -14,4 +14,5 @@ export type {
   Announcement,
   CreateAnnouncementInput,
 } from './announcement.service';
+export { deviceService } from './device.service';
 

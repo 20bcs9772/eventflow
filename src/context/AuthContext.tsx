@@ -12,8 +12,9 @@ import React, {
   useEffect,
   useRef,
 } from 'react';
-import { authService, apiService, AuthUser, BackendUser } from '../services';
+import { authService, apiService, deviceService, AuthUser, BackendUser } from '../services';
 import { API_ENDPOINTS } from '../config';
+import { requestPermission, getFcmToken } from '../notifications';
 
 interface AuthContextType {
   // State
@@ -76,6 +77,30 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   } | null>(null);
 
   /**
+   * Register FCM token for push notifications
+   */
+  const registerFcmToken = async (userId: string): Promise<void> => {
+    try {
+      const hasPermission = await requestPermission();
+      if (!hasPermission) {
+        return;
+      }
+
+      const fcmToken = await getFcmToken();
+      if (!fcmToken) {
+        return;
+      }
+
+      const response = await deviceService.saveFcmToken(userId, fcmToken);
+      if (!response.success) {
+        console.error('Failed to register FCM token:', response.error);
+      }
+    } catch (error) {
+      console.error('Error registering FCM token:', error);
+    }
+  };
+
+  /**
    * Sync user with backend after Firebase auth
    * Returns the backend user if successful
    */
@@ -98,6 +123,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       if (response.success && response.data) {
         setBackendUser(response.data);
+        // Register FCM token after successful backend sync
+        if (response.data.id) {
+          registerFcmToken(response.data.id).catch(err => {
+            console.error('FCM token registration failed:', err);
+          });
+        }
+        
         return response.data;
       }
       return null;
@@ -145,7 +177,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     });
 
     return () => unsubscribe();
-     
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   /**
