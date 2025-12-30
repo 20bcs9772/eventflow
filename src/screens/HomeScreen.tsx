@@ -17,7 +17,7 @@ import { Spacing, FontSizes } from '../constants/spacing';
 import { Event } from '../types';
 import FontAwesome6 from '@react-native-vector-icons/fontawesome6';
 import { useNavigation } from '@react-navigation/native';
-import { eventService } from '../services';
+import { eventService, locationService } from '../services';
 import { mapBackendEventsToFrontend } from '../utils/eventMapper';
 import { useAuth } from '../context/AuthContext';
 import { EventTypeCard } from '../components/home/EventTypeCard';
@@ -35,6 +35,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = () => {
 
   useEffect(() => {
     fetchEvents();
+    locationService.getFullLocation();
   }, []);
 
   const fetchEvents = async () => {
@@ -286,7 +287,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = () => {
                       style={[
                         {
                           width: cardWidth,
-                          marginLeft: index % 2 === 0 ? leftMargin : gapBetweenCards,
+                          marginLeft:
+                            index % 2 === 0 ? leftMargin : gapBetweenCards,
                           marginBottom: Spacing.md,
                         },
                       ]}

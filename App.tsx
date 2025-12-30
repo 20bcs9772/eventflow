@@ -1,21 +1,31 @@
-/**
- * EventFlow App
- * @format
- */
-
 import React, { useEffect } from 'react';
 import { StatusBar, useColorScheme } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AppNavigator } from './src/navigation';
 import { AuthProvider } from './src/context';
-import { configureGoogleSignIn } from './src/services';
+import { configureGoogleSignIn, locationService } from './src/services';
 
 function App() {
   const isDarkMode = useColorScheme() === 'dark';
 
-  // Configure Google Sign-In on app start
   useEffect(() => {
     configureGoogleSignIn();
+
+    const initLocation = async () => {
+      try {
+        const allowed = await locationService.requestLocationPermission();
+
+        if (!allowed) return;
+
+        const location = await locationService.getCurrentLocation();
+
+        console.log('Location:', location);
+      } catch (err) {
+        console.log('Location init failed:', err);
+      }
+    };
+
+    initLocation();
   }, []);
 
   return (
