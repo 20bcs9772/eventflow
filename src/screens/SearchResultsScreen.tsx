@@ -13,11 +13,14 @@ import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import FontAwesome6 from '@react-native-vector-icons/fontawesome6';
 import { ScreenLayout, ScreenHeader, EventListCard } from '../components';
 import { Colors } from '../constants/colors';
-import { Spacing, FontSizes, BorderRadius } from '../constants/spacing';
+import { Spacing, FontSizes } from '../constants/spacing';
 import { RootStackParamList, Event } from '../types';
 import { eventService } from '../services';
 import type { Event as BackendEvent } from '../services/event.service';
-import { mapBackendEventsToFrontend, getEventStatus } from '../utils/eventMapper';
+import {
+  mapBackendEventsToFrontend,
+  getEventStatus,
+} from '../utils/eventMapper';
 
 type SearchResultsRouteProp = RouteProp<RootStackParamList, 'SearchResults'>;
 
@@ -105,7 +108,6 @@ export const SearchResultsScreen = () => {
     };
   }, [searchQuery, performSearch]);
 
-
   const handleRefresh = () => {
     setIsRefreshing(true);
     performSearch();
@@ -129,7 +131,12 @@ export const SearchResultsScreen = () => {
 
         {/* Search Input */}
         <View style={styles.searchContainer}>
-          <View style={styles.searchInputWrapper}>
+          <View
+            style={[
+              styles.searchInputWrapper,
+              searchQuery.length > 0 && styles.searchInputWrapperActive,
+            ]}
+          >
             <FontAwesome6
               name="magnifying-glass"
               size={16}
@@ -145,10 +152,10 @@ export const SearchResultsScreen = () => {
               returnKeyType="search"
             />
             {searchQuery.length > 0 && (
-              <TouchableOpacity onPress={handleClearSearch}>
+              <TouchableOpacity onPress={handleClearSearch} activeOpacity={0.7}>
                 <FontAwesome6
-                  name="circle-xmark"
-                  size={18}
+                  name="xmark"
+                  size={16}
                   color={Colors.textSecondary}
                   iconStyle="solid"
                 />
@@ -191,7 +198,8 @@ export const SearchResultsScreen = () => {
               const attendeeCount = event.attendees || 0;
               const imageUri = event.coverImage || event.portraitImage;
               // Use original startDate from backend event for proper date parsing
-              const eventDate = backendEvent?.startDate || event.date || new Date();
+              const eventDate =
+                backendEvent?.startDate || event.date || new Date();
 
               return (
                 <EventListCard
@@ -221,12 +229,14 @@ export const SearchResultsScreen = () => {
             </View>
           ) : (
             <View style={styles.emptyState}>
-              <FontAwesome6
-                name="magnifying-glass"
-                size={48}
-                color={Colors.textLight}
-                iconStyle="solid"
-              />
+              <View style={styles.emptyIconContainer}>
+                <FontAwesome6
+                  name="magnifying-glass"
+                  size={64}
+                  color={Colors.textLight}
+                  iconStyle="solid"
+                />
+              </View>
               <Text style={styles.emptyTitle}>Search for events</Text>
               <Text style={styles.emptySubtitle}>
                 Enter a search term to find events
@@ -244,18 +254,25 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   searchContainer: {
-    paddingHorizontal: Spacing.lg,
+    paddingHorizontal: 20,
     marginBottom: Spacing.md,
   },
   searchInputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: Colors.white,
-    borderRadius: BorderRadius.full,
+    borderRadius: 16,
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,
     borderWidth: 1,
     borderColor: Colors.border,
+  },
+  searchInputWrapperActive: {
+    shadowColor: Colors.black,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
   searchInput: {
     flex: 1,
@@ -275,17 +292,91 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingTop: 100,
+    paddingTop: 120,
+  },
+  emptyIconContainer: {
+    marginBottom: Spacing.lg,
   },
   emptyTitle: {
     fontSize: FontSizes.lg,
     fontWeight: '600',
     color: Colors.text,
-    marginTop: Spacing.lg,
     marginBottom: Spacing.xs,
+    textAlign: 'center',
   },
   emptySubtitle: {
     fontSize: FontSizes.md,
+    color: Colors.textSecondary,
+    textAlign: 'center',
+  },
+  resultCard: {
+    flexDirection: 'row',
+    backgroundColor: Colors.white,
+    borderRadius: 12,
+    padding: Spacing.md,
+    marginBottom: Spacing.md,
+    shadowColor: Colors.black,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  resultImageContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 12,
+    overflow: 'hidden',
+    marginRight: Spacing.md,
+  },
+  resultImage: {
+    width: '100%',
+    height: '100%',
+  },
+  resultImagePlaceholder: {
+    width: '100%',
+    height: '100%',
+    backgroundColor: Colors.backgroundLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  resultContent: {
+    flex: 1,
+  },
+  resultHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    marginBottom: Spacing.xs,
+  },
+  resultTitle: {
+    flex: 1,
+    fontSize: FontSizes.md,
+    fontWeight: '700',
+    color: Colors.text,
+    marginRight: Spacing.sm,
+  },
+  liveBadge: {
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  liveBadgeText: {
+    fontSize: FontSizes.xs,
+    fontWeight: '700',
+    color: Colors.white,
+  },
+  resultDate: {
+    fontSize: FontSizes.sm,
+    color: Colors.textSecondary,
+    marginBottom: Spacing.xs,
+  },
+  resultMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+  },
+  resultMetaText: {
+    fontSize: FontSizes.sm,
     color: Colors.textSecondary,
   },
   loadingContainer: {

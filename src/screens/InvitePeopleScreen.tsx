@@ -27,7 +27,7 @@ export const InvitePeopleScreen: React.FC = () => {
         <View style={styles.searchBar}>
           <FontAwesome6
             name="magnifying-glass"
-            size={18}
+            size={16}
             color={Colors.textSecondary}
             style={{ marginRight: 10 }}
             iconStyle="solid"

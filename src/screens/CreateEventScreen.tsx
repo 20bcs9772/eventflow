@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,7 @@ import {
   Image,
   Alert,
   ActivityIndicator,
+  Animated,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import FontAwesome6 from '@react-native-vector-icons/fontawesome6';
@@ -71,6 +72,18 @@ export const CreateEventScreen = () => {
     'PUBLIC' | 'UNLISTED' | 'PRIVATE'
   >('PUBLIC');
   const [isTypeDropdownOpen, setIsTypeDropdownOpen] = useState(false);
+  const visibilitySliderAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    const position =
+      visibility === 'PUBLIC' ? 0 : visibility === 'UNLISTED' ? 1 : 2;
+    Animated.spring(visibilitySliderAnim, {
+      toValue: position,
+      useNativeDriver: false,
+      tension: 50,
+      friction: 8,
+    }).start();
+  }, [visibility, visibilitySliderAnim]);
 
   const eventTypeOptions = useMemo(
     () => [
@@ -350,31 +363,44 @@ export const CreateEventScreen = () => {
 
             <View style={styles.section}>
               <Text style={styles.label}>Visibility</Text>
-              <View style={styles.visibilityPill}>
-                {(['PUBLIC', 'UNLISTED', 'PRIVATE'] as const).map(option => (
-                  <TouchableOpacity
-                    key={option}
-                    style={[
-                      styles.visibilityOption,
-                      visibility === option && styles.visibilityOptionActive,
-                    ]}
-                    onPress={() => setVisibility(option)}
-                    activeOpacity={0.85}
-                  >
-                    <Text
+              <View style={styles.visibilityContainer}>
+                <View style={styles.visibilityPill}>
+                  {(['PUBLIC', 'UNLISTED', 'PRIVATE'] as const).map(option => (
+                    <TouchableOpacity
+                      key={option}
                       style={[
-                        styles.visibilityText,
-                        visibility === option && styles.visibilityTextActive,
+                        styles.visibilityOption,
+                        visibility === option && styles.visibilityOptionActive,
                       ]}
+                      onPress={() => setVisibility(option)}
+                      activeOpacity={0.85}
                     >
-                      {option === 'PUBLIC'
-                        ? 'Public'
-                        : option === 'UNLISTED'
-                        ? 'Unlisted'
-                        : 'Private'}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
+                      <Text
+                        style={[
+                          styles.visibilityText,
+                          visibility === option && styles.visibilityTextActive,
+                        ]}
+                      >
+                        {option === 'PUBLIC'
+                          ? 'Public'
+                          : option === 'UNLISTED'
+                          ? 'Unlisted'
+                          : 'Private'}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                  <Animated.View
+                    style={[
+                      styles.visibilitySlider,
+                      {
+                        left: visibilitySliderAnim.interpolate({
+                          inputRange: [0, 1, 2],
+                          outputRange: ['0%', '33.33%', '66.66%'],
+                        }),
+                      },
+                    ]}
+                  />
+                </View>
               </View>
             </View>
 
@@ -384,7 +410,7 @@ export const CreateEventScreen = () => {
               onPress={() => setShowDateTimeModal(true)}
               activeOpacity={0.7}
             >
-              <View style={styles.infoIcon}>
+              <View style={styles.infoIconCircle}>
                 <FontAwesome6
                   name="calendar"
                   size={18}
@@ -399,9 +425,9 @@ export const CreateEventScreen = () => {
                 </Text>
               </View>
               <FontAwesome6
-                name="pen"
-                size={16}
-                color={Colors.textSecondary}
+                name="chevron-right"
+                size={14}
+                color={Colors.textLight}
                 iconStyle="solid"
               />
             </TouchableOpacity>
@@ -418,7 +444,7 @@ export const CreateEventScreen = () => {
                 });
               }}
             >
-              <View style={styles.infoIcon}>
+              <View style={styles.infoIconCircle}>
                 <FontAwesome6
                   name="location-dot"
                   size={18}
@@ -433,9 +459,9 @@ export const CreateEventScreen = () => {
                 </Text>
               </View>
               <FontAwesome6
-                name="pen"
-                size={16}
-                color={Colors.textSecondary}
+                name="chevron-right"
+                size={14}
+                color={Colors.textLight}
                 iconStyle="solid"
               />
             </TouchableOpacity>
@@ -462,34 +488,43 @@ export const CreateEventScreen = () => {
                       })),
                     });
                   }}
+                  style={styles.addButtonLink}
                 >
+                  <FontAwesome6
+                    name="plus"
+                    size={14}
+                    color={Colors.primary}
+                    iconStyle="solid"
+                  />
                   <Text style={styles.addLink}>Add</Text>
                 </TouchableOpacity>
               </View>
               <Text style={styles.cardDescription}>
                 Add co-hosts or volunteers to help you manage the event.
               </Text>
-              <View style={styles.collaboratorsRow}>
-                <View style={styles.avatarStack}>
-                  {collaborators.slice(0, 3).map((collab, index) => (
-                    <Image
-                      key={collab.id}
-                      source={{ uri: collab.avatar }}
-                      style={[
-                        styles.stackedAvatar,
-                        { marginLeft: index > 0 ? -12 : 0, zIndex: 3 - index },
-                      ]}
-                    />
-                  ))}
+              {collaborators.length > 0 && (
+                <View style={styles.collaboratorsRow}>
+                  <View style={styles.avatarStack}>
+                    {collaborators.slice(0, 5).map((collab, index) => (
+                      <Image
+                        key={collab.id}
+                        source={{ uri: collab.avatar }}
+                        style={[
+                          styles.stackedAvatar,
+                          { marginLeft: index > 0 ? -8 : 0, zIndex: 5 - index },
+                        ]}
+                      />
+                    ))}
+                    {collaborators.length > 5 && (
+                      <View style={[styles.stackedAvatar, styles.avatarMore]}>
+                        <Text style={styles.avatarMoreText}>
+                          +{collaborators.length - 5}
+                        </Text>
+                      </View>
+                    )}
+                  </View>
                 </View>
-                <Text style={styles.collaboratorCount}>
-                  {collaborators.length}{' '}
-                  {collaborators.length === 1
-                    ? 'collaborator'
-                    : 'collaborators'}{' '}
-                  invited
-                </Text>
-              </View>
+              )}
             </View>
 
             {/* Schedule */}
@@ -528,7 +563,7 @@ export const CreateEventScreen = () => {
                   </View>
                   <TouchableOpacity style={styles.dragHandle}>
                     <FontAwesome6
-                      name="grip-lines"
+                      name="pen"
                       size={16}
                       color={Colors.textLight}
                       iconStyle="solid"
@@ -576,8 +611,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    padding: Spacing.lg,
-    paddingBottom: 100,
+    padding: 20,
+    paddingBottom: 120,
   },
   dropdownContainer: {
     marginTop: Spacing.xs,
@@ -586,12 +621,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    borderWidth: 1,
-    borderColor: Colors.border,
-    borderRadius: BorderRadius.md,
+    borderWidth: 0,
+    borderRadius: 12,
     paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    backgroundColor: Colors.cardBackground,
+    paddingVertical: Spacing.md,
+    backgroundColor: '#F9FAFB',
   },
   dropdownHeaderText: {
     fontSize: FontSizes.md,
@@ -599,11 +633,15 @@ const styles = StyleSheet.create({
   },
   dropdownList: {
     marginTop: Spacing.xs,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    borderRadius: BorderRadius.md,
-    backgroundColor: Colors.cardBackground,
+    borderWidth: 0,
+    borderRadius: 12,
+    backgroundColor: Colors.white,
     overflow: 'hidden',
+    shadowColor: Colors.black,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
   },
   dropdownItem: {
     paddingHorizontal: Spacing.md,
@@ -620,45 +658,57 @@ const styles = StyleSheet.create({
     color: Colors.primary,
     fontWeight: '600',
   },
+  visibilityContainer: {
+    marginTop: Spacing.sm,
+  },
   visibilityPill: {
     flexDirection: 'row',
-    borderWidth: 1,
-    borderColor: Colors.primary,
-    borderRadius: BorderRadius.lg,
-    overflow: 'hidden',
-    marginTop: Spacing.sm,
-    backgroundColor: Colors.background,
+    backgroundColor: '#F3F4F6',
+    borderRadius: 12,
+    padding: 4,
+    position: 'relative',
+  },
+  visibilitySlider: {
+    position: 'absolute',
+    top: 4,
+    bottom: 4,
+    width: '33.33%',
+    backgroundColor: Colors.primary,
+    borderRadius: 10,
+    zIndex: 0,
   },
   visibilityOption: {
     flex: 1,
     paddingVertical: Spacing.sm,
     alignItems: 'center',
     justifyContent: 'center',
+    zIndex: 1,
   },
   visibilityOptionActive: {
-    backgroundColor: Colors.primary,
+    // Active state handled by slider
   },
   visibilityText: {
     fontSize: FontSizes.sm,
-    color: Colors.text,
+    color: '#6B7280',
+    fontWeight: '500',
   },
   visibilityTextActive: {
     color: Colors.white,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   section: {
     marginBottom: Spacing.lg,
   },
   label: {
     fontSize: FontSizes.sm,
-    color: Colors.textSecondary,
+    color: '#1F2937',
     marginBottom: Spacing.sm,
+    fontWeight: '600',
   },
   inputContainer: {
-    backgroundColor: Colors.white,
-    borderRadius: BorderRadius.lg,
-    borderWidth: 1,
-    borderColor: Colors.border,
+    backgroundColor: '#F9FAFB',
+    borderRadius: 12,
+    borderWidth: 0,
   },
   input: {
     fontSize: FontSizes.md,
@@ -677,11 +727,11 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.md,
     marginBottom: Spacing.sm,
   },
-  infoIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: BorderRadius.md,
-    backgroundColor: Colors.primaryLight + '30',
+  infoIconCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(107, 70, 193, 0.1)',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: Spacing.md,
@@ -716,6 +766,11 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: Colors.text,
   },
+  addButtonLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
   addLink: {
     fontSize: FontSizes.md,
     color: Colors.primary,
@@ -736,15 +791,21 @@ const styles = StyleSheet.create({
     marginRight: Spacing.sm,
   },
   stackedAvatar: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     borderWidth: 2,
     borderColor: Colors.white,
   },
-  collaboratorCount: {
-    fontSize: FontSizes.sm,
-    color: Colors.textSecondary,
+  avatarMore: {
+    backgroundColor: Colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  avatarMoreText: {
+    fontSize: FontSizes.xs,
+    color: Colors.white,
+    fontWeight: '600',
   },
   scheduleSection: {
     marginTop: Spacing.md,

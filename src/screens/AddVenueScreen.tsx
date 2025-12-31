@@ -68,7 +68,7 @@ export const AddVenueScreen: React.FC = () => {
         <View style={styles.searchContainer}>
           <FontAwesome6
             name="magnifying-glass"
-            size={18}
+            size={16}
             color={Colors.textSecondary}
             iconStyle="solid"
             style={{ marginRight: 10 }}
@@ -129,7 +129,7 @@ export const AddVenueScreen: React.FC = () => {
           })}
 
           {/* ADD CUSTOM VENUE */}
-          <TouchableOpacity style={styles.customVenueBtn} onPress={() => {}}>
+          <TouchableOpacity style={styles.customVenueBtn} onPress={() => {}} activeOpacity={0.7}>
             <FontAwesome6
               name="location-dot"
               size={18}
@@ -195,7 +195,7 @@ const styles = StyleSheet.create({
   /* Venue List */
   venueRow: {
     flexDirection: 'row',
-    paddingVertical: Spacing.md,
+    paddingVertical: Spacing.lg,
     alignItems: 'center',
     borderBottomWidth: 1,
     borderBottomColor: Colors.border,
@@ -219,12 +219,14 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     fontSize: FontSizes.md,
     color: Colors.text,
-    marginBottom: 2,
+    marginBottom: 4,
+    letterSpacing: -0.2,
   },
 
   venueAddress: {
     color: Colors.textSecondary,
     fontSize: FontSizes.sm,
+    lineHeight: 18,
   },
 
   checkCircle: {
@@ -238,22 +240,24 @@ const styles = StyleSheet.create({
 
   /* Add Custom Venue */
   customVenueBtn: {
-    borderWidth: 2,
-    borderColor: Colors.primary,
+    borderWidth: 1.5,
+    borderColor: 'rgba(107, 70, 193, 0.3)',
     borderStyle: 'dashed',
-    borderRadius: BorderRadius.lg,
-    paddingVertical: 18,
+    borderRadius: 16,
+    paddingVertical: 20,
     paddingHorizontal: Spacing.lg,
     alignItems: 'center',
     justifyContent: 'center',
     flexDirection: 'row',
     gap: 10,
     marginTop: Spacing.lg,
+    backgroundColor: 'rgba(107, 70, 193, 0.04)',
   },
 
   customVenueText: {
     fontSize: FontSizes.md,
     color: Colors.primary,
     fontWeight: '600',
+    letterSpacing: -0.1,
   },
 });

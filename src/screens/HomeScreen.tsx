@@ -80,12 +80,11 @@ export const HomeScreen: React.FC<HomeScreenProps> = () => {
 
   // Calculate carousel width based on screen dimensions
   const screenWidth = Dimensions.get('window').width;
-  const carouselWidth = screenWidth - Spacing.md * 2; // Account for horizontal padding
+  const carouselWidth = screenWidth - 40;
   const [currentCarouselIndex, setCurrentCarouselIndex] = useState(0);
 
-  // Calculate grid card dimensions for centered 2-column layout
-  const containerPadding = Spacing.md * 2; // Left + right padding
-  const gapBetweenCards = 12; // Fixed gap in pixels
+  const containerPadding = 40;
+  const gapBetweenCards = 16;
   const availableWidth = screenWidth - containerPadding;
   const cardWidth = (availableWidth - gapBetweenCards) / 2;
   const leftMargin = (availableWidth - (cardWidth * 2 + gapBetweenCards)) / 2;
@@ -149,37 +148,38 @@ export const HomeScreen: React.FC<HomeScreenProps> = () => {
             </View>
           </TouchableOpacity>
 
-          {/* Search Icon */}
-          <TouchableOpacity
-            style={styles.iconButton}
-            activeOpacity={0.7}
-            onPress={handleSearchPress}
-          >
-            <View style={styles.iconCircle}>
-              <FontAwesome6
-                name="magnifying-glass"
-                size={20}
-                iconStyle="solid"
-                color={Colors.text}
-              />
-            </View>
-          </TouchableOpacity>
+          {/* Action Icons Container */}
+          <View style={styles.actionIconsContainer}>
+            <TouchableOpacity
+              style={styles.iconButton}
+              activeOpacity={0.7}
+              onPress={handleSearchPress}
+            >
+              <View style={styles.iconCircle}>
+                <FontAwesome6
+                  name="magnifying-glass"
+                  size={18}
+                  iconStyle="solid"
+                  color={Colors.primary}
+                />
+              </View>
+            </TouchableOpacity>
 
-          {/* Join Event Icon */}
-          <TouchableOpacity
-            style={styles.iconButton}
-            activeOpacity={0.7}
-            onPress={handleJoinEventPress}
-          >
-            <View style={styles.iconCircle}>
-              <FontAwesome6
-                name="expand"
-                size={20}
-                iconStyle="solid"
-                color={Colors.text}
-              />
-            </View>
-          </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.iconButton}
+              activeOpacity={0.7}
+              onPress={handleJoinEventPress}
+            >
+              <View style={styles.iconCircle}>
+                <FontAwesome6
+                  name="expand"
+                  size={18}
+                  iconStyle="solid"
+                  color={Colors.primary}
+                />
+              </View>
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
 
@@ -202,7 +202,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = () => {
         ) : (
           <>
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>What's Happening Now</Text>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>What's Happening Now</Text>
+              </View>
               {happeningNowEvents.length > 0 ? (
                 <View style={styles.carouselContainer}>
                   <FlatList
@@ -272,11 +274,20 @@ export const HomeScreen: React.FC<HomeScreenProps> = () => {
               <View style={styles.sectionHeader}>
                 <Text style={styles.sectionTitle}>Discover Events</Text>
                 <TouchableOpacity
+                  style={styles.seeAllButton}
                   onPress={() =>
                     navigation.navigate('SearchResults', { query: '' })
                   }
+                  activeOpacity={0.7}
                 >
-                  <Text style={styles.seeAll}>See All</Text>
+                  <Text style={styles.seeAllText}>See All</Text>
+                  <FontAwesome6
+                    name="chevron-right"
+                    size={12}
+                    color={Colors.primary}
+                    iconStyle="solid"
+                    style={styles.seeAllIcon}
+                  />
                 </TouchableOpacity>
               </View>
               {discoverEvents.length > 0 ? (
@@ -325,7 +336,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = () => {
 
 const styles = StyleSheet.create({
   header: {
-    paddingHorizontal: Spacing.md,
+    paddingHorizontal: 20,
     paddingTop: Spacing.md,
     paddingBottom: Spacing.sm,
     backgroundColor: Colors.backgroundLight,
@@ -392,14 +403,31 @@ const styles = StyleSheet.create({
     fontSize: FontSizes.xs,
     color: Colors.textSecondary,
   },
+  actionIconsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+    backgroundColor: Colors.white,
+    borderRadius: 24,
+    paddingHorizontal: Spacing.xs,
+    paddingVertical: Spacing.xs,
+    shadowColor: Colors.black,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
+  },
   iconButton: {
-    marginLeft: Spacing.sm,
+    marginLeft: 0,
   },
   iconCircle: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: Colors.white,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'transparent',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -407,12 +435,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingHorizontal: Spacing.md,
+    paddingHorizontal: 20,
     paddingBottom: 100,
     marginTop: 10,
   },
   section: {
-    marginBottom: Spacing.xl,
+    marginBottom: Spacing.xxl,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -422,14 +450,31 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: FontSizes.xl,
-    fontWeight: 'bold',
+    fontWeight: '700',
     color: Colors.text,
-    marginBottom: Spacing.md,
+    letterSpacing: -0.3,
+    flex: 1,
+    marginBottom: 0,
   },
-  seeAll: {
-    fontSize: FontSizes.md,
+  seeAllButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.xs,
+    backgroundColor: 'rgba(107, 70, 193, 0.08)',
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(107, 70, 193, 0.15)',
+  },
+  seeAllText: {
+    fontSize: FontSizes.sm,
     color: Colors.primary,
     fontWeight: '600',
+    letterSpacing: 0.1,
+    marginRight: Spacing.xs,
+  },
+  seeAllIcon: {
+    marginTop: 1,
   },
   eventsRow: {
     flexDirection: 'row',
@@ -452,8 +497,8 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
   },
   carouselContainer: {
-    marginHorizontal: -Spacing.md, // Offset parent padding
-    paddingHorizontal: Spacing.md,
+    marginHorizontal: -20, // Offset parent padding
+    paddingHorizontal: 20,
   },
   carouselItem: {
     paddingHorizontal: Spacing.xs,
