@@ -17,6 +17,7 @@ import {
   JoinEventScreen,
   JoinedEventsScreen,
   ManageEventsScreen,
+  SelectLocationScreen,
 } from '../screens';
 import { MainTabNavigator } from './MainTabNavigator';
 import { RootStackParamList } from '../types';
@@ -201,6 +202,7 @@ export const AppNavigator = () => {
                 />
               )}
             </Stack.Screen>
+            <Stack.Screen name="SelectLocation" component={SelectLocationScreen} />
           </>
         )}
       </Stack.Navigator>

@@ -14,7 +14,8 @@ interface ScreenHeaderProps {
   title: string;
   onBack?: () => void;
   rightAction?: {
-    icon: string;
+    icon?: string;
+    text?: string;
     onPress: () => void;
     iconStyle?: 'solid' | 'regular' | 'light' | 'thin' | 'duotone';
   };
@@ -54,16 +55,20 @@ export const ScreenHeader: React.FC<ScreenHeaderProps> = ({
       <Text style={styles.headerTitle}>{title}</Text>
       {rightAction ? (
         <TouchableOpacity
-          style={styles.rightButton}
+          style={rightAction.text ? styles.rightTextButton : styles.rightButton}
           onPress={rightAction.onPress}
           activeOpacity={0.7}
         >
-          <FontAwesome6
-            name={rightAction.icon as any}
-            size={18}
-            color={Colors.text}
-            iconStyle={rightAction.iconStyle || 'solid'}
-          />
+          {rightAction.text ? (
+            <Text style={styles.rightButtonText}>{rightAction.text}</Text>
+          ) : (
+            <FontAwesome6
+              name={rightAction.icon as any}
+              size={18}
+              color={Colors.text}
+              iconStyle={rightAction.iconStyle || 'solid'}
+            />
+          )}
         </TouchableOpacity>
       ) : (
         <View style={styles.headerSpacer} />
@@ -104,6 +109,17 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.backgroundLight,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  rightTextButton: {
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.xs,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  rightButtonText: {
+    fontSize: FontSizes.md,
+    color: Colors.textSecondary,
+    fontWeight: '500',
   },
 });
 

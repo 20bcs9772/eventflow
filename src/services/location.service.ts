@@ -19,6 +19,20 @@ type AddressInfo = {
 
 type FullLocation = Coordinates & AddressInfo;
 
+export type LocationSearchResult = {
+  id: string;
+  name: string;
+  fullAddress: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  country?: string;
+  zipCode?: string;
+  latitude: number;
+  longitude: number;
+  placeId?: string;
+};
+
 class LocationService {
   async requestLocationPermission(): Promise<boolean> {
     if (Platform.OS === 'android') {
@@ -90,7 +104,125 @@ class LocationService {
   async getFullLocation(): Promise<FullLocation> {
     const coords = await this.getCurrentLocation();
     const address = await this.reverseGeocode(coords);
+    console.log('address', address);
     return { ...coords, ...address };
+  }
+
+  /**
+   * Search for locations by query string
+   */
+  async searchLocations(query: string): Promise<LocationSearchResult[]> {
+    try {
+      const geo = await Geocoder.from(query);
+
+      if (!geo.results || geo.results.length === 0) {
+        return [];
+      }
+
+      return geo.results.map((result: any, index: number) => {
+        const addressComponents = result.address_components || [];
+
+        const streetNumber = addressComponents.find(
+          (c: { types: string[]; long_name: string }) =>
+            c.types.includes('street_number'),
+        )?.long_name;
+
+        const route = addressComponents.find(
+          (c: { types: string[]; long_name: string }) =>
+            c.types.includes('route'),
+        )?.long_name;
+
+        const city = addressComponents.find(
+          (c: { types: string[]; long_name: string }) =>
+            c.types.includes('locality'),
+        )?.long_name;
+
+        const state = addressComponents.find(
+          (c: { types: string[]; long_name: string }) =>
+            c.types.includes('administrative_area_level_1'),
+        )?.long_name;
+
+        const country = addressComponents.find(
+          (c: { types: string[]; long_name: string }) =>
+            c.types.includes('country'),
+        )?.long_name;
+
+        const zipCode = addressComponents.find(
+          (c: { types: string[]; long_name: string }) =>
+            c.types.includes('postal_code'),
+        )?.long_name;
+
+        const address = [streetNumber, route].filter(Boolean).join(' ');
+
+        const fullAddress = [address, city, state, zipCode]
+          .filter(Boolean)
+          .join(', ');
+
+        // Use formatted_address as name if it's a place, otherwise use the query
+        const name =
+          result.types?.includes('establishment') ||
+          result.types?.includes('point_of_interest')
+            ? result.formatted_address.split(',')[0]
+            : result.formatted_address.split(',')[0];
+
+        return {
+          id: result.place_id || `location-${index}`,
+          name: name || query,
+          fullAddress: result.formatted_address || fullAddress,
+          address,
+          city,
+          state,
+          country,
+          zipCode,
+          latitude: result.geometry.location.lat,
+          longitude: result.geometry.location.lng,
+          placeId: result.place_id,
+        };
+      });
+    } catch (error) {
+      console.error('Location search error:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Get nearby venues based on current location
+   */
+  async getNearbyVenues(
+    latitude: number,
+    longitude: number,
+  ): Promise<LocationSearchResult[]> {
+    try {
+      // Search for nearby places using a query that typically returns venues
+      const queries = [
+        'restaurant',
+        'hotel',
+        'venue',
+        'event space',
+        'conference center',
+      ];
+
+      const allResults: LocationSearchResult[] = [];
+
+      for (const query of queries) {
+        const results = await this.searchLocations(
+          `${query} near ${latitude},${longitude}`,
+        );
+        allResults.push(...results);
+      }
+
+      // Remove duplicates and limit results
+      const uniqueResults = Array.from(
+        new Map(
+          allResults.map(item => [item.placeId || item.id, item]),
+        ).values(),
+      ).slice(0, 10);
+
+      return uniqueResults;
+    } catch (error) {
+      console.error('Get nearby venues error:', error);
+      return [];
+    }
   }
 }
 

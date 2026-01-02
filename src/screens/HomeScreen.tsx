@@ -17,9 +17,9 @@ import { Spacing, FontSizes } from '../constants/spacing';
 import { Event } from '../types';
 import FontAwesome6 from '@react-native-vector-icons/fontawesome6';
 import { useNavigation } from '@react-navigation/native';
-import { eventService, locationService } from '../services';
+import { eventService } from '../services';
 import { mapBackendEventsToFrontend } from '../utils/eventMapper';
-import { useAuth } from '../context/AuthContext';
+import { useAuth, useLocation } from '../context';
 import { EventTypeCard } from '../components/home/EventTypeCard';
 
 interface HomeScreenProps {}
@@ -27,6 +27,7 @@ interface HomeScreenProps {}
 export const HomeScreen: React.FC<HomeScreenProps> = () => {
   const navigation = useNavigation<any>();
   const { backendUser, user } = useAuth();
+  const { location, isLoading: isLocationLoading } = useLocation();
   const [happeningNowEvents, setHappeningNowEvents] = useState<Event[]>([]);
   const [discoverEvents, setDiscoverEvents] = useState<Event[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -35,7 +36,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = () => {
 
   useEffect(() => {
     fetchEvents();
-    locationService.getFullLocation();
   }, []);
 
   const fetchEvents = async () => {
@@ -138,12 +138,29 @@ export const HomeScreen: React.FC<HomeScreenProps> = () => {
           <TouchableOpacity
             style={styles.locationContainer}
             activeOpacity={0.7}
+            onPress={() => navigation.navigate('SelectLocation')}
           >
-            <Text style={styles.locationLabel}>Your Location</Text>
-            <View style={styles.locationRow}>
-              <Text style={styles.locationText}>Metropolis,DC</Text>
-              <Text style={styles.chevron}>
-                <FontAwesome6 name="caret-down" size={25} iconStyle="solid" />
+            <View style={styles.locationContent}>
+              <View style={styles.locationRow}>
+                <Text style={styles.locationCity}>
+                  {isLocationLoading
+                    ? 'Loading...'
+                    : location
+                      ? location.city || 'Unknown'
+                      : 'Location unavailable'}
+                </Text>
+                <Text style={styles.chevron}>
+                  <FontAwesome6 name="caret-down" size={25} iconStyle="solid" />
+                </Text>
+              </View>
+              <Text style={styles.locationDetails}>
+                {isLocationLoading
+                  ? ''
+                  : location
+                    ? `${location.state || ''}${
+                        location.state && location.country ? ', ' : ''
+                      }${location.country || ''}`
+                    : ''}
               </Text>
             </View>
           </TouchableOpacity>
@@ -384,20 +401,23 @@ const styles = StyleSheet.create({
     flex: 1,
     marginRight: Spacing.md,
   },
-  locationLabel: {
-    fontSize: FontSizes.xs,
-    color: Colors.textSecondary,
-    marginBottom: 2,
+  locationContent: {
+    flex: 1,
   },
   locationRow: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  locationText: {
-    fontSize: FontSizes.md,
-    fontWeight: 'bold',
+  locationCity: {
+    fontSize: FontSizes.lg,
+    fontWeight: '700',
     color: Colors.text,
     marginRight: Spacing.xs,
+  },
+  locationDetails: {
+    fontSize: FontSizes.xs,
+    color: Colors.textSecondary,
+    marginTop: 2,
   },
   chevron: {
     fontSize: FontSizes.xs,
