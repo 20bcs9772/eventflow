@@ -1,13 +1,11 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
-import { Header, Card, ScreenLayout } from '../components';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { ScreenLayout, Header } from '../components';
 import { Colors } from '../constants/colors';
-import { Spacing, FontSizes, BorderRadius } from '../constants/spacing';
+import { Spacing, FontSizes } from '../constants/spacing';
 import { Announcement } from '../types';
 
-interface AnnouncementsScreenProps {
-  onNavigate: (route: string) => void;
-}
+interface AnnouncementsScreenProps {}
 
 const mockAnnouncements: Announcement[] = [
   {
@@ -41,6 +39,12 @@ const mockAnnouncements: Announcement[] = [
 ];
 
 export const AnnouncementsScreen: React.FC<AnnouncementsScreenProps> = () => {
+  const [viewedIds, setViewedIds] = useState<Set<string>>(new Set());
+
+  const handleAnnouncementPress = (id: string) => {
+    setViewedIds(prev => new Set(prev).add(id));
+  };
+
   return (
     <ScreenLayout backgroundColor={Colors.backgroundLight}>
       <Header title="Announcements" />
@@ -49,26 +53,42 @@ export const AnnouncementsScreen: React.FC<AnnouncementsScreenProps> = () => {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {mockAnnouncements.map(announcement => (
-          <Card key={announcement.id} style={styles.announcementCard}>
-            <View style={styles.announcementHeader}>
-              <View style={styles.announcementContent}>
-                <Text style={styles.announcementTitle}>
-                  {announcement.title}
-                </Text>
+        <View style={styles.announcementsList}>
+          {mockAnnouncements.map((announcement, index) => {
+            const isViewed = viewedIds.has(announcement.id);
+            const isUnread = announcement.isNew && !isViewed;
+
+            return (
+              <TouchableOpacity
+                key={announcement.id}
+                style={[
+                  styles.announcementItem,
+                  isUnread && styles.announcementItemUnread,
+                  index < mockAnnouncements.length - 1 && styles.announcementItemWithDivider,
+                ]}
+                onPress={() => handleAnnouncementPress(announcement.id)}
+                activeOpacity={0.7}
+              >
+                <View style={styles.announcementHeader}>
+                  <View style={styles.announcementTitleRow}>
+                    <Text style={styles.announcementTitle}>
+                      {announcement.title}
+                    </Text>
+                    {announcement.isNew && (
+                      <View style={styles.newBadge}>
+                        <View style={styles.newBadgeDot} />
+                      </View>
+                    )}
+                  </View>
+                  <Text style={styles.timestamp}>{announcement.timestamp}</Text>
+                </View>
                 <Text style={styles.announcementDescription}>
                   {announcement.description}
                 </Text>
-                {announcement.isNew && (
-                  <View style={styles.newBadge}>
-                    <Text style={styles.newBadgeText}>New</Text>
-                  </View>
-                )}
-              </View>
-              <Text style={styles.timestamp}>{announcement.timestamp}</Text>
-            </View>
-          </Card>
-        ))}
+              </TouchableOpacity>
+            );
+          })}
+        </View>
       </ScrollView>
     </ScreenLayout>
   );
@@ -79,48 +99,68 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    padding: Spacing.md,
     paddingBottom: 100, // Extra padding for floating navigation bar
   },
-  announcementCard: {
-    marginBottom: Spacing.md,
+  announcementsList: {
+    backgroundColor: Colors.white,
+    marginHorizontal: 20,
+    marginTop: Spacing.md,
+    borderRadius: 12,
+    overflow: 'hidden',
+    shadowColor: Colors.black,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  announcementItem: {
+    padding: Spacing.md,
+    backgroundColor: Colors.white,
+  },
+  announcementItemUnread: {
+    backgroundColor: 'rgba(107, 70, 193, 0.02)',
+  },
+  announcementItemWithDivider: {
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
   },
   announcementHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
+    marginBottom: Spacing.xs,
   },
-  announcementContent: {
+  announcementTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
     flex: 1,
-    marginRight: Spacing.md,
+    marginRight: Spacing.sm,
   },
   announcementTitle: {
-    fontSize: FontSizes.lg,
-    fontWeight: 'bold',
-    color: Colors.text,
-    marginBottom: Spacing.xs,
-  },
-  announcementDescription: {
     fontSize: FontSizes.md,
-    color: Colors.textSecondary,
-    marginBottom: Spacing.xs,
+    fontWeight: '700',
+    color: Colors.text,
+    flex: 1,
   },
   newBadge: {
-    alignSelf: 'flex-start',
-    backgroundColor: Colors.secondary,
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: 2,
-    borderRadius: BorderRadius.sm,
-    marginTop: Spacing.sm,
+    marginLeft: Spacing.xs,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  newBadgeText: {
-    fontSize: FontSizes.sm,
-    color: Colors.white,
-    fontWeight: '600',
+  newBadgeDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: Colors.primary,
   },
   timestamp: {
+    fontSize: FontSizes.xs,
+    color: Colors.textSecondary,
+    fontWeight: '400',
+  },
+  announcementDescription: {
     fontSize: FontSizes.sm,
     color: Colors.textSecondary,
-    marginTop: Spacing.xs,
+    lineHeight: 20,
   },
 });

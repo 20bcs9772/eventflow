@@ -1,6 +1,6 @@
 /**
  * API Service
- * 
+ *
  * Centralized HTTP client for making API requests.
  * Handles authentication headers, error handling, and response parsing.
  */
@@ -36,17 +36,12 @@ class ApiService {
    */
   async request<T = any>(
     endpoint: string,
-    options: RequestOptions = {}
+    options: RequestOptions = {},
   ): Promise<ApiResponse<T>> {
-    const {
-      method = 'GET',
-      body,
-      headers = {},
-      requiresAuth = true,
-    } = options;
+    const { method = 'GET', body, headers = {}, requiresAuth = true } = options;
 
     const url = `${this.baseURL}${endpoint}`;
-    
+
     const requestHeaders: Record<string, string> = {
       'Content-Type': 'application/json',
       ...headers,
@@ -78,14 +73,17 @@ class ApiService {
       const isJson = contentType && contentType.includes('application/json');
 
       let data: any;
-      
+
       if (isJson) {
         try {
           data = await response.json();
         } catch (jsonError) {
           // If JSON parsing fails, read as text for better error message
           const text = await response.text();
-          console.error('Failed to parse JSON response:', text.substring(0, 200));
+          console.error(
+            'Failed to parse JSON response:',
+            text.substring(0, 200),
+          );
           return {
             success: false,
             message: 'Invalid JSON response from server',
@@ -96,7 +94,7 @@ class ApiService {
         // If not JSON, read as text (might be HTML error page)
         const text = await response.text();
         console.error('Non-JSON response received:', text.substring(0, 200));
-        
+
         // Try to extract error message from HTML if possible
         let errorMessage = 'Request failed';
         if (text.includes('<title>')) {
@@ -105,10 +103,12 @@ class ApiService {
             errorMessage = titleMatch[1];
           }
         }
-        
+
         return {
           success: false,
-          message: errorMessage || `Server returned non-JSON response (${contentType || 'unknown'})`,
+          message:
+            errorMessage ||
+            `Server returned non-JSON response (${contentType || 'unknown'})`,
           error: `HTTP ${response.status}`,
         };
       }
@@ -134,7 +134,7 @@ class ApiService {
       }
 
       console.error('API request error:', error);
-      
+
       return {
         success: false,
         message: error.message || 'Network error',
@@ -146,7 +146,10 @@ class ApiService {
   /**
    * GET request
    */
-  async get<T = any>(endpoint: string, requiresAuth = true): Promise<ApiResponse<T>> {
+  async get<T = any>(
+    endpoint: string,
+    requiresAuth = true,
+  ): Promise<ApiResponse<T>> {
     return this.request<T>(endpoint, { method: 'GET', requiresAuth });
   }
 
@@ -156,7 +159,7 @@ class ApiService {
   async post<T = any>(
     endpoint: string,
     body?: any,
-    requiresAuth = true
+    requiresAuth = true,
   ): Promise<ApiResponse<T>> {
     return this.request<T>(endpoint, { method: 'POST', body, requiresAuth });
   }
@@ -167,7 +170,7 @@ class ApiService {
   async patch<T = any>(
     endpoint: string,
     body?: any,
-    requiresAuth = true
+    requiresAuth = true,
   ): Promise<ApiResponse<T>> {
     return this.request<T>(endpoint, { method: 'PATCH', body, requiresAuth });
   }
@@ -175,12 +178,13 @@ class ApiService {
   /**
    * DELETE request
    */
-  async delete<T = any>(endpoint: string, requiresAuth = true): Promise<ApiResponse<T>> {
+  async delete<T = any>(
+    endpoint: string,
+    requiresAuth = true,
+  ): Promise<ApiResponse<T>> {
     return this.request<T>(endpoint, { method: 'DELETE', requiresAuth });
   }
 }
 
 export const apiService = new ApiService();
 export default apiService;
-
-

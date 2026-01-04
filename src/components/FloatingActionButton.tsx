@@ -36,15 +36,15 @@ export const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
     const baseStyle: ViewStyle = {
       backgroundColor: Colors.primary,
       height: 56,
-      borderRadius: BorderRadius.full,
+      borderRadius: 16,
       justifyContent: 'center',
       alignItems: 'center',
       flexDirection: 'row',
       gap: Spacing.sm,
-      shadowColor: '#000',
+      shadowColor: Colors.primary,
       shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.25,
-      shadowRadius: 8,
+      shadowOpacity: 0.2,
+      shadowRadius: 12,
       elevation: 8,
     };
 
@@ -54,11 +54,13 @@ export const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
       baseStyle.borderColor = Colors.primary;
     } else if (variant === 'danger') {
       baseStyle.backgroundColor = Colors.red;
+    } else {
+      baseStyle.backgroundColor = Colors.primary;
     }
 
     if (disabled) {
-      baseStyle.backgroundColor = Colors.textLight;
-      baseStyle.opacity = 0.5;
+      baseStyle.backgroundColor = '#D1D5DB';
+      baseStyle.opacity = 0.6;
     }
 
     return [baseStyle, style];
@@ -80,6 +82,7 @@ export const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
 
   return (
     <View style={styles.container}>
+      <View style={styles.gradientBackground} />
       <TouchableOpacity
         style={getButtonStyle()}
         onPress={onPress}
@@ -102,10 +105,22 @@ export const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    bottom: Spacing.lg,
-    left: Spacing.lg,
-    right: Spacing.lg,
+    bottom: 0,
+    left: 0,
+    right: 0,
+    padding: 20,
+    paddingBottom: 24,
+    backgroundColor: 'transparent',
     zIndex: 1000,
+  },
+  gradientBackground: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 100,
+    backgroundColor: Colors.backgroundLight,
+    opacity: 0.95,
   },
 });
 

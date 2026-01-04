@@ -13,17 +13,25 @@ import { Button, TextInput, SocialButton, ScreenLayout } from '../components';
 import { Colors } from '../constants/colors';
 import { Spacing, BorderRadius, FontSizes } from '../constants/spacing';
 import { useAuth } from '../context';
+import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
+import { RootStackParamList } from '../types';
 
 interface SignUpScreenProps {
   onSignUp: () => void;
   onLogin: () => void;
 }
 
+type SignUpRouteProp = RouteProp<RootStackParamList, 'SignUp'>;
+
 export const SignUpScreen: React.FC<SignUpScreenProps> = ({
   onSignUp,
   onLogin,
 }) => {
-  const { signUpWithEmail, signInWithGoogle, signInWithApple, isLoading } = useAuth();
+  const navigation = useNavigation<any>();
+  const route = useRoute<SignUpRouteProp>();
+  const { signUpWithEmail, signInWithGoogle, signInWithApple, isLoading, setPendingJoinAction } = useAuth();
+  const returnTo = route.params?.returnTo;
+  const eventCode = route.params?.eventCode;
   
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -67,6 +75,10 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
       const result = await signUpWithEmail(email.trim(), password, name.trim());
       
       if (result.success) {
+        // Store pending join action if user was trying to join an event
+        if (returnTo === 'JoinEvent' && eventCode) {
+          setPendingJoinAction(eventCode);
+        }
         onSignUp();
       } else {
         setError(result.error || 'Failed to create account');
@@ -83,6 +95,11 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
     setIsSubmitting(true);
     
     try {
+      // Store pending join action BEFORE auth (if user was trying to join an event)
+      if (returnTo === 'JoinEvent' && eventCode) {
+        setPendingJoinAction(eventCode);
+      }
+      
       const result = await signInWithGoogle();
       
       if (result.success) {
@@ -102,6 +119,11 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
     setIsSubmitting(true);
     
     try {
+      // Store pending join action BEFORE auth (if user was trying to join an event)
+      if (returnTo === 'JoinEvent' && eventCode) {
+        setPendingJoinAction(eventCode);
+      }
+      
       const result = await signInWithApple();
       
       if (result.success) {

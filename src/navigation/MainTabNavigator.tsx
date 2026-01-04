@@ -20,10 +20,11 @@ export const MainTabNavigator = () => {
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
+          position: 'absolute',
           backgroundColor: Colors.navigationBar,
           borderTopWidth: 0,
           borderRadius: 50,
-          height: 75,
+          height: 70,
           paddingBottom: 12,
           paddingTop: 17,
           paddingHorizontal: 20,
@@ -38,6 +39,7 @@ export const MainTabNavigator = () => {
         tabBarShowLabel: false,
         tabBarActiveTintColor: Colors.text,
         tabBarInactiveTintColor: Colors.white,
+        tabBarHideOnKeyboard: true,
       }}
     >
       {/* Home */}
@@ -110,24 +112,30 @@ export const MainTabNavigator = () => {
 };
 
 // Screen wrappers
-const HomeScreenWrapper = ({ navigation }) => (
+const HomeScreenWrapper = ({ navigation }: { navigation: any }) => (
   <HomeScreen onNavigate={route => navigation.navigate(route)} />
 );
 
-const CalendarScreenWrapper = ({ navigation }) => (
+const CalendarScreenWrapper = ({ navigation }: { navigation: any }) => (
   <CalendarScreen onNavigate={route => navigation.navigate(route)} />
 );
 
-const AnnouncementsScreenWrapper = ({ navigation }) => (
+const AnnouncementsScreenWrapper = ({ navigation }: { navigation: any }) => (
   <AnnouncementsScreen onNavigate={route => navigation.navigate(route)} />
 );
 
-const SettingsScreenWrapper = ({ navigation }) => (
+const SettingsScreenWrapper = ({ navigation }: { navigation: any }) => (
   <SettingsScreen onNavigate={route => navigation.navigate(route)} />
 );
 
 // Icon container with active circle
-const TabIconContainer = ({ focused, children }) => (
+const TabIconContainer = ({
+  focused,
+  children,
+}: {
+  focused: boolean;
+  children: React.ReactNode;
+}) => (
   <View
     style={[styles.tabIconContainer, focused && styles.tabIconContainerFocused]}
   >

@@ -14,5 +14,7 @@ export type {
   Announcement,
   CreateAnnouncementInput,
 } from './announcement.service';
-
-
+export { deviceService } from './device.service';
+export { locationService } from './location.service';
+export type { LocationSearchResult } from './location.service';
+export { storageService } from './storage.service';

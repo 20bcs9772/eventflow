@@ -9,6 +9,9 @@ export interface Event {
   attendeesAvatars?: string[];
   startTime?: string;
   endTime?: string;
+  coverImage?: string;
+  portraitImage?: string;
+  galleryImages?: string[];
 }
 
 export interface Announcement {
@@ -37,12 +40,13 @@ export type RootStackParamList = {
   AddScheduleBlock: { onSave?: (block: any) => void; initialBlock?: any };
   AddVenue: { onSave?: (venue: any) => void; initialVenue?: any };
   InvitePeople: { onSave?: (people: any[]) => void; initialPeople?: any[] };
-  Login: undefined;
-  SignUp: undefined;
+  Login: { returnTo?: string; eventCode?: string } | undefined;
+  SignUp: { returnTo?: string; eventCode?: string } | undefined;
   ForgotPassword: undefined;
   EmailVerification: { email?: string };
-  JoinEvent: undefined;
+  JoinEvent: { eventCode?: string; autoJoin?: boolean } | undefined;
   JoinedEvents: undefined;
+  SelectLocation: { onSelect?: (location: any) => void } | undefined;
 };
 
 export type MainTabParamList = {

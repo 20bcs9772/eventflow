@@ -4,21 +4,19 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  TouchableOpacity,
-  Image,
   RefreshControl,
   ActivityIndicator,
 } from 'react-native';
-import { ScreenLayout } from '../components';
+import { ScreenLayout, EventListCard, ScreenHeader } from '../components';
 import { Colors } from '../constants/colors';
-import { Spacing, BorderRadius, FontSizes } from '../constants/spacing';
+import { Spacing, FontSizes } from '../constants/spacing';
 import FontAwesome6 from '@react-native-vector-icons/fontawesome6';
 import { Event } from '../types';
 import { guestService } from '../services';
-import { mapBackendEventsToFrontend } from '../utils/eventMapper';
 import { useAuth } from '../context/AuthContext';
 import { useNavigation } from '@react-navigation/native';
 import dayjs from 'dayjs';
+import { getEventStatus } from '../utils/eventMapper';
 
 interface JoinedEventsScreenProps {
   onBack?: () => void;
@@ -37,7 +35,8 @@ export const JoinedEventsScreen: React.FC<JoinedEventsScreenProps> = ({
 
   useEffect(() => {
     fetchJoinedEvents();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [backendUser]);
 
   const fetchJoinedEvents = async () => {
     if (!backendUser) {
@@ -51,26 +50,40 @@ export const JoinedEventsScreen: React.FC<JoinedEventsScreenProps> = ({
 
       if (response.success && response.data) {
         // Map guest events to Event type
-        const events = response.data.map((guestEvent: any) => {
-          const event = guestEvent.event;
-          if (!event) return null;
+        const events = response.data
+          .map((guestEvent: any) => {
+            const event = guestEvent.event;
+            if (!event) {
+              console.warn('Guest event missing event data:', guestEvent);
+              return null;
+            }
 
-          const startDate = new Date(event.startDate);
-          return {
-            id: event.id,
-            shortCode: event.shortCode,
-            title: event.name,
-            date: dayjs(startDate).format('MMM D, YYYY'),
-            location: event.location || 'Location TBA',
-            attendees: event._count?.guestEvents || 0,
-            startTime: dayjs(startDate).format('h:mm A'),
-            endTime: event.endDate 
-              ? dayjs(new Date(event.endDate)).format('h:mm A')
-              : undefined,
-          };
-        }).filter(Boolean);
+            const startDate = new Date(event.startDate);
+            const endDate = event.endDate ? new Date(event.endDate) : undefined;
+            return {
+              id: event.id,
+              shortCode: event.shortCode,
+              title: event.name,
+              date: dayjs(startDate).format('MMM D, YYYY'),
+              location: event.location || 'Location TBA',
+              attendees: event._count?.guestEvents || 0,
+              startTime: dayjs(startDate).format('h:mm A'),
+              endTime: endDate ? dayjs(endDate).format('h:mm A') : undefined,
+              coverImage: event.coverImage,
+              portraitImage: event.portraitImage,
+              // Store original dates for status calculation
+              startDate: startDate,
+              endDate: endDate,
+            } as Event & { startDate?: Date; endDate?: Date };
+          })
+          .filter(Boolean) as Event[];
 
         setJoinedEvents(events);
+      } else {
+        console.log(
+          'Failed to fetch joined events:',
+          response.message || response.error,
+        );
       }
     } catch (error) {
       console.error('Error fetching joined events:', error);
@@ -93,35 +106,13 @@ export const JoinedEventsScreen: React.FC<JoinedEventsScreenProps> = ({
     }
   };
 
-  const handleBack = () => {
-    if (onBack) {
-      onBack();
-    } else {
-      navigation.goBack();
-    }
-  };
   return (
-    <ScreenLayout backgroundColor={Colors.background}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={handleBack}
-          activeOpacity={0.7}
-        >
-          <FontAwesome6
-            name="chevron-left"
-            size={20}
-            color={Colors.text}
-            iconStyle="solid"
-          />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Joined Events</Text>
-        <View style={styles.headerSpacer} />
-      </View>
+    <ScreenLayout backgroundColor={Colors.backgroundLight}>
+      <ScreenHeader title="Joined Events" onBack={onBack} />
 
       {/* Events List */}
       <ScrollView
+        style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
         refreshControl={
@@ -137,70 +128,46 @@ export const JoinedEventsScreen: React.FC<JoinedEventsScreenProps> = ({
             <ActivityIndicator size="large" color={Colors.primary} />
           </View>
         ) : joinedEvents.length > 0 ? (
-          joinedEvents.map((event) => (
-            <TouchableOpacity
-              key={event.id}
-              style={styles.eventCard}
-              onPress={() => handleEventPress(event)}
-              activeOpacity={0.7}
-            >
-              {/* Event Image */}
-              <View style={styles.eventImageContainer}>
-                {event.image ? (
-                  <Image source={{ uri: event.image }} style={styles.eventImage} />
-                ) : (
-                  <View style={styles.eventImagePlaceholder}>
-                    <FontAwesome6
-                      name="calendar"
-                      size={24}
-                      color={Colors.primary}
-                      iconStyle="solid"
-                    />
-                  </View>
-                )}
-              </View>
+          joinedEvents.map(event => {
+            const eventWithDate = event as Event & {
+              startDate?: Date;
+              endDate?: Date;
+            };
+            const status = getEventStatus(
+              eventWithDate.startDate || event.date || new Date(),
+              eventWithDate.endDate || undefined,
+            );
+            const imageUri =
+              event.image || event.coverImage || event.portraitImage;
+            // Use original startDate if available, otherwise use formatted date string
+            const eventDate = eventWithDate.startDate || event.date;
 
-              {/* Event Info */}
-              <View style={styles.eventInfo}>
-                <Text style={styles.eventTitle} numberOfLines={2}>
-                  {event.title}
-                </Text>
-                <View style={styles.eventDateRow}>
-                  <FontAwesome6
-                    name="calendar"
-                    size={14}
-                    color={Colors.primary}
-                    iconStyle="regular"
-                  />
-                  <Text style={styles.eventDate}>{event.date}</Text>
-                </View>
-                {event.location && (
-                  <View style={styles.eventLocationRow}>
-                    <FontAwesome6
-                      name="location-dot"
-                      size={12}
-                      color={Colors.textSecondary}
-                      iconStyle="solid"
-                    />
-                    <Text style={styles.eventLocation} numberOfLines={1}>
-                      {event.location}
-                    </Text>
-                  </View>
-                )}
-              </View>
-            </TouchableOpacity>
-          ))
+            return (
+              <EventListCard
+                key={event.id}
+                title={event.title}
+                date={eventDate}
+                attendeesCount={event.attendees || 0}
+                imageUri={imageUri}
+                status={status}
+                onPress={() => handleEventPress(event)}
+                showOptions={false}
+              />
+            );
+          })
         ) : (
           <View style={styles.emptyState}>
-            <FontAwesome6
-              name="calendar-xmark"
-              size={48}
-              color={Colors.textLight}
-              iconStyle="solid"
-            />
+            <View style={styles.emptyIconContainer}>
+              <FontAwesome6
+                name="calendar-xmark"
+                size={48}
+                color={Colors.white}
+                iconStyle="solid"
+              />
+            </View>
             <Text style={styles.emptyTitle}>No Joined Events</Text>
             <Text style={styles.emptySubtitle}>
-              {backendUser 
+              {backendUser
                 ? 'Events you join will appear here'
                 : 'Please sign in to see your joined events'}
             </Text>
@@ -212,127 +179,44 @@ export const JoinedEventsScreen: React.FC<JoinedEventsScreenProps> = ({
 };
 
 const styles = StyleSheet.create({
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: Spacing.xl,
-    paddingVertical: Spacing.md,
-    marginBottom: Spacing.md,
-  },
-  backButton: {
-    width: 44,
-    height: 44,
-    borderRadius: BorderRadius.md,
-    backgroundColor: Colors.backgroundLight,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerTitle: {
-    fontSize: FontSizes.xl,
-    fontWeight: 'bold',
-    color: Colors.text,
-  },
-  headerSpacer: {
-    width: 44,
+  scrollView: {
+    flex: 1,
   },
   scrollContent: {
-    flexGrow: 1,
-    paddingHorizontal: Spacing.xl,
+    paddingHorizontal: Spacing.md,
     paddingBottom: Spacing.xl,
   },
-  eventCard: {
-    flexDirection: 'row',
-    backgroundColor: Colors.white,
-    borderRadius: BorderRadius.lg,
-    padding: Spacing.md,
-    marginBottom: Spacing.md,
-    shadowColor: Colors.black,
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
-  },
-  eventImageContainer: {
-    width: 100,
-    height: 100,
-    borderRadius: BorderRadius.md,
-    overflow: 'hidden',
-    marginRight: Spacing.md,
-  },
-  eventImage: {
-    width: '100%',
-    height: '100%',
-    resizeMode: 'cover',
-  },
-  eventImagePlaceholder: {
-    width: '100%',
-    height: '100%',
-    backgroundColor: Colors.backgroundLight,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: BorderRadius.md,
-  },
-  eventInfo: {
+  loadingContainer: {
     flex: 1,
     justifyContent: 'center',
-  },
-  eventTitle: {
-    fontSize: FontSizes.md,
-    fontWeight: '600',
-    color: Colors.text,
-    marginBottom: Spacing.sm,
-    lineHeight: 22,
-  },
-  eventDateRow: {
-    flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.sm,
-  },
-  eventDate: {
-    fontSize: FontSizes.sm,
-    color: Colors.primary,
-    fontWeight: '500',
   },
   emptyState: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     paddingTop: Spacing.xxl * 2,
+    minHeight: 400,
+  },
+  emptyIconContainer: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: Colors.primaryLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: Spacing.lg,
   },
   emptyTitle: {
-    fontSize: FontSizes.lg,
-    fontWeight: '600',
+    fontSize: FontSizes.xl,
+    fontWeight: 'bold',
     color: Colors.text,
-    marginTop: Spacing.lg,
     marginBottom: Spacing.sm,
   },
   emptySubtitle: {
     fontSize: FontSizes.md,
     color: Colors.textSecondary,
     textAlign: 'center',
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    minHeight: 200,
-    paddingTop: Spacing.xxl,
-  },
-  eventLocationRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.xs,
-    marginTop: Spacing.xs,
-  },
-  eventLocation: {
-    fontSize: FontSizes.sm,
-    color: Colors.textSecondary,
-    flex: 1,
+    paddingHorizontal: Spacing.xl,
   },
 });
-
-

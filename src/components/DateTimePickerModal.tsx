@@ -52,8 +52,8 @@ export const DateTimePickerModal: React.FC<DateTimePickerModalProps> = ({
   onConfirm,
   initialDateTime,
 }) => {
-  const slideAnim = useState(new Animated.Value(SCREEN_HEIGHT))[0];
-  const opacityAnim = useState(new Animated.Value(0))[0];
+  const slideAnim = React.useRef(new Animated.Value(SCREEN_HEIGHT)).current;
+  const opacityAnim = React.useRef(new Animated.Value(0)).current;
 
   const [selectedStartDate, setSelectedStartDate] = useState(
     initialDateTime?.startDate || dayjs().format('YYYY-MM-DD'),
@@ -112,17 +112,29 @@ export const DateTimePickerModal: React.FC<DateTimePickerModalProps> = ({
   /* ------------------------- Animations ------------------------- */
   useEffect(() => {
     if (visible) {
-      Animated.parallel([
-        Animated.spring(slideAnim, {
-          toValue: 0,
-          useNativeDriver: true,
-        }),
-        Animated.timing(opacityAnim, {
-          toValue: 1,
-          duration: 180,
-          useNativeDriver: true,
-        }),
-      ]).start();
+      // Reset animation values when opening
+      slideAnim.setValue(SCREEN_HEIGHT);
+      opacityAnim.setValue(0);
+      
+      // Small delay to ensure values are set before animation starts
+      const timer = setTimeout(() => {
+        // Start animation
+        Animated.parallel([
+          Animated.spring(slideAnim, {
+            toValue: 0,
+            useNativeDriver: true,
+            tension: 50,
+            friction: 8,
+          }),
+          Animated.timing(opacityAnim, {
+            toValue: 1,
+            duration: 200,
+            useNativeDriver: true,
+          }),
+        ]).start();
+      }, 10);
+
+      return () => clearTimeout(timer);
     } else {
       Animated.parallel([
         Animated.timing(slideAnim, {
@@ -137,7 +149,7 @@ export const DateTimePickerModal: React.FC<DateTimePickerModalProps> = ({
         }),
       ]).start();
     }
-  }, [visible]);
+  }, [visible, slideAnim, opacityAnim]);
 
   /* ------------------------- Date Selection ------------------------- */
   const handleDateSelect = (day: any) => {
@@ -161,8 +173,15 @@ export const DateTimePickerModal: React.FC<DateTimePickerModalProps> = ({
       marked[selectedStartDate] = {
         startingDay: true,
         selected: true,
+        selectedColor: Colors.primary,
         color: Colors.primary,
         textColor: Colors.white,
+        customStyles: {
+          container: {
+            backgroundColor: Colors.primary,
+            borderRadius: 20,
+          },
+        },
       };
     }
 
@@ -170,15 +189,27 @@ export const DateTimePickerModal: React.FC<DateTimePickerModalProps> = ({
       marked[selectedEndDate] = {
         endingDay: true,
         selected: true,
+        selectedColor: Colors.primary,
         color: Colors.primary,
         textColor: Colors.white,
+        customStyles: {
+          container: {
+            backgroundColor: Colors.primary,
+            borderRadius: 20,
+          },
+        },
       };
 
       let cur = dayjs(selectedStartDate).add(1, 'day');
       while (cur.isBefore(dayjs(selectedEndDate))) {
         marked[cur.format('YYYY-MM-DD')] = {
-          color: Colors.primary + '30',
+          color: 'rgba(107, 70, 193, 0.15)',
           textColor: Colors.primary,
+          customStyles: {
+            container: {
+              backgroundColor: 'rgba(107, 70, 193, 0.15)',
+            },
+          },
         };
         cur = cur.add(1, 'day');
       }
@@ -232,6 +263,11 @@ export const DateTimePickerModal: React.FC<DateTimePickerModalProps> = ({
                   textMonthFontWeight: '700',
                   textDayHeaderFontSize: 12,
                   arrowColor: Colors.text,
+                  selectedDayBackgroundColor: Colors.primary,
+                  selectedDayTextColor: Colors.white,
+                  todayTextColor: Colors.primary,
+                  dayTextColor: Colors.text,
+                  textDisabledColor: Colors.textLight,
                 }}
                 renderArrow={(direction) => <FontAwesome6 name={`chevron-${direction}`} size={15} iconStyle='solid' />}
                 minDate={dayjs().format("YYYY-MM-DD")}
@@ -258,14 +294,14 @@ export const DateTimePickerModal: React.FC<DateTimePickerModalProps> = ({
                     </Text>
                   </TouchableOpacity>
 
-                  <TouchableOpacity
+                    <TouchableOpacity
                     style={styles.periodBox}
                     onPress={() =>
                       setStartPeriod(startPeriod === 'AM' ? 'PM' : 'AM')
                     }
-                  >
+                    >
                     <Text style={styles.periodText}>{startPeriod}</Text>
-                  </TouchableOpacity>
+                    </TouchableOpacity>
                 </View>
               </View>
 
@@ -287,14 +323,14 @@ export const DateTimePickerModal: React.FC<DateTimePickerModalProps> = ({
                     </Text>
                   </TouchableOpacity>
 
-                  <TouchableOpacity
+                    <TouchableOpacity
                     style={styles.periodBox}
                     onPress={() =>
                       setEndPeriod(endPeriod === 'AM' ? 'PM' : 'AM')
                     }
-                  >
+                    >
                     <Text style={styles.periodText}>{endPeriod}</Text>
-                  </TouchableOpacity>
+                    </TouchableOpacity>
                 </View>
               </View>
             </View>

@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import FontAwesome6 from '@react-native-vector-icons/fontawesome6';
-import { ScreenLayout, FloatingActionButton } from '../components';
+import { ScreenLayout, FloatingActionButton, ScreenHeader } from '../components';
 import { Colors } from '../constants/colors';
 import { Spacing, FontSizes, BorderRadius } from '../constants/spacing';
 import { RootStackParamList } from '../types';
@@ -90,34 +90,11 @@ export const AddScheduleBlockScreen: React.FC = () => {
 
   return (
     <ScreenLayout backgroundColor={Colors.backgroundLight}>
+      <ScreenHeader
+        title="Add Schedule Block"
+        backIcon="arrow-left"
+      />
       <View style={styles.container}>
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity
-            style={styles.headerButton}
-            onPress={() => navigation.goBack()}
-          >
-            <FontAwesome6
-              name="arrow-left"
-              size={18}
-              color={Colors.text}
-              iconStyle="solid"
-            />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Add Schedule Block</Text>
-          <TouchableOpacity
-            style={styles.headerButton}
-            onPress={() => navigation.goBack()}
-          >
-            <FontAwesome6
-              name="xmark"
-              size={18}
-              color={Colors.text}
-              iconStyle="solid"
-            />
-          </TouchableOpacity>
-        </View>
-
         <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}
@@ -153,6 +130,8 @@ export const AddScheduleBlockScreen: React.FC = () => {
               />
             </View>
           </View>
+
+          <View style={{ height: Spacing.md }} />
 
           {/* Start Time and End Time */}
           <View style={styles.timeRow}>
@@ -260,24 +239,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.md,
-  },
-  headerButton: {
-    width: 40,
-    height: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  headerTitle: {
-    fontSize: FontSizes.lg,
-    fontWeight: '700',
-    color: Colors.text,
-  },
   scrollView: {
     flex: 1,
   },
@@ -290,15 +251,14 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: FontSizes.sm,
-    color: Colors.textSecondary,
+    color: '#1F2937',
     marginBottom: Spacing.sm,
     fontWeight: '600',
   },
   inputContainer: {
-    backgroundColor: Colors.white,
-    borderRadius: BorderRadius.lg,
-    borderWidth: 1,
-    borderColor: Colors.border,
+    backgroundColor: '#F9FAFB',
+    borderRadius: 12,
+    borderWidth: 0,
   },
   input: {
     fontSize: FontSizes.md,
@@ -322,10 +282,9 @@ const styles = StyleSheet.create({
   timeInputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.white,
-    borderRadius: BorderRadius.lg,
-    borderWidth: 1,
-    borderColor: Colors.border,
+    backgroundColor: '#F9FAFB',
+    borderRadius: 12,
+    borderWidth: 0,
     padding: Spacing.md,
     gap: Spacing.sm,
   },
@@ -339,6 +298,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: Spacing.sm,
     paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.xs,
   },
   inputWithIcon: {
     flex: 1,
@@ -446,18 +406,18 @@ const TimePickerModal: React.FC<TimePickerModalProps> = ({
                 </TouchableOpacity>
               ))}
             </ScrollView>
-            <View style={timePickerStyles.periodContainer}>
+            <View style={timePickerStyles.periodPillContainer}>
               <TouchableOpacity
                 style={[
-                  timePickerStyles.periodButton,
-                  selectedPeriod === 'AM' && timePickerStyles.periodButtonSelected,
+                  timePickerStyles.periodPill,
+                  selectedPeriod === 'AM' && timePickerStyles.periodPillActive,
                 ]}
                 onPress={() => setSelectedPeriod('AM')}
               >
                 <Text
                   style={[
-                    timePickerStyles.periodText,
-                    selectedPeriod === 'AM' && timePickerStyles.periodTextSelected,
+                    timePickerStyles.periodPillText,
+                    selectedPeriod === 'AM' && timePickerStyles.periodPillTextActive,
                   ]}
                 >
                   AM
@@ -465,15 +425,15 @@ const TimePickerModal: React.FC<TimePickerModalProps> = ({
               </TouchableOpacity>
               <TouchableOpacity
                 style={[
-                  timePickerStyles.periodButton,
-                  selectedPeriod === 'PM' && timePickerStyles.periodButtonSelected,
+                  timePickerStyles.periodPill,
+                  selectedPeriod === 'PM' && timePickerStyles.periodPillActive,
                 ]}
                 onPress={() => setSelectedPeriod('PM')}
               >
                 <Text
                   style={[
-                    timePickerStyles.periodText,
-                    selectedPeriod === 'PM' && timePickerStyles.periodTextSelected,
+                    timePickerStyles.periodPillText,
+                    selectedPeriod === 'PM' && timePickerStyles.periodPillTextActive,
                   ]}
                 >
                   PM
@@ -554,29 +514,31 @@ const timePickerStyles = StyleSheet.create({
     color: Colors.text,
     marginHorizontal: Spacing.sm,
   },
-  periodContainer: {
+  periodPillContainer: {
     marginLeft: Spacing.md,
-    gap: Spacing.sm,
+    flexDirection: 'row',
+    backgroundColor: '#F3F4F6',
+    borderRadius: 20,
+    padding: 4,
+    gap: 4,
   },
-  periodButton: {
-    paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.md,
-    borderRadius: BorderRadius.md,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    minWidth: 60,
+  periodPill: {
+    flex: 1,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 16,
     alignItems: 'center',
+    justifyContent: 'center',
   },
-  periodButtonSelected: {
+  periodPillActive: {
     backgroundColor: Colors.primary,
-    borderColor: Colors.primary,
   },
-  periodText: {
-    fontSize: FontSizes.md,
-    color: Colors.text,
+  periodPillText: {
+    fontSize: FontSizes.sm,
     fontWeight: '600',
+    color: '#6B7280',
   },
-  periodTextSelected: {
+  periodPillTextActive: {
     color: Colors.white,
   },
   actions: {

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { ActivityIndicator, View, StyleSheet } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -17,16 +17,81 @@ import {
   JoinEventScreen,
   JoinedEventsScreen,
   ManageEventsScreen,
+  SelectLocationScreen,
 } from '../screens';
 import { MainTabNavigator } from './MainTabNavigator';
 import { RootStackParamList } from '../types';
 import { useAuth } from '../context';
 import { Colors } from '../constants/colors';
+import {
+  setupForegroundMessageHandler,
+  setupNotificationOpenedHandler,
+  checkInitialNotification,
+} from '../notifications';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export const AppNavigator = () => {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, backendUser, getPendingJoinAction, clearPendingJoinAction } = useAuth();
+  const navigationRef = useRef<any>(null);
+  const hasHandledPendingJoinRef = useRef(false);
+
+  // Handle pending join action after authentication
+  useEffect(() => {
+    // Wait for both authentication and backend user to be ready
+    if (isAuthenticated && !isLoading && backendUser && navigationRef.current) {
+      const pendingJoin = getPendingJoinAction();
+      if (pendingJoin && !hasHandledPendingJoinRef.current) {
+        hasHandledPendingJoinRef.current = true;
+        // Small delay to ensure navigation is ready and backend user is fully loaded
+        setTimeout(() => {
+          navigationRef.current?.navigate('JoinEvent', {
+            eventCode: pendingJoin.eventCode,
+            autoJoin: true, // Flag to auto-join
+          });
+          clearPendingJoinAction();
+        }, 500);
+      }
+    } else if (!isAuthenticated) {
+      hasHandledPendingJoinRef.current = false;
+    }
+  }, [isAuthenticated, isLoading, backendUser, getPendingJoinAction, clearPendingJoinAction]);
+
+  // Setup Firebase Cloud Messaging handlers
+  useEffect(() => {
+    let unsubscribeForeground: (() => void) | undefined;
+    let unsubscribeOpened: (() => void) | undefined;
+    let retryTimeout: NodeJS.Timeout | undefined;
+    
+    const setupFCMHandlers = () => {
+      unsubscribeForeground = setupForegroundMessageHandler(navigationRef);
+      unsubscribeOpened = setupNotificationOpenedHandler(navigationRef);
+
+      if (navigationRef.current) {
+        checkInitialNotification(navigationRef).catch(err => {
+          console.error('Error checking initial notification:', err);
+        });
+      }
+    };
+    
+    setupFCMHandlers();
+    
+    if (!navigationRef.current) {
+      retryTimeout = setTimeout(() => {
+        if (navigationRef.current) {
+          checkInitialNotification(navigationRef).catch(err => {
+            console.error('Error checking initial notification:', err);
+          });
+        }
+      }, 1000);
+    }
+    
+    return () => {
+      if (retryTimeout) clearTimeout(retryTimeout);
+      if (unsubscribeForeground) unsubscribeForeground();
+      if (unsubscribeOpened) unsubscribeOpened();
+    };
+  }, [isAuthenticated, isLoading]);
 
   // Show loading screen while checking auth state
   if (isLoading) {
@@ -38,7 +103,7 @@ export const AppNavigator = () => {
   }
 
   return (
-    <NavigationContainer>
+    <NavigationContainer ref={navigationRef}>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         {!isAuthenticated ? (
           <>
@@ -126,6 +191,7 @@ export const AppNavigator = () => {
             />
             <Stack.Screen name="AddVenue" component={AddVenueScreen} />
             <Stack.Screen name="InvitePeople" component={InvitePeopleScreen} />
+            <Stack.Screen name="JoinEvent" component={JoinEventScreen} />
             <Stack.Screen name="JoinedEvents">
               {({ navigation }) => (
                 <JoinedEventsScreen
@@ -136,6 +202,7 @@ export const AppNavigator = () => {
                 />
               )}
             </Stack.Screen>
+            <Stack.Screen name="SelectLocation" component={SelectLocationScreen} />
           </>
         )}
       </Stack.Navigator>

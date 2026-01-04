@@ -12,8 +12,9 @@ import React, {
   useEffect,
   useRef,
 } from 'react';
-import { authService, apiService, AuthUser, BackendUser } from '../services';
+import { authService, apiService, deviceService, AuthUser, BackendUser } from '../services';
 import { API_ENDPOINTS } from '../config';
+import { requestPermission, getFcmToken } from '../notifications';
 
 interface AuthContextType {
   // State
@@ -38,6 +39,10 @@ interface AuthContextType {
 
   // Utility methods
   refreshUser: () => Promise<void>;
+  // Pending join action
+  setPendingJoinAction: (eventCode: string, eventId?: string) => void;
+  getPendingJoinAction: () => { eventCode: string; eventId?: string } | null;
+  clearPendingJoinAction: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -63,6 +68,37 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const isSyncingRef = useRef(false);
   // Track the last synced Firebase UID to prevent re-syncing
   const lastSyncedUidRef = useRef<string | null>(null);
+  // Track if we're in the middle of an explicit sign-up operation
+  const isSigningUpRef = useRef(false);
+  // Store pending join action (event code) to execute after authentication
+  const pendingJoinActionRef = useRef<{
+    eventCode: string;
+    eventId?: string;
+  } | null>(null);
+
+  /**
+   * Register FCM token for push notifications
+   */
+  const registerFcmToken = async (userId: string): Promise<void> => {
+    try {
+      const hasPermission = await requestPermission();
+      if (!hasPermission) {
+        return;
+      }
+
+      const fcmToken = await getFcmToken();
+      if (!fcmToken) {
+        return;
+      }
+
+      const response = await deviceService.saveFcmToken(userId, fcmToken);
+      if (!response.success) {
+        console.error('Failed to register FCM token:', response.error);
+      }
+    } catch (error) {
+      console.error('Error registering FCM token:', error);
+    }
+  };
 
   /**
    * Sync user with backend after Firebase auth
@@ -87,6 +123,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       if (response.success && response.data) {
         setBackendUser(response.data);
+        // Register FCM token after successful backend sync
+        if (response.data.id) {
+          registerFcmToken(response.data.id).catch(err => {
+            console.error('FCM token registration failed:', err);
+          });
+        }
+        
         return response.data;
       }
       return null;
@@ -114,8 +157,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setUser(authUser);
 
         // Only sync if this is a different user than last synced
-        // This handles app restart/refresh scenarios
-        if (lastSyncedUidRef.current !== firebaseUser.uid && !isSyncingRef.current) {
+        // Skip automatic sync if we're in the middle of an explicit sign-up
+        // (the sign-up method will handle the sync with the correct name)
+        if (
+          lastSyncedUidRef.current !== firebaseUser.uid &&
+          !isSyncingRef.current &&
+          !isSigningUpRef.current
+        ) {
           lastSyncedUidRef.current = firebaseUser.uid;
           await syncWithBackend(firebaseUser.displayName);
         }
@@ -123,11 +171,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setUser(null);
         setBackendUser(null);
         lastSyncedUidRef.current = null;
+        isSigningUpRef.current = false;
       }
       setIsLoading(false);
     });
 
     return () => unsubscribe();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   /**
@@ -139,6 +189,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     name?: string,
   ): Promise<{ success: boolean; error?: string }> => {
     setIsLoading(true);
+    // Set flag to prevent automatic sync in auth state listener
+    isSigningUpRef.current = true;
+
     try {
       const result = await authService.signUpWithEmail(email, password, name);
 
@@ -146,13 +199,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setUser(result.user);
         lastSyncedUidRef.current = result.user.uid;
 
-        // Sync with backend
+        // Wait a bit for Firebase to update the displayName profile
+        // This ensures the auth state listener doesn't interfere
+        await new Promise<void>(resolve => setTimeout(() => resolve(), 100));
+
+        // Sync with backend using the name parameter (most reliable)
+        // This will create/update the user in the backend with the correct name
         await syncWithBackend(name || result.user.displayName);
       }
 
       return result;
     } finally {
       setIsLoading(false);
+      // Clear the sign-up flag after sync completes
+      isSigningUpRef.current = false;
     }
   };
 
@@ -267,6 +327,30 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  /**
+   * Set pending join action (to execute after authentication)
+   */
+  const setPendingJoinAction = (eventCode: string, eventId?: string): void => {
+    pendingJoinActionRef.current = { eventCode, eventId };
+  };
+
+  /**
+   * Get pending join action
+   */
+  const getPendingJoinAction = (): {
+    eventCode: string;
+    eventId?: string;
+  } | null => {
+    return pendingJoinActionRef.current;
+  };
+
+  /**
+   * Clear pending join action
+   */
+  const clearPendingJoinAction = (): void => {
+    pendingJoinActionRef.current = null;
+  };
+
   const value: AuthContextType = {
     user,
     backendUser,
@@ -278,6 +362,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     signInWithApple,
     signOut,
     refreshUser,
+    setPendingJoinAction,
+    getPendingJoinAction,
+    clearPendingJoinAction,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
   View,
   Text,
@@ -7,22 +7,19 @@ import {
   TouchableOpacity,
   RefreshControl,
   ActivityIndicator,
+  Animated,
 } from 'react-native';
 import { Calendar, DateData } from 'react-native-calendars';
-import { Header, SegmentedControl, Card, ScreenLayout } from '../components';
+import { ScreenLayout, Header } from '../components';
 import { Colors } from '../constants/colors';
-import { Spacing, FontSizes, BorderRadius } from '../constants/spacing';
+import { Spacing, FontSizes } from '../constants/spacing';
 import FontAwesome6 from '@react-native-vector-icons/fontawesome6';
 import { useNavigation } from '@react-navigation/native';
 import { eventService } from '../services';
 import { useAuth } from '../context/AuthContext';
 import dayjs from 'dayjs';
-import { Event } from '../types';
-import { mapBackendEventToFrontend } from '../utils/eventMapper';
 
-interface CalendarScreenProps {
-  onNavigate?: (route: string) => void;
-}
+interface CalendarScreenProps {}
 
 interface CalendarEvent {
   id: string;
@@ -53,6 +50,21 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = () => {
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [switchWidth, setSwitchWidth] = useState(0);
+  const viewSliderAnim = useRef(new Animated.Value(1)).current;
+
+  // Animate view switch
+  useEffect(() => {
+    if (switchWidth > 0) {
+      const sliderWidth = (switchWidth - 8) / 2; // Account for padding (4px on each side)
+      Animated.spring(viewSliderAnim, {
+        toValue: selectedView * sliderWidth,
+        useNativeDriver: true,
+        tension: 50,
+        friction: 8,
+      }).start();
+    }
+  }, [selectedView, viewSliderAnim, switchWidth]);
 
   useEffect(() => {
     if (backendUser) {
@@ -60,6 +72,7 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = () => {
     } else {
       setIsLoading(false);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [backendUser]);
 
   const fetchCalendarEvents = async () => {
@@ -68,7 +81,6 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = () => {
     try {
       setIsLoading(true);
 
-      // Get events for current month and next month
       const startDate = dayjs().startOf('month').toISOString();
       const endDate = dayjs().add(2, 'month').endOf('month').toISOString();
 
@@ -178,22 +190,6 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = () => {
     setSelectedView(0); // Switch to timeline view when date is selected
   };
 
-  const handleEventPress = (event: CalendarEvent) => {
-    // Convert CalendarEvent to format expected by EventDetails
-    const frontendEvent = {
-      id: event.id,
-      shortCode: event.shortCode,
-      title: event.name,
-      date: dayjs(event.startDate).format('MMM D, YYYY'),
-      location: event.location || 'Location TBA',
-      startTime: dayjs(event.startDate).format('h:mm A'),
-      endTime: event.endDate 
-        ? dayjs(new Date(event.endDate)).format('h:mm A')
-        : undefined,
-    };
-    navigation.navigate('EventDetails', { event: frontendEvent });
-  };
-
   const handleScheduleItemPress = (eventId: string) => {
     const event = events.find(e => e.id === eventId);
     if (event) {
@@ -212,9 +208,6 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = () => {
     }
   };
 
-  const formatSelectedDate = (dateString: string) => {
-    return dayjs(dateString).format('dddd, MMMM D, YYYY');
-  };
 
   if (isLoading) {
     return (
@@ -249,16 +242,59 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = () => {
 
   return (
     <ScreenLayout backgroundColor={Colors.backgroundLight}>
-      <Header
-        title="Timeline"
-        subtitle={selectedDate ? formatSelectedDate(selectedDate) : undefined}
-      />
+      <Header title="Timeline" />
       <View style={styles.content}>
-        <SegmentedControl
-          options={['Timeline', 'Calendar']}
-          selectedIndex={selectedView}
-          onSelect={setSelectedView}
-        />
+        {/* Custom Pill Switch */}
+        <View style={styles.viewSwitchContainer}>
+          <View
+            style={styles.viewSwitch}
+            onLayout={(e) => setSwitchWidth(e.nativeEvent.layout.width)}
+          >
+            {switchWidth > 0 && (
+              <Animated.View
+                style={[
+                  styles.viewSwitchSlider,
+                  {
+                    width: (switchWidth - 8) / 2,
+                    transform: [
+                      {
+                        translateX: viewSliderAnim,
+                      },
+                    ],
+                  },
+                ]}
+              />
+            )}
+            <TouchableOpacity
+              style={styles.viewSwitchOption}
+              onPress={() => setSelectedView(0)}
+              activeOpacity={0.7}
+            >
+              <Text
+                style={[
+                  styles.viewSwitchText,
+                  selectedView === 0 && styles.viewSwitchTextActive,
+                ]}
+              >
+                Timeline
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.viewSwitchOption}
+              onPress={() => setSelectedView(1)}
+              activeOpacity={0.7}
+            >
+              <Text
+                style={[
+                  styles.viewSwitchText,
+                  selectedView === 1 && styles.viewSwitchTextActive,
+                ]}
+              >
+                Calendar
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
 
         {selectedView === 1 && (
           <View style={styles.calendarContainer}>
@@ -270,8 +306,8 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = () => {
               enableSwipeMonths={true}
               hideExtraDays={false}
               theme={{
-                backgroundColor: Colors.white,
-                calendarBackground: Colors.white,
+                backgroundColor: 'transparent',
+                calendarBackground: 'transparent',
                 textSectionTitleColor: Colors.textSecondary,
                 selectedDayBackgroundColor: Colors.primary,
                 selectedDayTextColor: Colors.white,
@@ -282,15 +318,15 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = () => {
                 selectedDotColor: Colors.white,
                 arrowColor: Colors.primary,
                 monthTextColor: Colors.text,
-                textDayFontWeight: '400',
-                textMonthFontWeight: 'bold',
-                textDayHeaderFontWeight: '500',
-                textDayFontSize: FontSizes.sm,
+                textDayFontWeight: '500',
+                textMonthFontWeight: '700',
+                textDayHeaderFontWeight: '600',
+                textDayFontSize: FontSizes.md,
                 textMonthFontSize: FontSizes.xl,
                 textDayHeaderFontSize: FontSizes.xs,
               }}
               style={styles.calendar}
-              renderArrow={(direction) => <FontAwesome6 name={`chevron-${direction}`} size={15} iconStyle='solid' />}
+              renderArrow={(direction) => <FontAwesome6 name={`chevron-${direction}`} size={16} iconStyle='solid' />}
             />
           </View>
         )}
@@ -298,6 +334,7 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = () => {
         {selectedView === 0 && (
           <ScrollView
             style={styles.timelineView}
+            contentContainerStyle={styles.timelineContent}
             refreshControl={
               <RefreshControl
                 refreshing={isRefreshing}
@@ -309,38 +346,41 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = () => {
             {selectedDateEvents.length > 0 || selectedDateScheduleItems.length > 0 ? (
               <>
                 {selectedDateScheduleItems.length > 0 && (
-                  <View style={styles.eventsSection}>
-                    {selectedDateScheduleItems.map(item => (
-                      <TouchableOpacity
-                        key={item.id}
-                        onPress={() => handleScheduleItemPress(item.eventId)}
-                        activeOpacity={0.7}
-                      >
-                        <Card style={styles.eventCard}>
-                          <Text style={styles.scheduleEventName}>
-                            {item.eventName}
-                          </Text>
-                          <Text style={styles.eventTitle}>{item.title}</Text>
-                          <View style={styles.eventInfo}>
-                            <Text style={styles.eventInfoText}>
-                              <FontAwesome6 name="clock" size={14} />{' '}
-                              {item.startTime} - {item.endTime}
+                  <View>
+                    {selectedDateScheduleItems.map((item, index) => (
+                      <View key={item.id} style={styles.timelineItem}>
+                        <View style={styles.timelineLeft}>
+                          <Text style={styles.timelineTime}>{item.startTime}</Text>
+                          {index < selectedDateScheduleItems.length - 1 && (
+                            <View style={styles.timelineLine} />
+                          )}
+                        </View>
+                        <TouchableOpacity
+                          style={styles.timelineContent}
+                          onPress={() => handleScheduleItemPress(item.eventId)}
+                          activeOpacity={0.7}
+                        >
+                          <View style={styles.timelineCard}>
+                            <Text style={styles.timelineEventName}>
+                              {item.eventName}
                             </Text>
-                          </View>
-                          {item.location && (
-                            <View style={styles.eventInfo}>
-                              <Text style={styles.eventInfoText}>
+                            <Text style={styles.timelineTitle}>{item.title}</Text>
+                            {item.location && (
+                              <View style={styles.timelineMeta}>
                                 <FontAwesome6
                                   name="map-pin"
                                   iconStyle="solid"
-                                  size={14}
-                                />{' '}
-                                {item.location}
-                              </Text>
-                            </View>
-                          )}
-                        </Card>
-                      </TouchableOpacity>
+                                  size={12}
+                                  color={Colors.textSecondary}
+                                />
+                                <Text style={styles.timelineMetaText}>
+                                  {item.location}
+                                </Text>
+                              </View>
+                            )}
+                          </View>
+                        </TouchableOpacity>
+                      </View>
                     ))}
                   </View>
                 )}
@@ -369,7 +409,43 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = () => {
 const styles = StyleSheet.create({
   content: {
     flex: 1,
-    paddingHorizontal: Spacing.md,
+    paddingHorizontal: 20,
+  },
+  viewSwitchContainer: {
+    marginVertical: Spacing.md,
+  },
+  viewSwitch: {
+    flexDirection: 'row',
+    backgroundColor: '#F3F4F6',
+    borderRadius: 12,
+    padding: 4,
+    position: 'relative',
+  },
+  viewSwitchSlider: {
+    position: 'absolute',
+    top: 4,
+    bottom: 4,
+    left: 4,
+    width: '50%',
+    backgroundColor: Colors.primary,
+    borderRadius: 10,
+    zIndex: 0,
+  },
+  viewSwitchOption: {
+    flex: 1,
+    paddingVertical: Spacing.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 1,
+  },
+  viewSwitchText: {
+    fontSize: FontSizes.sm,
+    color: '#6B7280',
+    fontWeight: '500',
+  },
+  viewSwitchTextActive: {
+    color: Colors.white,
+    fontWeight: '600',
   },
   loadingContainer: {
     flex: 1,
@@ -401,72 +477,82 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   calendarContainer: {
-    backgroundColor: Colors.white,
-    borderRadius: BorderRadius.lg,
-    padding: Spacing.md,
+    backgroundColor: 'transparent',
+    borderRadius: 0,
+    padding: 0,
     marginBottom: Spacing.lg,
     marginTop: Spacing.md,
-    shadowColor: Colors.black,
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
   },
   calendar: {
-    borderRadius: BorderRadius.lg,
+    borderRadius: 0,
   },
   timelineView: {
     flex: 1,
     marginTop: Spacing.sm,
   },
-  eventsSection: {
-    marginTop: Spacing.lg,
+  timelineContent: {
+    paddingBottom: Spacing.sm,
   },
-  eventsSectionTitle: {
-    fontSize: FontSizes.lg,
-    fontWeight: 'bold',
+  timelineItem: {
+    flexDirection: 'row',
+    marginBottom: Spacing.xs,
+  },
+  timelineLeft: {
+    width: 80,
+    alignItems: 'flex-end',
+    paddingRight: Spacing.md,
+    position: 'relative',
+  },
+  timelineTime: {
+    fontSize: FontSizes.sm,
+    fontWeight: '600',
     color: Colors.text,
-    marginBottom: Spacing.md,
+    marginTop: 2,
   },
-  eventCard: {
-    marginBottom: Spacing.md,
+  timelineLine: {
+    position: 'absolute',
+    right: 8,
+    top: 24,
+    bottom: -Spacing.lg,
+    width: 2,
+    backgroundColor: Colors.border,
   },
-  eventHeader: {
+  timelineCard: {
+    flex: 1,
+    backgroundColor: Colors.white,
+    borderRadius: 12,
+    padding: Spacing.md,
+    shadowColor: Colors.black,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
+    width: 250
+  },
+  timelineEventName: {
+    fontSize: FontSizes.xs,
+    color: Colors.primary,
+    fontWeight: '600',
+    marginBottom: Spacing.xs,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  timelineTitle: {
+    fontSize: FontSizes.md,
+    fontWeight: '700',
+    color: Colors.text,
+    marginBottom: Spacing.xs,
+  },
+  timelineMeta: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: Spacing.sm,
+    gap: Spacing.xs,
+    marginTop: Spacing.xs,
   },
-  eventTitle: {
-    fontSize: FontSizes.md,
-    fontWeight: '600',
-    color: Colors.text,
-    flex: 1,
-  },
-  scheduleEventName: {
-    fontSize: FontSizes.xs,
-    color: Colors.primary,
-    fontWeight: '500',
-    marginBottom: Spacing.xs,
-  },
-  adminBadge: {
-    backgroundColor: Colors.primaryLight,
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: 2,
-    borderRadius: BorderRadius.sm,
-  },
-  adminBadgeText: {
-    fontSize: FontSizes.xs,
-    color: Colors.primary,
-    fontWeight: '600',
-  },
-  eventInfo: {
-    marginBottom: Spacing.xs,
-  },
-  eventInfoText: {
+  timelineMetaText: {
     fontSize: FontSizes.sm,
     color: Colors.textSecondary,
   },

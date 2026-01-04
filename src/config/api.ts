@@ -1,6 +1,6 @@
 /**
  * API Configuration
- * 
+ *
  * Configure the base URL for your backend server.
  * Set API_URL in your .env file.
  */
@@ -34,6 +34,8 @@ export const API_ENDPOINTS = {
     UPDATE: (id: string) => `/api/events/${id}`,
     DELETE: (id: string) => `/api/events/${id}`,
     BY_CODE: (code: string) => `/api/events/code/${code}`,
+    TYPES: `/api/events/types`,
+    BY_TYPE: (type: string) => `/api/events/types/${type}`,
   },
   // Guest Events
   GUESTS: {
@@ -52,4 +54,3 @@ export const API_ENDPOINTS = {
     UPDATE: (id: string) => `/api/devices/${id}`,
   },
 };
-
