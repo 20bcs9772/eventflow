@@ -10,7 +10,7 @@ import {
   Animated,
 } from 'react-native';
 import { Calendar, DateData } from 'react-native-calendars';
-import { ScreenLayout, ScreenHeader, Header } from '../components';
+import { ScreenLayout, Header } from '../components';
 import { Colors } from '../constants/colors';
 import { Spacing, FontSizes } from '../constants/spacing';
 import FontAwesome6 from '@react-native-vector-icons/fontawesome6';
@@ -72,6 +72,7 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = () => {
     } else {
       setIsLoading(false);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [backendUser]);
 
   const fetchCalendarEvents = async () => {
@@ -207,9 +208,6 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = () => {
     }
   };
 
-  const formatSelectedDate = (dateString: string) => {
-    return dayjs(dateString).format('dddd, MMMM D, YYYY');
-  };
 
   if (isLoading) {
     return (
@@ -244,7 +242,7 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = () => {
 
   return (
     <ScreenLayout backgroundColor={Colors.backgroundLight}>
-      <ScreenHeader title="Timeline" />
+      <Header title="Timeline" />
       <View style={styles.content}>
         {/* Custom Pill Switch */}
         <View style={styles.viewSwitchContainer}>
@@ -348,7 +346,7 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = () => {
             {selectedDateEvents.length > 0 || selectedDateScheduleItems.length > 0 ? (
               <>
                 {selectedDateScheduleItems.length > 0 && (
-                  <View style={styles.timelineContainer}>
+                  <View>
                     {selectedDateScheduleItems.map((item, index) => (
                       <View key={item.id} style={styles.timelineItem}>
                         <View style={styles.timelineLeft}>
@@ -493,14 +491,11 @@ const styles = StyleSheet.create({
     marginTop: Spacing.sm,
   },
   timelineContent: {
-    paddingBottom: Spacing.xl,
-  },
-  timelineContainer: {
-    paddingLeft: Spacing.md,
+    paddingBottom: Spacing.sm,
   },
   timelineItem: {
     flexDirection: 'row',
-    marginBottom: Spacing.lg,
+    marginBottom: Spacing.xs,
   },
   timelineLeft: {
     width: 80,
@@ -516,7 +511,7 @@ const styles = StyleSheet.create({
   },
   timelineLine: {
     position: 'absolute',
-    right: 0,
+    right: 8,
     top: 24,
     bottom: -Spacing.lg,
     width: 2,
@@ -535,6 +530,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.06,
     shadowRadius: 8,
     elevation: 2,
+    width: 250
   },
   timelineEventName: {
     fontSize: FontSizes.xs,

@@ -147,7 +147,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = () => {
                     ? 'Loading...'
                     : location
                       ? location.city || 'Unknown'
-                      : 'Location unavailable'}
+                      : 'Select Location'}
                 </Text>
                 <Text style={styles.chevron}>
                   <FontAwesome6 name="caret-down" size={25} iconStyle="solid" />
@@ -527,7 +527,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: Spacing.md,
+    marginTop: Spacing.xs,
     gap: Spacing.xs,
   },
   indicator: {

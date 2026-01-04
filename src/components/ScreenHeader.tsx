@@ -1,10 +1,5 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-} from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import FontAwesome6 from '@react-native-vector-icons/fontawesome6';
 import { Colors } from '../constants/colors';
 import { Spacing, BorderRadius, FontSizes } from '../constants/spacing';
@@ -66,7 +61,7 @@ export const ScreenHeader: React.FC<ScreenHeaderProps> = ({
               name={rightAction.icon as any}
               size={18}
               color={Colors.text}
-              iconStyle={rightAction.iconStyle || 'solid'}
+              iconStyle={(rightAction.iconStyle as any) || 'solid'}
             />
           )}
         </TouchableOpacity>
@@ -82,9 +77,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: Spacing.xl,
+    paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.md,
-    marginBottom: Spacing.md,
+    minHeight: 56,
   },
   backButton: {
     width: 44,
@@ -122,4 +117,3 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
 });
-

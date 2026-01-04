@@ -122,10 +122,10 @@ export const EventCard: React.FC<EventCardProps> = ({
 
 const styles = StyleSheet.create({
   largeCard: {
-    borderRadius: 24,
+    borderRadius: 16,
     overflow: 'hidden',
     marginBottom: Spacing.md,
-    height: 300,
+    height: 250,
     shadowColor: Colors.black,
     shadowOffset: {
       width: 0,
@@ -167,15 +167,15 @@ const styles = StyleSheet.create({
     zIndex: 2,
   },
   largeTitle: {
-    fontSize: FontSizes.xxxl,
-    fontWeight: '800',
+    fontSize: FontSizes.xxl,
+    fontWeight: '700',
     color: Colors.white,
     textShadowColor: 'rgba(0, 0, 0, 0.75)',
     textShadowOffset: { width: 0, height: 2 },
     textShadowRadius: 10,
     letterSpacing: -0.5,
   },
-  largeInfo: { 
+  largeInfo: {
     gap: Spacing.sm,
     backgroundColor: 'rgba(255, 255, 255, 0.15)',
     borderRadius: BorderRadius.lg,
@@ -187,8 +187,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: Spacing.sm,
   },
-  largeInfoText: { 
-    fontSize: FontSizes.md, 
+  largeInfoText: {
+    fontSize: FontSizes.md,
     color: Colors.white,
     fontWeight: '600',
     textShadowColor: 'rgba(0, 0, 0, 0.8)',

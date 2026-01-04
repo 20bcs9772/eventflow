@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
-import { ScreenLayout, ScreenHeader } from '../components';
+import { ScreenLayout, Header } from '../components';
 import { Colors } from '../constants/colors';
 import { Spacing, FontSizes } from '../constants/spacing';
 import { Announcement } from '../types';
@@ -47,7 +47,7 @@ export const AnnouncementsScreen: React.FC<AnnouncementsScreenProps> = () => {
 
   return (
     <ScreenLayout backgroundColor={Colors.backgroundLight}>
-      <ScreenHeader title="Announcements" />
+      <Header title="Announcements" />
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
