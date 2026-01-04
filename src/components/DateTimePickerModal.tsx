@@ -173,8 +173,15 @@ export const DateTimePickerModal: React.FC<DateTimePickerModalProps> = ({
       marked[selectedStartDate] = {
         startingDay: true,
         selected: true,
+        selectedColor: Colors.primary,
         color: Colors.primary,
         textColor: Colors.white,
+        customStyles: {
+          container: {
+            backgroundColor: Colors.primary,
+            borderRadius: 20,
+          },
+        },
       };
     }
 
@@ -182,15 +189,27 @@ export const DateTimePickerModal: React.FC<DateTimePickerModalProps> = ({
       marked[selectedEndDate] = {
         endingDay: true,
         selected: true,
+        selectedColor: Colors.primary,
         color: Colors.primary,
         textColor: Colors.white,
+        customStyles: {
+          container: {
+            backgroundColor: Colors.primary,
+            borderRadius: 20,
+          },
+        },
       };
 
       let cur = dayjs(selectedStartDate).add(1, 'day');
       while (cur.isBefore(dayjs(selectedEndDate))) {
         marked[cur.format('YYYY-MM-DD')] = {
-          color: Colors.primary + '30',
+          color: 'rgba(107, 70, 193, 0.15)',
           textColor: Colors.primary,
+          customStyles: {
+            container: {
+              backgroundColor: 'rgba(107, 70, 193, 0.15)',
+            },
+          },
         };
         cur = cur.add(1, 'day');
       }
@@ -244,6 +263,11 @@ export const DateTimePickerModal: React.FC<DateTimePickerModalProps> = ({
                   textMonthFontWeight: '700',
                   textDayHeaderFontSize: 12,
                   arrowColor: Colors.text,
+                  selectedDayBackgroundColor: Colors.primary,
+                  selectedDayTextColor: Colors.white,
+                  todayTextColor: Colors.primary,
+                  dayTextColor: Colors.text,
+                  textDisabledColor: Colors.textLight,
                 }}
                 renderArrow={(direction) => <FontAwesome6 name={`chevron-${direction}`} size={15} iconStyle='solid' />}
                 minDate={dayjs().format("YYYY-MM-DD")}
@@ -270,14 +294,14 @@ export const DateTimePickerModal: React.FC<DateTimePickerModalProps> = ({
                     </Text>
                   </TouchableOpacity>
 
-                  <TouchableOpacity
+                    <TouchableOpacity
                     style={styles.periodBox}
                     onPress={() =>
                       setStartPeriod(startPeriod === 'AM' ? 'PM' : 'AM')
                     }
-                  >
+                    >
                     <Text style={styles.periodText}>{startPeriod}</Text>
-                  </TouchableOpacity>
+                    </TouchableOpacity>
                 </View>
               </View>
 
@@ -299,14 +323,14 @@ export const DateTimePickerModal: React.FC<DateTimePickerModalProps> = ({
                     </Text>
                   </TouchableOpacity>
 
-                  <TouchableOpacity
+                    <TouchableOpacity
                     style={styles.periodBox}
                     onPress={() =>
                       setEndPeriod(endPeriod === 'AM' ? 'PM' : 'AM')
                     }
-                  >
+                    >
                     <Text style={styles.periodText}>{endPeriod}</Text>
-                  </TouchableOpacity>
+                    </TouchableOpacity>
                 </View>
               </View>
             </View>

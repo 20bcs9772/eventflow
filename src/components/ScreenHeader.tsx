@@ -1,10 +1,5 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-} from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import FontAwesome6 from '@react-native-vector-icons/fontawesome6';
 import { Colors } from '../constants/colors';
 import { Spacing, BorderRadius, FontSizes } from '../constants/spacing';
@@ -14,7 +9,8 @@ interface ScreenHeaderProps {
   title: string;
   onBack?: () => void;
   rightAction?: {
-    icon: string;
+    icon?: string;
+    text?: string;
     onPress: () => void;
     iconStyle?: 'solid' | 'regular' | 'light' | 'thin' | 'duotone';
   };
@@ -54,16 +50,20 @@ export const ScreenHeader: React.FC<ScreenHeaderProps> = ({
       <Text style={styles.headerTitle}>{title}</Text>
       {rightAction ? (
         <TouchableOpacity
-          style={styles.rightButton}
+          style={rightAction.text ? styles.rightTextButton : styles.rightButton}
           onPress={rightAction.onPress}
           activeOpacity={0.7}
         >
-          <FontAwesome6
-            name={rightAction.icon as any}
-            size={18}
-            color={Colors.text}
-            iconStyle={rightAction.iconStyle || 'solid'}
-          />
+          {rightAction.text ? (
+            <Text style={styles.rightButtonText}>{rightAction.text}</Text>
+          ) : (
+            <FontAwesome6
+              name={rightAction.icon as any}
+              size={18}
+              color={Colors.text}
+              iconStyle={(rightAction.iconStyle as any) || 'solid'}
+            />
+          )}
         </TouchableOpacity>
       ) : (
         <View style={styles.headerSpacer} />
@@ -77,9 +77,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: Spacing.xl,
+    paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.md,
-    marginBottom: Spacing.md,
+    minHeight: 56,
   },
   backButton: {
     width: 44,
@@ -105,5 +105,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  rightTextButton: {
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.xs,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  rightButtonText: {
+    fontSize: FontSizes.md,
+    color: Colors.textSecondary,
+    fontWeight: '500',
+  },
 });
-

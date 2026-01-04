@@ -9,6 +9,7 @@ export const ENV = {
   // Feature Flags
   ENABLE_GOOGLE_SIGNIN: 'true',
   ENABLE_APPLE_SIGNIN: 'true',
+  GOOGLE_MAPS_API_KEY: '',
 } as const;
 
 /**

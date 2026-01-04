@@ -13,3 +13,5 @@ export { DateTimePickerModal } from './DateTimePickerModal';
 export { FloatingActionButton } from './FloatingActionButton';
 export { TextInput } from './TextInput';
 export { SocialButton } from './SocialButton';
+export { LocationItem } from './LocationItem';
+export { CurrentLocationButton } from './CurrentLocationButton';

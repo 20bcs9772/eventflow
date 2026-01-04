@@ -46,6 +46,7 @@ export type RootStackParamList = {
   EmailVerification: { email?: string };
   JoinEvent: { eventCode?: string; autoJoin?: boolean } | undefined;
   JoinedEvents: undefined;
+  SelectLocation: { onSelect?: (location: any) => void } | undefined;
 };
 
 export type MainTabParamList = {

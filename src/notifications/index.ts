@@ -1,20 +1,33 @@
-import messaging, {
-  FirebaseMessagingTypes,
+import { getApp } from '@react-native-firebase/app';
+import {
+  requestPermission as reqPermission,
+  getMessaging,
+  AuthorizationStatus,
+  getToken,
+  onMessage,
+  onNotificationOpenedApp,
+  getInitialNotification,
+  setBackgroundMessageHandler as setBgMessageHandler,
 } from '@react-native-firebase/messaging';
-import notifee, { AndroidImportance } from '@notifee/react-native';
+import type { FirebaseMessagingTypes } from '@react-native-firebase/messaging';
+import notifee, { AndroidImportance, EventType } from '@notifee/react-native';
 import { NavigationContainerRef } from '@react-navigation/native';
+import { eventService } from '../services';
+
+const app = getApp();
+const messaging = getMessaging(app);
 
 export async function requestPermission() {
-  const authStatus = await messaging().requestPermission();
+  const authStatus = await reqPermission(messaging);
   const enabled =
-    authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
-    authStatus === messaging.AuthorizationStatus.PROVISIONAL;
+    authStatus === AuthorizationStatus.AUTHORIZED ||
+    authStatus === AuthorizationStatus.PROVISIONAL;
   return enabled;
 }
 
 export async function getFcmToken() {
   try {
-    const token = await messaging().getToken();
+    const token = await getToken(messaging);
     return token;
   } catch (error) {
     console.error('Error getting FCM token:', error);
@@ -45,9 +58,10 @@ async function displayNotification(
     const notificationData: { [key: string]: string } = {};
     if (data) {
       Object.keys(data).forEach(key => {
-        notificationData[key] = typeof data[key] === 'string' 
-          ? data[key] as string 
-          : JSON.stringify(data[key]);
+        notificationData[key] =
+          typeof data[key] === 'string'
+            ? (data[key] as string)
+            : JSON.stringify(data[key]);
       });
     }
 
@@ -76,18 +90,12 @@ async function displayNotification(
 export function setupForegroundMessageHandler(
   _navigationRef: React.RefObject<NavigationContainerRef<any>>,
 ) {
-  try {
-    messaging();
-  } catch (error) {
-    console.error('Messaging not available:', error);
-    return () => {};
-  }
-
-  const unsubscribe = messaging().onMessage(
+  const unsubscribe = onMessage(
+    messaging,
     async (remoteMessage: FirebaseMessagingTypes.RemoteMessage) => {
       if (remoteMessage.notification) {
         const { title, body } = remoteMessage.notification;
-        
+
         // Display notification using Notifee
         await displayNotification(
           title || 'Notification',
@@ -107,15 +115,17 @@ export function setupForegroundMessageHandler(
 export function setupNotificationOpenedHandler(
   navigationRef: React.RefObject<NavigationContainerRef<any>>,
 ) {
-  const unsubscribe = messaging().onNotificationOpenedApp(
+  const unsubscribe = onNotificationOpenedApp(
+    messaging,
     (remoteMessage: FirebaseMessagingTypes.RemoteMessage) => {
       if (remoteMessage.data) {
         // Convert data to string format
         const data: { [key: string]: string } = {};
         Object.keys(remoteMessage.data).forEach(key => {
-          data[key] = typeof remoteMessage.data![key] === 'string' 
-            ? remoteMessage.data![key] as string 
-            : String(remoteMessage.data![key]);
+          data[key] =
+            typeof remoteMessage.data![key] === 'string'
+              ? (remoteMessage.data![key] as string)
+              : String(remoteMessage.data![key]);
         });
 
         if (navigationRef.current) {
@@ -133,21 +143,29 @@ export function setupNotificationOpenedHandler(
   );
 
   // Also handle Notifee notification press events
-  notifee.onForegroundEvent(({ type, detail }: { type: number; detail: any }) => {
-    if (type === 1 && detail.notification?.data && navigationRef.current) {
-      // Press action (user tapped notification)
-      const data = detail.notification.data as { [key: string]: string };
-      handleNotificationNavigation(data, navigationRef.current);
-    }
-  });
+  notifee.onForegroundEvent(
+    ({ type, detail }: { type: number; detail: any }) => {
+      if (
+        type === EventType.PRESS &&
+        detail.notification?.data &&
+        navigationRef.current
+      ) {
+        // Press action (user tapped notification)
+        const data = detail.notification.data as { [key: string]: string };
+        handleNotificationNavigation(data, navigationRef.current);
+      }
+    },
+  );
 
-  notifee.onBackgroundEvent(async ({ type, detail }: { type: number; detail: any }) => {
-    if (type === 1 && detail.notification?.data && navigationRef.current) {
-      // Press action (user tapped notification)
-      const data = detail.notification.data as { [key: string]: string };
-      handleNotificationNavigation(data, navigationRef.current);
-    }
-  });
+  notifee.onBackgroundEvent(
+    async ({ type, detail }: { type: number; detail: any }) => {
+      if (type === EventType.PRESS && detail.notification?.data && navigationRef.current) {
+        // Press action (user tapped notification)
+        const data = detail.notification.data as { [key: string]: string };
+        handleNotificationNavigation(data, navigationRef.current);
+      }
+    },
+  );
 
   return unsubscribe;
 }
@@ -158,15 +176,16 @@ export function setupNotificationOpenedHandler(
 export async function checkInitialNotification(
   navigationRef: React.RefObject<NavigationContainerRef<any>>,
 ) {
-  const remoteMessage = await messaging().getInitialNotification();
+  const remoteMessage = await getInitialNotification(messaging);
 
   if (remoteMessage?.data) {
     // Convert data to string format
     const data: { [key: string]: string } = {};
     Object.keys(remoteMessage.data).forEach(key => {
-      data[key] = typeof remoteMessage.data![key] === 'string' 
-        ? remoteMessage.data![key] as string 
-        : String(remoteMessage.data![key]);
+      data[key] =
+        typeof remoteMessage.data![key] === 'string'
+          ? (remoteMessage.data![key] as string)
+          : String(remoteMessage.data![key]);
     });
 
     if (navigationRef.current) {
@@ -197,7 +216,6 @@ async function handleNotificationNavigation(
   }
 
   try {
-    const { eventService } = await import('../services');
     const response = await eventService.getEventById(eventId);
 
     if (response.success && response.data) {
@@ -213,7 +231,8 @@ async function handleNotificationNavigation(
  * This must be called at the top level of your app (outside React components)
  */
 export function setBackgroundMessageHandler() {
-  messaging().setBackgroundMessageHandler(
+  setBgMessageHandler(
+    messaging,
     async (_remoteMessage: FirebaseMessagingTypes.RemoteMessage) => {
       // Background messages are handled automatically by the system
       // Notifee will display them if needed

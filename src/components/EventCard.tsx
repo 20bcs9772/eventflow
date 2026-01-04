@@ -52,59 +52,32 @@ export const EventCard: React.FC<EventCardProps> = ({
           imageStyle={styles.largeImageStyle}
         >
           <View style={styles.largeOverlay}>
-            <Text style={styles.largeTitle}>{event.title}</Text>
-
-            <View style={styles.largeInfo}>
-              <View style={styles.largeInfoRow}>
-                <FontAwesome6
-                  name="calendar-day"
-                  color={Colors.background}
-                  size={20}
-                  iconStyle="solid"
-                />
-                <Text style={styles.largeInfoText}>{event.date}</Text>
-              </View>
-
-              <View style={styles.largeInfoRow}>
-                <FontAwesome6
-                  name="map-location"
-                  color={Colors.background}
-                  size={20}
-                  iconStyle="solid"
-                />
-                <Text style={styles.largeInfoText}>{event.location}</Text>
-              </View>
+            <View style={styles.fullGradientOverlay} />
+            <View style={styles.titleContainer}>
+              <Text style={styles.largeTitle}>{event.title}</Text>
             </View>
+            <View style={styles.contentContainer}>
+              <View style={styles.largeInfo}>
+                <View style={styles.largeInfoRow}>
+                  <FontAwesome6
+                    name="calendar-day"
+                    color={Colors.white}
+                    size={20}
+                    iconStyle="solid"
+                  />
+                  <Text style={styles.largeInfoText}>{event.date}</Text>
+                </View>
 
-            <View style={styles.largeFooter}>
-              <View style={styles.attendeesContainer}>
-                {event.attendeesAvatars?.slice(0, 3).map((avatar, index) => (
-                  <View
-                    key={index}
-                    style={[styles.avatar, { marginLeft: index > 0 ? -8 : 0 }]}
-                  >
-                    <View style={styles.avatarPlaceholder} />
-                  </View>
-                ))}
-                {event.attendees && event.attendees > 3 && (
-                  <View style={[styles.avatar, styles.avatarMore]}>
-                    <Text style={styles.avatarMoreText}>
-                      {event.attendees - 3}+
-                    </Text>
-                  </View>
-                )}
+                <View style={styles.largeInfoRow}>
+                  <FontAwesome6
+                    name="map-location"
+                    color={Colors.white}
+                    size={20}
+                    iconStyle="solid"
+                  />
+                  <Text style={styles.largeInfoText}>{event.location}</Text>
+                </View>
               </View>
-
-              <TouchableOpacity
-                style={styles.joinButton}
-                activeOpacity={0.7}
-                onPress={e => {
-                  e.stopPropagation();
-                  handlePress();
-                }}
-              >
-                <Text style={styles.joinButtonText}>View</Text>
-              </TouchableOpacity>
             </View>
           </View>
         </ImageBackground>
@@ -149,80 +122,94 @@ export const EventCard: React.FC<EventCardProps> = ({
 
 const styles = StyleSheet.create({
   largeCard: {
-    borderRadius: BorderRadius.lg,
+    borderRadius: 16,
     overflow: 'hidden',
     marginBottom: Spacing.md,
-    height: 280,
+    height: 250,
+    shadowColor: Colors.black,
+    shadowOffset: {
+      width: 0,
+      height: 8,
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: 16,
+    elevation: 8,
   },
   largeImage: { width: '100%', height: '100%' },
   largeImageStyle: { borderRadius: BorderRadius.lg },
   largeOverlay: {
     flex: 1,
+    position: 'relative',
+  },
+  fullGradientOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    zIndex: 1,
+  },
+  titleContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
     padding: Spacing.lg,
-    justifyContent: 'space-between',
+    paddingTop: Spacing.md,
+    zIndex: 2,
+  },
+  contentContainer: {
+    flex: 1,
+    padding: Spacing.lg,
+    justifyContent: 'flex-end',
+    paddingBottom: Spacing.xl,
+    zIndex: 2,
   },
   largeTitle: {
     fontSize: FontSizes.xxl,
-    fontWeight: 'bold',
+    fontWeight: '700',
     color: Colors.white,
-    marginBottom: Spacing.sm,
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 10,
+    letterSpacing: -0.5,
   },
-  largeInfo: { gap: Spacing.xs },
+  largeInfo: {
+    gap: Spacing.sm,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.md,
+    borderWidth: 0,
+  },
   largeInfoRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.xs,
+    gap: Spacing.sm,
   },
-  largeInfoText: { fontSize: FontSizes.md, color: Colors.white },
-  largeFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  attendeesContainer: { flexDirection: 'row', alignItems: 'center' },
-  avatar: {
-    width: 32,
-    height: 32,
-    borderRadius: BorderRadius.full,
-    borderWidth: 2,
-    borderColor: Colors.white,
-    backgroundColor: Colors.primaryLight,
-    overflow: 'hidden',
-  },
-  avatarPlaceholder: {
-    width: '100%',
-    height: '100%',
-    backgroundColor: Colors.primaryLight,
-  },
-  avatarMore: {
-    backgroundColor: Colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  avatarMoreText: {
-    fontSize: FontSizes.xs,
-    color: Colors.white,
-    fontWeight: '600',
-  },
-  joinButton: {
-    backgroundColor: Colors.primary,
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.sm,
-    borderRadius: BorderRadius.md,
-  },
-  joinButtonText: {
-    color: Colors.white,
+  largeInfoText: {
     fontSize: FontSizes.md,
+    color: Colors.white,
     fontWeight: '600',
+    textShadowColor: 'rgba(0, 0, 0, 0.8)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 6,
   },
   smallCard: {
     width: 170,
-    borderRadius: BorderRadius.lg,
+    borderRadius: 20,
     backgroundColor: Colors.cardBackground,
     overflow: 'hidden',
     marginRight: Spacing.md,
     marginBottom: Spacing.md,
+    shadowColor: Colors.black,
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 4,
   },
 
   smallImageContainer: {
@@ -249,13 +236,15 @@ const styles = StyleSheet.create({
 
   smallTitle: {
     fontSize: FontSizes.md,
-    fontWeight: '600',
+    fontWeight: '700',
     color: Colors.text,
     marginBottom: Spacing.xs,
+    letterSpacing: -0.2,
   },
 
   smallDate: {
     fontSize: FontSizes.sm,
     color: Colors.textSecondary,
+    fontWeight: '500',
   },
 });
