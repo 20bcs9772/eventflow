@@ -114,14 +114,12 @@ class LocationService {
   async searchLocations(query: string): Promise<LocationSearchResult[]> {
     try {
       const geo = await Geocoder.from(query);
-
       if (!geo.results || geo.results.length === 0) {
         return [];
       }
 
       return geo.results.map((result: any, index: number) => {
         const addressComponents = result.address_components || [];
-
         const streetNumber = addressComponents.find(
           (c: { types: string[]; long_name: string }) =>
             c.types.includes('street_number'),
@@ -158,19 +156,14 @@ class LocationService {
           .filter(Boolean)
           .join(', ');
 
-        // Use formatted_address as name if it's a place, otherwise use the query
-        const name =
-          result.types?.includes('establishment') ||
-          result.types?.includes('point_of_interest')
-            ? result.formatted_address.split(',')[0]
-            : result.formatted_address.split(',')[0];
+        const name = result.formatted_address.split(',')[0];
 
         return {
           id: result.place_id || `location-${index}`,
           name: name || query,
           fullAddress: result.formatted_address || fullAddress,
           address,
-          city,
+          city: city || name,
           state,
           country,
           zipCode,
@@ -193,32 +186,30 @@ class LocationService {
     longitude: number,
   ): Promise<LocationSearchResult[]> {
     try {
-      // Search for nearby places using a query that typically returns venues
-      const queries = [
-        'restaurant',
-        'hotel',
-        'venue',
-        'event space',
-        'conference center',
-      ];
+      const url =
+        `https://maps.googleapis.com/maps/api/place/textsearch/json` +
+        `?query=event venues near ${latitude},${longitude}` +
+        `&radius=2000` +
+        `&key=${ENV.GOOGLE_MAPS_API_KEY}`;
 
-      const allResults: LocationSearchResult[] = [];
+      const res = await fetch(url);
+      const json = await res.json();
 
-      for (const query of queries) {
-        const results = await this.searchLocations(
-          `${query} near ${latitude},${longitude}`,
-        );
-        allResults.push(...results);
+      if (json.status === 'ZERO_RESULTS') {
+        return [];
       }
 
-      // Remove duplicates and limit results
-      const uniqueResults = Array.from(
-        new Map(
-          allResults.map(item => [item.placeId || item.id, item]),
-        ).values(),
-      ).slice(0, 10);
-
-      return uniqueResults;
+      if (json.status !== 'OK') {
+        throw json;
+      }
+      return json.results.slice(0, 10).map((place: any) => ({
+        id: place.place_id,
+        name: place.name,
+        fullAddress: place.formatted_address,
+        latitude: place.geometry.location.lat,
+        longitude: place.geometry.location.lng,
+        placeId: place.place_id,
+      }));
     } catch (error) {
       console.error('Get nearby venues error:', error);
       return [];

@@ -28,10 +28,10 @@ export const LocationItem: React.FC<LocationItemProps> = ({
     >
       <View style={styles.iconContainer}>
         <FontAwesome6
-          name={icon}
+          name={icon as any}
           size={18}
           color={Colors.textSecondary}
-          iconStyle={iconStyle}
+          iconStyle={iconStyle as 'solid'}
         />
       </View>
       <View style={styles.content}>
@@ -91,4 +91,3 @@ const styles = StyleSheet.create({
     marginLeft: Spacing.sm,
   },
 });
-

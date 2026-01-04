@@ -10,11 +10,20 @@ import {
 } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import FontAwesome6 from '@react-native-vector-icons/fontawesome6';
-import { ScreenLayout, ScreenHeader, LocationItem, CurrentLocationButton } from '../components';
+import {
+  ScreenLayout,
+  ScreenHeader,
+  LocationItem,
+  CurrentLocationButton,
+} from '../components';
 import { Colors } from '../constants/colors';
 import { Spacing, FontSizes, BorderRadius } from '../constants/spacing';
 import { RootStackParamList } from '../types';
-import { locationService, storageService, LocationSearchResult } from '../services';
+import {
+  locationService,
+  storageService,
+  LocationSearchResult,
+} from '../services';
 import { useLocation } from '../context';
 
 type SelectLocationRouteProp = RouteProp<RootStackParamList, 'SelectLocation'>;
@@ -22,14 +31,22 @@ type SelectLocationRouteProp = RouteProp<RootStackParamList, 'SelectLocation'>;
 export const SelectLocationScreen: React.FC = () => {
   const navigation = useNavigation<any>();
   const route = useRoute<SelectLocationRouteProp>();
-  const { location: currentLocation, isLoading: isLocationLoading, refreshLocation, setLocation: updateLocationContext } = useLocation();
-  
+  const {
+    location: currentLocation,
+    isLoading: isLocationLoading,
+    refreshLocation,
+    setLocation: updateLocationContext,
+  } = useLocation();
+
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<LocationSearchResult[]>([]);
-  const [recentSearches, setRecentSearches] = useState<LocationSearchResult[]>([]);
+  const [searchResults, setSearchResults] = useState<LocationSearchResult[]>(
+    [],
+  );
+  const [recentSearches, setRecentSearches] = useState<LocationSearchResult[]>(
+    [],
+  );
   const [nearbyVenues, setNearbyVenues] = useState<LocationSearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
-  const [selectedLocation, setSelectedLocation] = useState<LocationSearchResult | null>(null);
   const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Load recent searches on mount
@@ -52,7 +69,7 @@ export const SelectLocationScreen: React.FC = () => {
 
   // Load nearby venues
   const loadNearbyVenues = async () => {
-    if (currentLocation) {
+    if (currentLocation?.latitude && currentLocation?.longitude) {
       const venues = await locationService.getNearbyVenues(
         currentLocation.latitude,
         currentLocation.longitude,
@@ -76,7 +93,9 @@ export const SelectLocationScreen: React.FC = () => {
     setIsSearching(true);
     searchTimeoutRef.current = setTimeout(async () => {
       try {
-        const results = await locationService.searchLocations(searchQuery.trim());
+        const results = await locationService.searchLocations(
+          searchQuery.trim(),
+        );
         setSearchResults(results);
       } catch (error) {
         console.error('Search error:', error);
@@ -96,12 +115,11 @@ export const SelectLocationScreen: React.FC = () => {
   // Handle location selection
   const handleLocationSelect = useCallback(
     async (location: LocationSearchResult) => {
-      setSelectedLocation(location);
       // Save to recent searches
       await storageService.saveRecentSearch(location);
       // Reload recent searches
       await loadRecentSearches();
-      
+
       // Update location context
       updateLocationContext({
         latitude: location.latitude,
@@ -110,13 +128,13 @@ export const SelectLocationScreen: React.FC = () => {
         state: location.state,
         country: location.country,
       });
-      
+
       // Call the onSelect callback if provided
       const onSelect = route.params?.onSelect;
       if (onSelect) {
         onSelect(location);
       }
-      
+
       // Navigate back
       navigation.goBack();
     },
@@ -133,7 +151,11 @@ export const SelectLocationScreen: React.FC = () => {
     const locationResult: LocationSearchResult = {
       id: 'current-location',
       name: currentLocation.city || 'Current Location',
-      fullAddress: `${currentLocation.city || ''}, ${currentLocation.state || ''}, ${currentLocation.country || ''}`.trim().replace(/^,|,$/g, ''),
+      fullAddress: `${currentLocation.city || ''}, ${
+        currentLocation.state || ''
+      }, ${currentLocation.country || ''}`
+        .trim()
+        .replace(/^,|,$/g, ''),
       city: currentLocation.city,
       state: currentLocation.state,
       country: currentLocation.country,
@@ -158,7 +180,10 @@ export const SelectLocationScreen: React.FC = () => {
   );
 
   // Render location list
-  const renderLocationList = (locations: LocationSearchResult[], icon?: string) => (
+  const renderLocationList = (
+    locations: LocationSearchResult[],
+    icon?: string,
+  ) => (
     <View>
       {locations.map((location, index) => (
         <LocationItem
@@ -176,14 +201,8 @@ export const SelectLocationScreen: React.FC = () => {
   const showNearbyVenues = !showSearchResults && nearbyVenues.length > 0;
 
   return (
-    <ScreenLayout backgroundColor={Colors.background}>
-      <ScreenHeader
-        title="Select Location"
-        rightAction={{
-          text: 'Cancel',
-          onPress: () => navigation.goBack(),
-        }}
-      />
+    <ScreenLayout backgroundColor={Colors.backgroundLight}>
+      <ScreenHeader title="Select Location" />
 
       {/* Search Bar */}
       <View style={styles.searchContainer}>
@@ -267,42 +286,6 @@ export const SelectLocationScreen: React.FC = () => {
             {renderLocationList(nearbyVenues, 'map-pin')}
           </View>
         )}
-
-        {/* Map Preview Placeholder */}
-        {selectedLocation && (
-          <View style={styles.mapPreview}>
-            <View style={styles.mapPlaceholder}>
-              <FontAwesome6
-                name="map"
-                size={40}
-                color={Colors.textSecondary}
-                iconStyle="solid"
-              />
-              <Text style={styles.mapPlaceholderText}>Map Preview</Text>
-            </View>
-            <View style={styles.selectedLocationCard}>
-              <Text style={styles.selectedLocationName}>
-                {selectedLocation.name}
-              </Text>
-              <Text style={styles.selectedLocationAddress}>
-                {selectedLocation.fullAddress}
-              </Text>
-              <TouchableOpacity
-                style={styles.confirmButton}
-                onPress={() => handleLocationSelect(selectedLocation)}
-                activeOpacity={0.8}
-              >
-                <Text style={styles.confirmButtonText}>Confirm</Text>
-                <FontAwesome6
-                  name="check"
-                  size={16}
-                  color={Colors.white}
-                  iconStyle="solid"
-                />
-              </TouchableOpacity>
-            </View>
-          </View>
-        )}
       </ScrollView>
     </ScreenLayout>
   );
@@ -316,7 +299,7 @@ const styles = StyleSheet.create({
   searchInputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.backgroundLight,
+    backgroundColor: Colors.background,
     borderRadius: BorderRadius.lg,
     paddingHorizontal: Spacing.md,
     height: 50,
@@ -436,4 +419,3 @@ const styles = StyleSheet.create({
     color: Colors.white,
   },
 });
-

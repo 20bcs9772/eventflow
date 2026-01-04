@@ -112,11 +112,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: Spacing.xl,
   },
-  iconContainer: {
-    alignItems: 'center',
-    marginTop: Spacing.xl,
-    marginBottom: Spacing.xl,
-  },
   iconCircle: {
     width: 120,
     height: 120,
