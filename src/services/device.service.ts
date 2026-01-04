@@ -7,7 +7,15 @@ class DeviceService {
     const response = await apiService.post(API_ENDPOINTS.DEVICES.REGISTER, {
       userId,
       fcmToken,
-      deviceType: Platform.OS.toUpperCase()
+      deviceType: Platform.OS.toUpperCase(),
+    });
+    return response;
+  }
+
+  async updateFcmToken(id: string, fcmToken: string) {
+    const response = await apiService.post(API_ENDPOINTS.DEVICES.UPDATE(id), {
+      fcmToken,
+      deviceType: Platform.OS.toUpperCase(),
     });
     return response;
   }

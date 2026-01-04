@@ -12,9 +12,17 @@ import React, {
   useEffect,
   useRef,
 } from 'react';
-import { authService, apiService, deviceService, AuthUser, BackendUser } from '../services';
+import {
+  authService,
+  apiService,
+  deviceService,
+  AuthUser,
+  BackendUser,
+} from '../services';
 import { API_ENDPOINTS } from '../config';
 import { requestPermission, getFcmToken } from '../notifications';
+import { getMessaging, onTokenRefresh } from '@react-native-firebase/messaging';
+import { getApp } from '@react-native-firebase/app';
 
 interface AuthContextType {
   // State
@@ -63,6 +71,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [backendUser, setBackendUser] = useState<BackendUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [deviceId, setDeviceId] = useState('');
 
   // Track if we're currently syncing to prevent duplicate requests
   const isSyncingRef = useRef(false);
@@ -95,8 +104,23 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       if (!response.success) {
         console.error('Failed to register FCM token:', response.error);
       }
+      setDeviceId(response.data.id);
     } catch (error) {
       console.error('Error registering FCM token:', error);
+    }
+  };
+
+  const updateFcmToken = async (token: string) => {
+    try {
+      if (!deviceId || deviceId === '') {
+        return;
+      }
+      const response = await deviceService.updateFcmToken(deviceId, token);
+      if (!response.success) {
+        console.error('Failed to update FCM token:', response.error);
+      }
+    } catch (error) {
+      console.error('Error updating FCM token:', error);
     }
   };
 
@@ -129,7 +153,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             console.error('FCM token registration failed:', err);
           });
         }
-        
+
         return response.data;
       }
       return null;
@@ -179,6 +203,24 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     return () => unsubscribe();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (!backendUser?.id) return;
+
+    const unsubscribe = onTokenRefresh(
+      getMessaging(getApp()),
+      async newToken => {
+        try {
+          await updateFcmToken(newToken);
+        } catch (err) {
+          console.error('FCM token refresh failed', err);
+        }
+      },
+    );
+
+    return unsubscribe;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [backendUser?.id]);
 
   /**
    * Sign up with email
