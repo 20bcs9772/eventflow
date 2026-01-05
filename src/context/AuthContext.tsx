@@ -23,6 +23,7 @@ import { API_ENDPOINTS } from '../config';
 import { requestPermission, getFcmToken } from '../notifications';
 import { getMessaging, onTokenRefresh } from '@react-native-firebase/messaging';
 import { getApp } from '@react-native-firebase/app';
+import { getUniqueId } from 'react-native-device-info';
 
 interface AuthContextType {
   // State
@@ -72,6 +73,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [backendUser, setBackendUser] = useState<BackendUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [deviceId, setDeviceId] = useState('');
+  const pendingTokenRef = useRef<string | null>(null);
 
   // Track if we're currently syncing to prevent duplicate requests
   const isSyncingRef = useRef(false);
@@ -100,11 +102,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         return;
       }
 
-      const response = await deviceService.saveFcmToken(userId, fcmToken);
+      if (!deviceId) return;
+
+      const response = await deviceService.saveFcmToken(
+        userId,
+        fcmToken,
+        deviceId,
+      );
       if (!response.success) {
         console.error('Failed to register FCM token:', response.error);
       }
-      setDeviceId(response.data.id);
     } catch (error) {
       console.error('Error registering FCM token:', error);
     }
@@ -112,10 +119,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const updateFcmToken = async (token: string) => {
     try {
-      if (!deviceId || deviceId === '') {
+      if (!deviceId || deviceId === '' || !backendUser?.id) {
+        pendingTokenRef.current = token;
         return;
       }
-      const response = await deviceService.updateFcmToken(deviceId, token);
+      const response = await deviceService.updateFcmToken(
+        deviceId,
+        token,
+        backendUser.id,
+      );
       if (!response.success) {
         console.error('Failed to update FCM token:', response.error);
       }
@@ -205,6 +217,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, []);
 
   useEffect(() => {
+    getUniqueId().then(setDeviceId);
+  }, []);
+
+  useEffect(() => {
+    if (deviceId && backendUser?.id && pendingTokenRef.current) {
+      updateFcmToken(pendingTokenRef.current);
+      pendingTokenRef.current = null;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [deviceId, backendUser?.id]);
+
+  useEffect(() => {
     if (!backendUser?.id) return;
 
     const unsubscribe = onTokenRefresh(
@@ -217,7 +241,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         }
       },
     );
-
     return unsubscribe;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [backendUser?.id]);
@@ -340,10 +363,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setIsLoading(true);
     try {
       const result = await authService.signOut();
+      if (deviceId && backendUser?.id) {
+        await deviceService.deleteFcmToken(deviceId, backendUser.id);
+      }
 
       if (result.success) {
         setUser(null);
         setBackendUser(null);
+        setDeviceId('');
         lastSyncedUidRef.current = null;
       }
 

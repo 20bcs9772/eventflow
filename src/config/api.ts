@@ -52,5 +52,6 @@ export const API_ENDPOINTS = {
   DEVICES: {
     REGISTER: '/api/devices',
     UPDATE: (id: string) => `/api/devices/${id}`,
+    DELETE: (id: string) => `/api/devices/${id}`,
   },
 };
