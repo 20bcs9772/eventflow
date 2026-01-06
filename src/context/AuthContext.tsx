@@ -102,12 +102,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         return;
       }
 
-      if (!deviceId) return;
+      const deviceID = await getUniqueId();
+      setDeviceId(deviceID);
 
       const response = await deviceService.saveFcmToken(
         userId,
         fcmToken,
-        deviceId,
+        deviceID,
       );
       if (!response.success) {
         console.error('Failed to register FCM token:', response.error);
@@ -214,10 +215,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     return () => unsubscribe();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  useEffect(() => {
-    getUniqueId().then(setDeviceId);
   }, []);
 
   useEffect(() => {

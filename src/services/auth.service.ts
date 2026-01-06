@@ -24,6 +24,7 @@ import {
   signInWithCredential,
   signInWithEmailAndPassword,
   signOut as signOff,
+  updateProfile,
 } from '@react-native-firebase/auth';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import { appleAuth } from '@invertase/react-native-apple-authentication';
@@ -141,7 +142,7 @@ class AuthService {
 
       // Update display name if provided
       if (name && credential.user) {
-        await credential.user.updateProfile({ displayName: name });
+        await updateProfile(credential.user, { displayName: name });
       }
 
       await auth.currentUser?.sendEmailVerification();
@@ -281,7 +282,7 @@ class AuthService {
           .join(' ');
 
         if (displayName) {
-          await credential.user.updateProfile({ displayName });
+          await updateProfile(credential.user, { displayName });
         }
       }
 
