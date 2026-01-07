@@ -14,7 +14,7 @@ class DeviceService {
   }
 
   async updateFcmToken(id: string, fcmToken: string, userId: string) {
-    const response = await apiService.post(API_ENDPOINTS.DEVICES.UPDATE(id), {
+    const response = await apiService.patch(API_ENDPOINTS.DEVICES.UPDATE(id), {
       fcmToken,
       userId,
     });
