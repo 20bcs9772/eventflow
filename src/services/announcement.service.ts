@@ -30,6 +30,34 @@ export interface Announcement {
   };
 }
 
+export interface UserAnnouncementEvent {
+  event: {
+    id: string;
+    name: string;
+    startDate: string | Date;
+    endDate: string | Date;
+    announcements: Array<{
+      id: string;
+      title: string;
+      message: string;
+      createdAt: string | Date;
+      senderId: string;
+    }>;
+  };
+}
+
+export interface FlattenedAnnouncement {
+  id: string;
+  title: string;
+  message: string;
+  createdAt: string | Date;
+  senderId: string;
+  eventId: string;
+  eventName: string;
+  eventStartDate: string | Date;
+  eventEndDate: string | Date;
+}
+
 interface ServiceResponse<T> {
   success: boolean;
   data?: T;
@@ -138,6 +166,54 @@ class AnnouncementService {
           success: false,
           message: error.message || 'Failed to fetch announcements',
           error: 'FETCH_ANNOUNCEMENTS_ERROR',
+        };
+      }
+    });
+  }
+
+  /**
+   * Get user's announcements (all events with their announcements)
+   */
+  async getUserAnnouncements(
+    useCache = true,
+  ): Promise<ServiceResponse<UserAnnouncementEvent[]>> {
+    const cacheKey = 'announcements:user';
+
+    // Check cache
+    if (useCache) {
+      const cached = this.getCached(cacheKey);
+      if (cached) {
+        return { success: true, data: cached };
+      }
+    }
+
+    return this.deduplicateRequest(cacheKey, async () => {
+      try {
+        const response = await apiService.get<UserAnnouncementEvent[]>(
+          API_ENDPOINTS.ANNOUNCEMENTS.USER,
+        );
+
+        if (response.success && response.data) {
+          if (useCache) {
+            this.setCache(cacheKey, response.data);
+          }
+          return {
+            success: true,
+            data: response.data,
+          };
+        }
+
+        return {
+          success: false,
+          message: response.message || 'Failed to fetch announcements',
+          error: response.error,
+        };
+      } catch (error: any) {
+        console.error('Error fetching user announcements:', error);
+        return {
+          success: false,
+          message: error.message || 'Failed to fetch announcements',
+          error: 'FETCH_USER_ANNOUNCEMENTS_ERROR',
         };
       }
     });

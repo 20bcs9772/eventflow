@@ -47,6 +47,7 @@ export const API_ENDPOINTS = {
   ANNOUNCEMENTS: {
     LIST: (eventId: string) => `/api/announcements/event/${eventId}`,
     CREATE: '/api/announcements',
+    USER: '/api/announcements',
   },
   // Devices
   DEVICES: {
