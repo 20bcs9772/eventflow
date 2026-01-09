@@ -146,8 +146,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = () => {
                   {isLocationLoading
                     ? 'Loading...'
                     : location
-                      ? location.city || 'Unknown'
-                      : 'Select Location'}
+                    ? location.city || 'Unknown'
+                    : 'Select Location'}
                 </Text>
                 <Text style={styles.chevron}>
                   <FontAwesome6 name="caret-down" size={25} iconStyle="solid" />
@@ -157,10 +157,10 @@ export const HomeScreen: React.FC<HomeScreenProps> = () => {
                 {isLocationLoading
                   ? ''
                   : location
-                    ? `${location.state || ''}${
-                        location.state && location.country ? ', ' : ''
-                      }${location.country || ''}`
-                    : ''}
+                  ? `${location.state || ''}${
+                      location.state && location.country ? ', ' : ''
+                    }${location.country || ''}`
+                  : ''}
               </Text>
             </View>
           </TouchableOpacity>
@@ -292,9 +292,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = () => {
                 <Text style={styles.sectionTitle}>Discover Events</Text>
                 <TouchableOpacity
                   style={styles.seeAllButton}
-                  onPress={() =>
-                    navigation.navigate('SearchResults', { query: '' })
-                  }
+                  onPress={() => navigation.navigate('DiscoverEvents')}
                   activeOpacity={0.7}
                 >
                   <Text style={styles.seeAllText}>See All</Text>

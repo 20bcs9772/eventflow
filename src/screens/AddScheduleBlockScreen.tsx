@@ -88,10 +88,14 @@ export const AddScheduleBlockScreen: React.FC = () => {
     navigation.goBack();
   };
 
+  const isEditing = !!initialBlock?.id;
+  const screenTitle = isEditing ? 'Edit Schedule Block' : 'Add Schedule Block';
+  const buttonTitle = isEditing ? 'Update Block' : 'Save Block';
+
   return (
     <ScreenLayout backgroundColor={Colors.backgroundLight}>
       <ScreenHeader
-        title="Add Schedule Block"
+        title={screenTitle}
         backIcon="arrow-left"
       />
       <View style={styles.container}>
@@ -226,7 +230,7 @@ export const AddScheduleBlockScreen: React.FC = () => {
 
         {/* Save Button */}
         <FloatingActionButton
-          title="Save Block"
+          title={buttonTitle}
           onPress={handleSave}
           disabled={!title}
         />
@@ -326,9 +330,53 @@ const TimePickerModal: React.FC<TimePickerModalProps> = ({
   onClose,
   onConfirm,
 }) => {
-  const [selectedHour, setSelectedHour] = useState(hour);
+  // Ensure hour is in 01-12 format for picker
+  const normalizeHour = (h: string): string => {
+    const hourNum = parseInt(h, 10);
+    // Handle edge cases
+    if (hourNum === 0) return '12';
+    if (hourNum > 12) {
+      // Convert from 24-hour to 12-hour
+      return String(hourNum - 12).padStart(2, '0');
+    }
+    // Already in 1-12 range, ensure it's padded
+    return String(hourNum).padStart(2, '0');
+  };
+
+  const [selectedHour, setSelectedHour] = useState(() => normalizeHour(hour));
   const [selectedMinute, setSelectedMinute] = useState(minute);
-  const [selectedPeriod, setSelectedPeriod] = useState(period);
+  const [selectedPeriod, setSelectedPeriod] = useState<'AM' | 'PM'>(period);
+
+  const hourScrollRef = React.useRef<ScrollView>(null);
+  const minuteScrollRef = React.useRef<ScrollView>(null);
+
+  // Update state when props change (especially when modal opens)
+  React.useEffect(() => {
+    if (visible) {
+      const normalized = normalizeHour(hour);
+      setSelectedHour(normalized);
+      setSelectedMinute(minute);
+      setSelectedPeriod(period);
+
+      // Scroll to selected items after a short delay to ensure layout is complete
+      setTimeout(() => {
+        const hourIndex = parseInt(normalized, 10) - 1;
+        const minuteIndex = ['00', '15', '30', '45'].indexOf(minute);
+        if (hourScrollRef.current && hourIndex >= 0) {
+          hourScrollRef.current.scrollTo({
+            y: hourIndex * 56, // Approximate item height
+            animated: false,
+          });
+        }
+        if (minuteScrollRef.current && minuteIndex >= 0) {
+          minuteScrollRef.current.scrollTo({
+            y: minuteIndex * 56,
+            animated: false,
+          });
+        }
+      }, 100);
+    }
+  }, [visible, hour, minute, period]);
 
   const generateHours = () => {
     return Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, '0'));
@@ -363,7 +411,13 @@ const TimePickerModal: React.FC<TimePickerModalProps> = ({
             <Text style={timePickerStyles.title}>Select Time</Text>
           </View>
           <View style={timePickerStyles.pickerContainer}>
-            <ScrollView style={timePickerStyles.pickerColumn}>
+            <ScrollView
+              ref={hourScrollRef}
+              style={timePickerStyles.pickerColumn}
+              contentContainerStyle={timePickerStyles.pickerContent}
+              showsVerticalScrollIndicator={false}
+              nestedScrollEnabled={true}
+            >
               {hours.map((h) => (
                 <TouchableOpacity
                   key={h}
@@ -372,6 +426,7 @@ const TimePickerModal: React.FC<TimePickerModalProps> = ({
                     selectedHour === h && timePickerStyles.pickerItemSelected,
                   ]}
                   onPress={() => setSelectedHour(h)}
+                  activeOpacity={0.7}
                 >
                   <Text
                     style={[
@@ -385,7 +440,13 @@ const TimePickerModal: React.FC<TimePickerModalProps> = ({
               ))}
             </ScrollView>
             <Text style={timePickerStyles.separator}>:</Text>
-            <ScrollView style={timePickerStyles.pickerColumn}>
+            <ScrollView
+              ref={minuteScrollRef}
+              style={timePickerStyles.pickerColumn}
+              contentContainerStyle={timePickerStyles.pickerContent}
+              showsVerticalScrollIndicator={false}
+              nestedScrollEnabled={true}
+            >
               {minutes.map((m) => (
                 <TouchableOpacity
                   key={m}
@@ -394,6 +455,7 @@ const TimePickerModal: React.FC<TimePickerModalProps> = ({
                     selectedMinute === m && timePickerStyles.pickerItemSelected,
                   ]}
                   onPress={() => setSelectedMinute(m)}
+                  activeOpacity={0.7}
                 >
                   <Text
                     style={[
@@ -406,18 +468,19 @@ const TimePickerModal: React.FC<TimePickerModalProps> = ({
                 </TouchableOpacity>
               ))}
             </ScrollView>
-            <View style={timePickerStyles.periodPillContainer}>
+            <View style={timePickerStyles.periodContainer}>
               <TouchableOpacity
                 style={[
-                  timePickerStyles.periodPill,
-                  selectedPeriod === 'AM' && timePickerStyles.periodPillActive,
+                  timePickerStyles.periodButton,
+                  selectedPeriod === 'AM' && timePickerStyles.periodButtonSelected,
                 ]}
                 onPress={() => setSelectedPeriod('AM')}
+                activeOpacity={0.7}
               >
                 <Text
                   style={[
-                    timePickerStyles.periodPillText,
-                    selectedPeriod === 'AM' && timePickerStyles.periodPillTextActive,
+                    timePickerStyles.periodText,
+                    selectedPeriod === 'AM' && timePickerStyles.periodTextSelected,
                   ]}
                 >
                   AM
@@ -425,15 +488,16 @@ const TimePickerModal: React.FC<TimePickerModalProps> = ({
               </TouchableOpacity>
               <TouchableOpacity
                 style={[
-                  timePickerStyles.periodPill,
-                  selectedPeriod === 'PM' && timePickerStyles.periodPillActive,
+                  timePickerStyles.periodButton,
+                  selectedPeriod === 'PM' && timePickerStyles.periodButtonSelected,
                 ]}
                 onPress={() => setSelectedPeriod('PM')}
+                activeOpacity={0.7}
               >
                 <Text
                   style={[
-                    timePickerStyles.periodPillText,
-                    selectedPeriod === 'PM' && timePickerStyles.periodPillTextActive,
+                    timePickerStyles.periodText,
+                    selectedPeriod === 'PM' && timePickerStyles.periodTextSelected,
                   ]}
                 >
                   PM
@@ -492,6 +556,9 @@ const timePickerStyles = StyleSheet.create({
   pickerColumn: {
     maxHeight: 200,
   },
+  pickerContent: {
+    paddingVertical: 80,
+  },
   pickerItem: {
     padding: Spacing.md,
     minWidth: 60,
@@ -514,31 +581,29 @@ const timePickerStyles = StyleSheet.create({
     color: Colors.text,
     marginHorizontal: Spacing.sm,
   },
-  periodPillContainer: {
+  periodContainer: {
     marginLeft: Spacing.md,
-    flexDirection: 'row',
-    backgroundColor: '#F3F4F6',
-    borderRadius: 20,
-    padding: 4,
-    gap: 4,
+    gap: Spacing.sm,
   },
-  periodPill: {
-    flex: 1,
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 16,
+  periodButton: {
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    borderRadius: BorderRadius.md,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    minWidth: 60,
     alignItems: 'center',
-    justifyContent: 'center',
   },
-  periodPillActive: {
+  periodButtonSelected: {
     backgroundColor: Colors.primary,
+    borderColor: Colors.primary,
   },
-  periodPillText: {
-    fontSize: FontSizes.sm,
+  periodText: {
+    fontSize: FontSizes.md,
+    color: Colors.text,
     fontWeight: '600',
-    color: '#6B7280',
   },
-  periodPillTextActive: {
+  periodTextSelected: {
     color: Colors.white,
   },
   actions: {

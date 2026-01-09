@@ -18,6 +18,8 @@ import {
   JoinedEventsScreen,
   ManageEventsScreen,
   SelectLocationScreen,
+  DiscoverEventsScreen,
+  CreateAnnouncementScreen,
 } from '../screens';
 import { MainTabNavigator } from './MainTabNavigator';
 import { RootStackParamList } from '../types';
@@ -32,7 +34,13 @@ import {
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export const AppNavigator = () => {
-  const { isAuthenticated, isLoading, backendUser, getPendingJoinAction, clearPendingJoinAction } = useAuth();
+  const {
+    isAuthenticated,
+    isLoading,
+    backendUser,
+    getPendingJoinAction,
+    clearPendingJoinAction,
+  } = useAuth();
   const navigationRef = useRef<any>(null);
   const hasHandledPendingJoinRef = useRef(false);
 
@@ -55,14 +63,20 @@ export const AppNavigator = () => {
     } else if (!isAuthenticated) {
       hasHandledPendingJoinRef.current = false;
     }
-  }, [isAuthenticated, isLoading, backendUser, getPendingJoinAction, clearPendingJoinAction]);
+  }, [
+    isAuthenticated,
+    isLoading,
+    backendUser,
+    getPendingJoinAction,
+    clearPendingJoinAction,
+  ]);
 
   // Setup Firebase Cloud Messaging handlers
   useEffect(() => {
     let unsubscribeForeground: (() => void) | undefined;
     let unsubscribeOpened: (() => void) | undefined;
     let retryTimeout: NodeJS.Timeout | undefined;
-    
+
     const setupFCMHandlers = () => {
       unsubscribeForeground = setupForegroundMessageHandler(navigationRef);
       unsubscribeOpened = setupNotificationOpenedHandler(navigationRef);
@@ -73,9 +87,9 @@ export const AppNavigator = () => {
         });
       }
     };
-    
+
     setupFCMHandlers();
-    
+
     if (!navigationRef.current) {
       retryTimeout = setTimeout(() => {
         if (navigationRef.current) {
@@ -85,7 +99,7 @@ export const AppNavigator = () => {
         }
       }, 1000);
     }
-    
+
     return () => {
       if (retryTimeout) clearTimeout(retryTimeout);
       if (unsubscribeForeground) unsubscribeForeground();
@@ -202,7 +216,18 @@ export const AppNavigator = () => {
                 />
               )}
             </Stack.Screen>
-            <Stack.Screen name="SelectLocation" component={SelectLocationScreen} />
+            <Stack.Screen
+              name="SelectLocation"
+              component={SelectLocationScreen}
+            />
+            <Stack.Screen
+              name="DiscoverEvents"
+              component={DiscoverEventsScreen}
+            />
+            <Stack.Screen
+              name="CreateAnnouncement"
+              component={CreateAnnouncementScreen}
+            />
           </>
         )}
       </Stack.Navigator>

@@ -634,25 +634,44 @@ export const EventDetailsScreen = () => {
         </View>
       </Animated.ScrollView>
 
-      {/* Floating Join Button */}
-      <FloatingActionButton
-        title={
-          isJoining
-            ? hasJoined
-              ? 'Leaving...'
-              : 'Joining...'
-            : hasJoined
-            ? 'Leave Event'
-            : 'Join Event'
-        }
-        onPress={handleJoinEvent}
-        disabled={isJoining}
-        icon={
-          isJoining ? (
-            <ActivityIndicator color={Colors.white} size="small" />
-          ) : undefined
-        }
-      />
+      {/* Floating Action Button - Create Announcement for Admin, Join/Leave for Guests */}
+      {eventData && backendUser && eventData.adminId === backendUser.id ? (
+        <FloatingActionButton
+          title="Create Announcement"
+          onPress={() => {
+            navigation.navigate('CreateAnnouncement', {
+              eventId: eventData.id,
+            });
+          }}
+          icon={
+            <FontAwesome6
+              name="bullhorn"
+              size={18}
+              color={Colors.white}
+              iconStyle="solid"
+            />
+          }
+        />
+      ) : (
+        <FloatingActionButton
+          title={
+            isJoining
+              ? hasJoined
+                ? 'Leaving...'
+                : 'Joining...'
+              : hasJoined
+              ? 'Leave Event'
+              : 'Join Event'
+          }
+          onPress={handleJoinEvent}
+          disabled={isJoining}
+          icon={
+            isJoining ? (
+              <ActivityIndicator color={Colors.white} size="small" />
+            ) : undefined
+          }
+        />
+      )}
     </View>
   );
 };

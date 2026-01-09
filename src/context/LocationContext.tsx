@@ -5,12 +5,7 @@
  * Handles location permission requests and stores the current location.
  */
 
-import React, {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-} from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { locationService } from '../services';
 
 type Coordinates = {
@@ -136,9 +131,10 @@ export const LocationProvider: React.FC<LocationProviderProps> = ({
   };
 
   return (
-    <LocationContext.Provider value={value}>{children}</LocationContext.Provider>
+    <LocationContext.Provider value={value}>
+      {children}
+    </LocationContext.Provider>
   );
 };
 
 export default LocationContext;
-

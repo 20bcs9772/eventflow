@@ -1,5 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+} from 'react-native';
 import { eventService } from '../../services';
 import { Colors } from '../../constants/colors';
 import { Spacing, FontSizes } from '../../constants/spacing';
@@ -7,7 +13,10 @@ import FontAwesome6 from '@react-native-vector-icons/fontawesome6';
 import { useNavigation } from '@react-navigation/native';
 
 // Map event types to icons and colors
-const eventTypeConfig: Record<string, { icon: string; gradient: [string, string] }> = {
+const eventTypeConfig: Record<
+  string,
+  { icon: string; gradient: [string, string] }
+> = {
   WEDDING: {
     icon: 'ring',
     gradient: ['#F3E8FF', '#E9D5FF'], // Purple gradient
@@ -46,7 +55,7 @@ export const EventTypeCard = () => {
   }, []);
 
   const handleTypePress = (type: string) => {
-    navigation.navigate('SearchResults', { query: type });
+    navigation.navigate('DiscoverEvents', { eventType: type });
   };
 
   const getTypeConfig = (type: string) => {
@@ -56,15 +65,16 @@ export const EventTypeCard = () => {
 
   return (
     <View style={styles.container}>
-      <ScrollView 
-        horizontal 
+      <ScrollView
+        horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
         {eventTypes.map((item, index) => {
           const config = getTypeConfig(item);
-          const displayName = item.charAt(0) + item.slice(1).toLowerCase().replace(/_/g, ' ');
-          
+          const displayName =
+            item.charAt(0) + item.slice(1).toLowerCase().replace(/_/g, ' ');
+
           return (
             <TouchableOpacity
               key={index}
@@ -72,7 +82,12 @@ export const EventTypeCard = () => {
               onPress={() => handleTypePress(item)}
               activeOpacity={0.8}
             >
-              <View style={[styles.cardContent, { backgroundColor: config.gradient[0] }]}>
+              <View
+                style={[
+                  styles.cardContent,
+                  { backgroundColor: config.gradient[0] },
+                ]}
+              >
                 <View style={styles.iconWrapper}>
                   <FontAwesome6
                     name={config.icon as any}

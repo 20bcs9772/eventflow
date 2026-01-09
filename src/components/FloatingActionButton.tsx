@@ -9,7 +9,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { Colors } from '../constants/colors';
-import { Spacing, FontSizes, BorderRadius } from '../constants/spacing';
+import { Spacing, FontSizes } from '../constants/spacing';
 
 interface FloatingActionButtonProps {
   title: string;
@@ -90,7 +90,9 @@ export const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
         activeOpacity={0.8}
       >
         {loading ? (
-          <ActivityIndicator color={variant === 'secondary' ? Colors.primary : Colors.white} />
+          <ActivityIndicator
+            color={variant === 'secondary' ? Colors.primary : Colors.white}
+          />
         ) : (
           <>
             {icon}
@@ -123,4 +125,3 @@ const styles = StyleSheet.create({
     opacity: 0.95,
   },
 });
-

@@ -22,7 +22,7 @@ class DeviceService {
   }
 
   async deleteFcmToken(id: string, userId: string) {
-    const response = await apiService.post(API_ENDPOINTS.DEVICES.DELETE(id), {
+    const response = await apiService.delete(API_ENDPOINTS.DEVICES.DELETE(id), {
       userId,
     });
     return response;

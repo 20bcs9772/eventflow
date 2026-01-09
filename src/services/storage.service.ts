@@ -11,19 +11,16 @@ class StorageService {
   async saveRecentSearch(location: LocationSearchResult): Promise<void> {
     try {
       const recentSearches = await this.getRecentSearches();
-      
+
       // Remove if already exists (to move to top)
       const filtered = recentSearches.filter(
         item => item.id !== location.id && item.placeId !== location.placeId,
       );
-      
+
       // Add to beginning
       const updated = [location, ...filtered].slice(0, MAX_RECENT_SEARCHES);
-      
-      await AsyncStorage.setItem(
-        RECENT_SEARCHES_KEY,
-        JSON.stringify(updated),
-      );
+
+      await AsyncStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(updated));
     } catch (error) {
       console.error('Error saving recent search:', error);
     }
@@ -63,10 +60,7 @@ class StorageService {
       const filtered = recentSearches.filter(
         item => item.id !== locationId && item.placeId !== locationId,
       );
-      await AsyncStorage.setItem(
-        RECENT_SEARCHES_KEY,
-        JSON.stringify(filtered),
-      );
+      await AsyncStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(filtered));
     } catch (error) {
       console.error('Error removing recent search:', error);
     }
@@ -75,4 +69,3 @@ class StorageService {
 
 export const storageService = new StorageService();
 export default storageService;
-

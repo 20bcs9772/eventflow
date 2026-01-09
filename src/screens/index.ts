@@ -17,3 +17,5 @@ export { JoinEventScreen } from './JoinEventScreen';
 export { JoinedEventsScreen } from './JoinedEventsScreen';
 export { ManageEventsScreen } from './ManageEventsScreen';
 export { SelectLocationScreen } from './SelectLocationScreen';
+export { DiscoverEventsScreen } from './DiscoverEventsScreen';
+export { CreateAnnouncementScreen } from './CreateAnnouncementScreen';

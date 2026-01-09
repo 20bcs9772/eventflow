@@ -1,6 +1,6 @@
 /**
  * Announcement Service
- * 
+ *
  * Handles all announcement-related API operations.
  * Provides methods for creating and fetching announcements.
  */
@@ -13,6 +13,7 @@ export interface CreateAnnouncementInput {
   eventId: string;
   title: string;
   message: string;
+  senderId?: string;
 }
 
 export interface Announcement {
@@ -79,7 +80,7 @@ class AnnouncementService {
    */
   private async deduplicateRequest<T>(
     key: string,
-    requestFn: () => Promise<ServiceResponse<T>>
+    requestFn: () => Promise<ServiceResponse<T>>,
   ): Promise<ServiceResponse<T>> {
     if (this.pendingRequests.has(key)) {
       return this.pendingRequests.get(key)!;
@@ -98,7 +99,7 @@ class AnnouncementService {
    */
   async getEventAnnouncements(
     eventId: string,
-    useCache = true
+    useCache = true,
   ): Promise<ServiceResponse<Announcement[]>> {
     const cacheKey = `announcements:event:${eventId}`;
 
@@ -113,7 +114,7 @@ class AnnouncementService {
     return this.deduplicateRequest(cacheKey, async () => {
       try {
         const response = await apiService.get<Announcement[]>(
-          API_ENDPOINTS.ANNOUNCEMENTS.LIST(eventId)
+          API_ENDPOINTS.ANNOUNCEMENTS.LIST(eventId),
         );
 
         if (response.success && response.data) {
@@ -146,12 +147,17 @@ class AnnouncementService {
    * Create a new announcement
    */
   async createAnnouncement(
-    data: CreateAnnouncementInput
+    data: CreateAnnouncementInput & { senderId?: string },
   ): Promise<ServiceResponse<Announcement>> {
     try {
+      const requestData = {
+        ...data,
+        ...(data.senderId && { senderId: data.senderId }),
+      };
+
       const response = await apiService.post<Announcement>(
         API_ENDPOINTS.ANNOUNCEMENTS.CREATE,
-        data
+        requestData,
       );
 
       if (response.success && response.data) {
@@ -181,4 +187,3 @@ class AnnouncementService {
 
 export const announcementService = new AnnouncementService();
 export default announcementService;
-
