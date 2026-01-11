@@ -155,7 +155,7 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
           <View style={styles.headerContainer}>
             <Text style={styles.title}>Create Account</Text>
             <Text style={styles.subtitle}>
-              Sign up to get started with EventFlow
+              Sign up to get started with Hap
             </Text>
           </View>
 

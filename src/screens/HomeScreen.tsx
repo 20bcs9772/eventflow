@@ -150,7 +150,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = () => {
                     : 'Select Location'}
                 </Text>
                 <Text style={styles.chevron}>
-                  <FontAwesome6 name="caret-down" size={25} iconStyle="solid" />
+                  <FontAwesome6 name="caret-down" size={18} iconStyle="solid" />
                 </Text>
               </View>
               <Text style={styles.locationDetails}>
@@ -189,7 +189,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = () => {
             >
               <View style={styles.iconCircle}>
                 <FontAwesome6
-                  name="expand"
+                  name="qrcode"
                   size={18}
                   iconStyle="solid"
                   color={Colors.primary}

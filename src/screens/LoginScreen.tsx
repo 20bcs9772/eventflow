@@ -156,7 +156,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
           <View style={styles.headerContainer}>
             <Text style={styles.title}>Welcome Back</Text>
             <Text style={styles.subtitle}>
-              Sign in to continue to EventFlow
+              Sign in to continue to Hap
             </Text>
           </View>
 
