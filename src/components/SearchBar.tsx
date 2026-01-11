@@ -9,6 +9,7 @@ interface SearchBarProps {
   value?: string;
   onChangeText?: (text: string) => void;
   onFilterPress?: () => void;
+  onSubmit?: () => void;
 }
 
 export const SearchBar: React.FC<SearchBarProps> = ({
@@ -16,6 +17,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
   value,
   onChangeText,
   onFilterPress,
+  onSubmit,
 }) => {
   return (
     <View style={styles.container}>
@@ -26,6 +28,8 @@ export const SearchBar: React.FC<SearchBarProps> = ({
           placeholderTextColor={Colors.textLight}
           value={value}
           onChangeText={onChangeText}
+          onSubmitEditing={onSubmit}
+          returnKeyType="search"
         />
         {onFilterPress && (
           <TouchableOpacity
@@ -33,7 +37,12 @@ export const SearchBar: React.FC<SearchBarProps> = ({
             onPress={onFilterPress}
             activeOpacity={0.7}
           >
-            <FontAwesome6 name="filter" iconStyle="solid" size={15} />
+            <FontAwesome6
+              name="filter"
+              iconStyle="solid"
+              size={15}
+              color={Colors.white}
+            />
           </TouchableOpacity>
         )}
       </View>
@@ -48,10 +57,12 @@ const styles = StyleSheet.create({
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.backgroundLight,
-    borderRadius: BorderRadius.md,
-    paddingHorizontal: Spacing.md,
+    backgroundColor: Colors.background,
+    borderRadius: 50,
+    paddingHorizontal: Spacing.sm,
     height: 55,
+    borderWidth: 1,
+    borderColor: Colors.textLight,
   },
   input: {
     flex: 1,

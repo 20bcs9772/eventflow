@@ -1,5 +1,6 @@
 export interface Event {
-  id: string;
+  id?: string;
+  shortCode?: string;
   title: string;
   date: string;
   location: string;
@@ -8,6 +9,9 @@ export interface Event {
   attendeesAvatars?: string[];
   startTime?: string;
   endTime?: string;
+  coverImage?: string;
+  portraitImage?: string;
+  galleryImages?: string[];
 }
 
 export interface Announcement {
@@ -29,6 +33,22 @@ export interface User {
 export type RootStackParamList = {
   Welcome: undefined;
   Main: undefined;
+  EventDetails: { event: Event };
+  CreateEvent: undefined;
+  ManageEvents: undefined;
+  SearchResults: { query?: string };
+  AddScheduleBlock: { onSave?: (block: any) => void; initialBlock?: any };
+  AddVenue: { onSave?: (venue: any) => void; initialVenue?: any };
+  InvitePeople: { onSave?: (people: any[]) => void; initialPeople?: any[] };
+  Login: { returnTo?: string; eventCode?: string } | undefined;
+  SignUp: { returnTo?: string; eventCode?: string } | undefined;
+  ForgotPassword: undefined;
+  EmailVerification: { email?: string };
+  JoinEvent: { eventCode?: string; autoJoin?: boolean } | undefined;
+  JoinedEvents: undefined;
+  SelectLocation: { onSelect?: (location: any) => void } | undefined;
+  DiscoverEvents: { eventType?: string } | undefined;
+  CreateAnnouncement: { eventId: string };
 };
 
 export type MainTabParamList = {
@@ -37,4 +57,3 @@ export type MainTabParamList = {
   Announcements: undefined;
   Profile: undefined;
 };
-

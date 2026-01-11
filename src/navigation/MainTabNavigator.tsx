@@ -10,7 +10,7 @@ import {
 } from '../screens';
 import { Colors } from '../constants/colors';
 
-import { FontAwesome6 } from "@react-native-vector-icons/fontawesome6";
+import { FontAwesome6 } from '@react-native-vector-icons/fontawesome6';
 
 const Tab = createBottomTabNavigator();
 
@@ -20,10 +20,11 @@ export const MainTabNavigator = () => {
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: '#1A1A1A',
+          position: 'absolute',
+          backgroundColor: Colors.navigationBar,
           borderTopWidth: 0,
           borderRadius: 50,
-          height: 75,
+          height: 70,
           paddingBottom: 12,
           paddingTop: 17,
           paddingHorizontal: 20,
@@ -38,6 +39,7 @@ export const MainTabNavigator = () => {
         tabBarShowLabel: false,
         tabBarActiveTintColor: Colors.text,
         tabBarInactiveTintColor: Colors.white,
+        tabBarHideOnKeyboard: true,
       }}
     >
       {/* Home */}
@@ -45,9 +47,14 @@ export const MainTabNavigator = () => {
         name="Home"
         component={HomeScreenWrapper}
         options={{
-          tabBarIcon: ({ focused, color }) => (
+          tabBarIcon: ({ focused }) => (
             <TabIconContainer focused={focused}>
-              <FontAwesome6 name="house" size={22} color={color} iconStyle='solid' />
+              <FontAwesome6
+                name="house"
+                size={22}
+                color={Colors.white}
+                iconStyle="solid"
+              />
             </TabIconContainer>
           ),
         }}
@@ -58,9 +65,13 @@ export const MainTabNavigator = () => {
         name="Event"
         component={CalendarScreenWrapper}
         options={{
-          tabBarIcon: ({ focused, color }) => (
+          tabBarIcon: ({ focused }) => (
             <TabIconContainer focused={focused}>
-              <FontAwesome6 name="calendar-days" size={22} color={color} />
+              <FontAwesome6
+                name="calendar-days"
+                size={22}
+                color={Colors.white}
+              />
             </TabIconContainer>
           ),
         }}
@@ -71,9 +82,14 @@ export const MainTabNavigator = () => {
         name="Announcements"
         component={AnnouncementsScreenWrapper}
         options={{
-          tabBarIcon: ({ focused, color }) => (
+          tabBarIcon: ({ focused }) => (
             <TabIconContainer focused={focused}>
-              <FontAwesome6 name="bullhorn" size={22} color={color} iconStyle='solid' />
+              <FontAwesome6
+                name="bullhorn"
+                size={22}
+                color={Colors.white}
+                iconStyle="solid"
+              />
             </TabIconContainer>
           ),
         }}
@@ -84,9 +100,9 @@ export const MainTabNavigator = () => {
         name="Profile"
         component={SettingsScreenWrapper}
         options={{
-          tabBarIcon: ({ focused, color }) => (
+          tabBarIcon: ({ focused }) => (
             <TabIconContainer focused={focused}>
-              <FontAwesome6 name="user" size={22} color={color} />
+              <FontAwesome6 name="user" size={22} color={Colors.white} />
             </TabIconContainer>
           ),
         }}
@@ -96,24 +112,30 @@ export const MainTabNavigator = () => {
 };
 
 // Screen wrappers
-const HomeScreenWrapper = ({ navigation }) => (
+const HomeScreenWrapper = ({ navigation }: { navigation: any }) => (
   <HomeScreen onNavigate={route => navigation.navigate(route)} />
 );
 
-const CalendarScreenWrapper = ({ navigation }) => (
+const CalendarScreenWrapper = ({ navigation }: { navigation: any }) => (
   <CalendarScreen onNavigate={route => navigation.navigate(route)} />
 );
 
-const AnnouncementsScreenWrapper = ({ navigation }) => (
+const AnnouncementsScreenWrapper = ({ navigation }: { navigation: any }) => (
   <AnnouncementsScreen onNavigate={route => navigation.navigate(route)} />
 );
 
-const SettingsScreenWrapper = ({ navigation }) => (
+const SettingsScreenWrapper = ({ navigation }: { navigation: any }) => (
   <SettingsScreen onNavigate={route => navigation.navigate(route)} />
 );
 
 // Icon container with active circle
-const TabIconContainer = ({ focused, children }) => (
+const TabIconContainer = ({
+  focused,
+  children,
+}: {
+  focused: boolean;
+  children: React.ReactNode;
+}) => (
   <View
     style={[styles.tabIconContainer, focused && styles.tabIconContainerFocused]}
   >
@@ -123,13 +145,13 @@ const TabIconContainer = ({ focused, children }) => (
 
 const styles = StyleSheet.create({
   tabIconContainer: {
-    width: 44,
-    height: 44,
+    width: 40,
+    height: 40,
     alignItems: 'center',
     justifyContent: 'center',
   },
   tabIconContainerFocused: {
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.primary,
     borderRadius: 22,
   },
 });

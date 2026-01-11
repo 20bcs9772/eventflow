@@ -1,17 +1,16 @@
-/**
- * EventFlow App
- * @format
- */
-
-import React from 'react';
+import React, { useEffect } from 'react';
 import { StatusBar, useColorScheme } from 'react-native';
-import {
-  SafeAreaProvider,
-} from 'react-native-safe-area-context';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AppNavigator } from './src/navigation';
+import { AuthProvider, LocationProvider } from './src/context';
+import { configureGoogleSignIn } from './src/services';
 
 function App() {
   const isDarkMode = useColorScheme() === 'dark';
+
+  useEffect(() => {
+    configureGoogleSignIn();
+  }, []);
 
   return (
     <SafeAreaProvider>
@@ -20,7 +19,11 @@ function App() {
         backgroundColor="transparent"
         translucent
       />
-      <AppNavigator />
+      <LocationProvider>
+        <AuthProvider>
+          <AppNavigator />
+        </AuthProvider>
+      </LocationProvider>
     </SafeAreaProvider>
   );
 }
