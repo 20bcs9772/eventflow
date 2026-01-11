@@ -113,6 +113,33 @@ export const CreateEventScreen = () => {
     });
   };
 
+  const handleEditScheduleBlock = (block: ScheduleBlock) => {
+    navigation.navigate('AddScheduleBlock', {
+      onSave: (updatedBlock: any) => {
+        const editedBlock: ScheduleBlock = {
+          id: block.id,
+          title: updatedBlock.title,
+          description: updatedBlock.description,
+          startTime: updatedBlock.startTime,
+          endTime: updatedBlock.endTime,
+          location: updatedBlock.location,
+          icon: block.icon,
+        };
+        setScheduleBlocks(
+          scheduleBlocks.map(b => (b.id === block.id ? editedBlock : b)),
+        );
+      },
+      initialBlock: {
+        id: block.id,
+        title: block.title,
+        description: block.description || '',
+        startTime: block.startTime,
+        endTime: block.endTime,
+        location: block.location || '',
+      },
+    });
+  };
+
   const handleDateTimeConfirm = (selectedDateTime: {
     startDate?: string;
     endDate?: string;
@@ -561,7 +588,11 @@ export const CreateEventScreen = () => {
                       {block.startTime} - {block.endTime}
                     </Text>
                   </View>
-                  <TouchableOpacity style={styles.dragHandle}>
+                  <TouchableOpacity
+                    style={styles.dragHandle}
+                    onPress={() => handleEditScheduleBlock(block)}
+                    activeOpacity={0.7}
+                  >
                     <FontAwesome6
                       name="pen"
                       size={16}

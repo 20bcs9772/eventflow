@@ -146,21 +146,21 @@ export const HomeScreen: React.FC<HomeScreenProps> = () => {
                   {isLocationLoading
                     ? 'Loading...'
                     : location
-                      ? location.city || 'Unknown'
-                      : 'Select Location'}
+                    ? location.city || 'Unknown'
+                    : 'Select Location'}
                 </Text>
                 <Text style={styles.chevron}>
-                  <FontAwesome6 name="caret-down" size={25} iconStyle="solid" />
+                  <FontAwesome6 name="caret-down" size={18} iconStyle="solid" />
                 </Text>
               </View>
               <Text style={styles.locationDetails}>
                 {isLocationLoading
                   ? ''
                   : location
-                    ? `${location.state || ''}${
-                        location.state && location.country ? ', ' : ''
-                      }${location.country || ''}`
-                    : ''}
+                  ? `${location.state || ''}${
+                      location.state && location.country ? ', ' : ''
+                    }${location.country || ''}`
+                  : ''}
               </Text>
             </View>
           </TouchableOpacity>
@@ -189,7 +189,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = () => {
             >
               <View style={styles.iconCircle}>
                 <FontAwesome6
-                  name="expand"
+                  name="qrcode"
                   size={18}
                   iconStyle="solid"
                   color={Colors.primary}
@@ -292,9 +292,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = () => {
                 <Text style={styles.sectionTitle}>Discover Events</Text>
                 <TouchableOpacity
                   style={styles.seeAllButton}
-                  onPress={() =>
-                    navigation.navigate('SearchResults', { query: '' })
-                  }
+                  onPress={() => navigation.navigate('DiscoverEvents')}
                   activeOpacity={0.7}
                 >
                   <Text style={styles.seeAllText}>See All</Text>

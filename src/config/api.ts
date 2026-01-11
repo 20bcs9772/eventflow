@@ -47,10 +47,12 @@ export const API_ENDPOINTS = {
   ANNOUNCEMENTS: {
     LIST: (eventId: string) => `/api/announcements/event/${eventId}`,
     CREATE: '/api/announcements',
+    USER: '/api/announcements',
   },
   // Devices
   DEVICES: {
     REGISTER: '/api/devices',
     UPDATE: (id: string) => `/api/devices/${id}`,
+    DELETE: (id: string) => `/api/devices/${id}`,
   },
 };

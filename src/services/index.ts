@@ -13,6 +13,7 @@ export { announcementService } from './announcement.service';
 export type {
   Announcement,
   CreateAnnouncementInput,
+  FlattenedAnnouncement,
 } from './announcement.service';
 export { deviceService } from './device.service';
 export { locationService } from './location.service';

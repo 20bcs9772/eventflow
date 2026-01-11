@@ -1,49 +1,152 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  ActivityIndicator,
+  RefreshControl,
+} from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { ScreenLayout, Header } from '../components';
 import { Colors } from '../constants/colors';
 import { Spacing, FontSizes } from '../constants/spacing';
-import { Announcement } from '../types';
+import { announcementService, FlattenedAnnouncement } from '../services';
+import { useAuth } from '../context/AuthContext';
+import dayjs from 'dayjs';
+import relativeTime from 'dayjs/plugin/relativeTime';
+
+dayjs.extend(relativeTime);
 
 interface AnnouncementsScreenProps {}
 
-const mockAnnouncements: Announcement[] = [
-  {
-    id: '1',
-    title: 'Dinner is Served!',
-    description: 'Join us in the main hall for the reception dinner.',
-    timestamp: 'Just now',
-    isNew: true,
-  },
-  {
-    id: '2',
-    title: 'Schedule Change',
-    description: 'The keynote has been moved to Room B.',
-    timestamp: '5m ago',
-    isNew: true,
-  },
-  {
-    id: '3',
-    title: 'Bus Departs in 15 Min',
-    description: 'The shuttle bus will be leaving shortly.',
-    timestamp: '1h ago',
-    isNew: false,
-  },
-  {
-    id: '4',
-    title: 'Photo Booth is Open!',
-    description: 'Come make some memories!',
-    timestamp: '2h ago',
-    isNew: false,
-  },
-];
-
 export const AnnouncementsScreen: React.FC<AnnouncementsScreenProps> = () => {
+  const navigation = useNavigation<any>();
+  const { backendUser } = useAuth();
+  const [announcements, setAnnouncements] = useState<FlattenedAnnouncement[]>(
+    [],
+  );
+  const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [viewedIds, setViewedIds] = useState<Set<string>>(new Set());
 
-  const handleAnnouncementPress = (id: string) => {
-    setViewedIds(prev => new Set(prev).add(id));
+  const fetchAnnouncements = useCallback(async () => {
+    if (!backendUser) {
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      const response = await announcementService.getUserAnnouncements(
+        !isRefreshing, // Use cache only if not refreshing
+      );
+
+      if (response.success && response.data) {
+        // Flatten the nested structure
+        const flattened: FlattenedAnnouncement[] = [];
+        response.data.forEach(item => {
+          item.event.announcements.forEach(announcement => {
+            flattened.push({
+              id: announcement.id,
+              title: announcement.title,
+              message: announcement.message,
+              createdAt: announcement.createdAt,
+              senderId: announcement.senderId,
+              eventId: item.event.id,
+              eventName: item.event.name,
+              eventStartDate: item.event.startDate,
+              eventEndDate: item.event.endDate,
+            });
+          });
+        });
+
+        // Sort by creation date (newest first)
+        flattened.sort((a, b) => {
+          const dateA = new Date(a.createdAt).getTime();
+          const dateB = new Date(b.createdAt).getTime();
+          return dateB - dateA;
+        });
+
+        setAnnouncements(flattened);
+      }
+    } catch (error) {
+      console.error('Error fetching announcements:', error);
+    } finally {
+      setIsLoading(false);
+      setIsRefreshing(false);
+    }
+  }, [backendUser, isRefreshing]);
+
+  useEffect(() => {
+    fetchAnnouncements();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [backendUser]);
+
+  const handleRefresh = () => {
+    setIsRefreshing(true);
+    fetchAnnouncements();
   };
+
+  const handleAnnouncementPress = (announcement: FlattenedAnnouncement) => {
+    setViewedIds(prev => new Set(prev).add(announcement.id));
+
+    // Navigate to event details
+    const frontendEvent = {
+      id: announcement.eventId,
+      shortCode: '', // Will be fetched in EventDetailsScreen
+      title: announcement.eventName,
+      date: dayjs(announcement.eventStartDate).format('MMM D, YYYY'),
+      location: 'Location TBA', // Will be fetched in EventDetailsScreen
+      startTime: dayjs(announcement.eventStartDate).format('h:mm A'),
+      endTime: announcement.eventEndDate
+        ? dayjs(announcement.eventEndDate).format('h:mm A')
+        : undefined,
+    };
+
+    navigation.navigate('EventDetails', { event: frontendEvent });
+  };
+
+  const formatTimestamp = (date: string | Date): string => {
+    const now = dayjs();
+    const announcementDate = dayjs(date);
+    const diffInMinutes = now.diff(announcementDate, 'minute');
+
+    if (diffInMinutes < 1) {
+      return 'Just now';
+    } else if (diffInMinutes < 60) {
+      return `${diffInMinutes}m ago`;
+    } else if (diffInMinutes < 1440) {
+      const hours = Math.floor(diffInMinutes / 60);
+      return `${hours}h ago`;
+    } else {
+      return announcementDate.format('MMM D, YYYY');
+    }
+  };
+
+  if (!backendUser) {
+    return (
+      <ScreenLayout backgroundColor={Colors.backgroundLight}>
+        <Header title="Announcements" />
+        <View style={styles.emptyContainer}>
+          <Text style={styles.emptyText}>
+            Please sign in to view announcements
+          </Text>
+        </View>
+      </ScreenLayout>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <ScreenLayout backgroundColor={Colors.backgroundLight}>
+        <Header title="Announcements" />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={Colors.primary} />
+        </View>
+      </ScreenLayout>
+    );
+  }
 
   return (
     <ScreenLayout backgroundColor={Colors.backgroundLight}>
@@ -52,43 +155,66 @@ export const AnnouncementsScreen: React.FC<AnnouncementsScreenProps> = () => {
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefreshing}
+            onRefresh={handleRefresh}
+            tintColor={Colors.primary}
+          />
+        }
       >
-        <View style={styles.announcementsList}>
-          {mockAnnouncements.map((announcement, index) => {
-            const isViewed = viewedIds.has(announcement.id);
-            const isUnread = announcement.isNew && !isViewed;
+        {announcements.length === 0 ? (
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>No announcements yet</Text>
+            <Text style={styles.emptySubtext}>
+              Announcements from events you've joined will appear here
+            </Text>
+          </View>
+        ) : (
+          <View style={styles.announcementsList}>
+            {announcements.map((announcement, index) => {
+              const isViewed = viewedIds.has(announcement.id);
+              const announcementDate = new Date(announcement.createdAt);
+              const isRecent =
+                Date.now() - announcementDate.getTime() < 24 * 60 * 60 * 1000; // Within 24 hours
+              const isUnread = isRecent && !isViewed;
 
-            return (
-              <TouchableOpacity
-                key={announcement.id}
-                style={[
-                  styles.announcementItem,
-                  isUnread && styles.announcementItemUnread,
-                  index < mockAnnouncements.length - 1 && styles.announcementItemWithDivider,
-                ]}
-                onPress={() => handleAnnouncementPress(announcement.id)}
-                activeOpacity={0.7}
-              >
-                <View style={styles.announcementHeader}>
-                  <View style={styles.announcementTitleRow}>
-                    <Text style={styles.announcementTitle}>
-                      {announcement.title}
+              return (
+                <TouchableOpacity
+                  key={announcement.id}
+                  style={[
+                    styles.announcementItem,
+                    isUnread && styles.announcementItemUnread,
+                    index < announcements.length - 1 &&
+                      styles.announcementItemWithDivider,
+                  ]}
+                  onPress={() => handleAnnouncementPress(announcement)}
+                  activeOpacity={0.7}
+                >
+                  <View style={styles.announcementHeader}>
+                    <View style={styles.announcementTitleRow}>
+                      <Text style={styles.announcementTitle}>
+                        {announcement.title}
+                      </Text>
+                      {isUnread && (
+                        <View style={styles.newBadge}>
+                          <View style={styles.newBadgeDot} />
+                        </View>
+                      )}
+                    </View>
+                    <Text style={styles.timestamp}>
+                      {formatTimestamp(announcement.createdAt)}
                     </Text>
-                    {announcement.isNew && (
-                      <View style={styles.newBadge}>
-                        <View style={styles.newBadgeDot} />
-                      </View>
-                    )}
                   </View>
-                  <Text style={styles.timestamp}>{announcement.timestamp}</Text>
-                </View>
-                <Text style={styles.announcementDescription}>
-                  {announcement.description}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
+                  <Text style={styles.eventName}>{announcement.eventName}</Text>
+                  <Text style={styles.announcementDescription}>
+                    {announcement.message}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        )}
       </ScrollView>
     </ScreenLayout>
   );
@@ -162,5 +288,34 @@ const styles = StyleSheet.create({
     fontSize: FontSizes.sm,
     color: Colors.textSecondary,
     lineHeight: 20,
+  },
+  eventName: {
+    fontSize: FontSizes.xs,
+    color: Colors.primary,
+    fontWeight: '600',
+    marginBottom: Spacing.xs,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: Spacing.xl,
+    minHeight: 300,
+  },
+  emptyText: {
+    fontSize: FontSizes.md,
+    color: Colors.textSecondary,
+    fontWeight: '600',
+    marginBottom: Spacing.xs,
+  },
+  emptySubtext: {
+    fontSize: FontSizes.sm,
+    color: Colors.textLight,
+    textAlign: 'center',
   },
 });

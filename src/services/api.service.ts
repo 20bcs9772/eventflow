@@ -180,9 +180,10 @@ class ApiService {
    */
   async delete<T = any>(
     endpoint: string,
+    body?: any,
     requiresAuth = true,
   ): Promise<ApiResponse<T>> {
-    return this.request<T>(endpoint, { method: 'DELETE', requiresAuth });
+    return this.request<T>(endpoint, { method: 'DELETE', body, requiresAuth });
   }
 }
 

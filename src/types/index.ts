@@ -47,6 +47,8 @@ export type RootStackParamList = {
   JoinEvent: { eventCode?: string; autoJoin?: boolean } | undefined;
   JoinedEvents: undefined;
   SelectLocation: { onSelect?: (location: any) => void } | undefined;
+  DiscoverEvents: { eventType?: string } | undefined;
+  CreateAnnouncement: { eventId: string };
 };
 
 export type MainTabParamList = {

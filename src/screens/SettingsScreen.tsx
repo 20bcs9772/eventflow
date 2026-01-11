@@ -160,9 +160,9 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onLogout }) => {
                 <Text style={styles.settingLabel}>Joined Events</Text>
               </View>
               <View style={styles.settingRight}>
-                <View style={styles.badge}>
+                {/* <View style={styles.badge}>
                   <Text style={styles.badgeText}>2</Text>
-                </View>
+                </View> */}
                 <FontAwesome6
                   name="chevron-right"
                   size={14}

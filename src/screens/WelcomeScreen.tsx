@@ -29,7 +29,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
           </View>
         </View>
         
-        <Text style={styles.title}>EventFlow</Text>
+        <Text style={styles.title}>Hap</Text>
         <Text style={styles.subtitle}>Your live event companion</Text>
         
         <View style={styles.buttonContainer}>
