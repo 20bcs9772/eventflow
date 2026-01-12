@@ -1,14 +1,9 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Image,
-} from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import FontAwesome6 from '@react-native-vector-icons/fontawesome6';
 import { Colors } from '../constants/colors';
 import { Spacing, BorderRadius, FontSizes } from '../constants/spacing';
+import { SkeletonImage } from './skeletons';
 import dayjs from 'dayjs';
 
 export type EventStatus = 'Live' | 'Past' | 'Upcoming';
@@ -20,11 +15,11 @@ interface EventListCardProps {
   attendeesCount?: number;
   imageUri?: string;
   status?: EventStatus;
-  
+
   // Actions
   onPress?: () => void;
   onOptionsPress?: () => void;
-  
+
   // Optional styling
   showOptions?: boolean;
 }
@@ -41,7 +36,7 @@ export const EventListCard: React.FC<EventListCardProps> = ({
 }) => {
   // Format date as "DD Mon, YYYY" (e.g., "24 Sep, 2024")
   const formattedDate = dayjs(date).format('DD MMM, YYYY');
-  
+
   // Format attendees count
   const formatAttendees = (count: number): string => {
     if (count >= 500) {
@@ -79,18 +74,16 @@ export const EventListCard: React.FC<EventListCardProps> = ({
   const statusStyle = getStatusStyle(status);
 
   return (
-    <TouchableOpacity
-      style={styles.card}
-      onPress={onPress}
-      activeOpacity={0.7}
-    >
+    <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.7}>
       {/* Left Section - Image Thumbnail */}
       <View style={styles.imageContainer}>
         {imageUri ? (
-          <Image
+          <SkeletonImage
             source={{ uri: imageUri }}
             style={styles.image}
             resizeMode="cover"
+            skeletonHeight={120}
+            skeletonBorderRadius={BorderRadius.md}
           />
         ) : (
           <View style={styles.imagePlaceholder}>
@@ -125,7 +118,7 @@ export const EventListCard: React.FC<EventListCardProps> = ({
           {showOptions && (
             <TouchableOpacity
               style={styles.optionsButton}
-              onPress={(e) => {
+              onPress={e => {
                 e.stopPropagation();
                 onOptionsPress?.();
               }}

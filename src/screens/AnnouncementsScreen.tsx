@@ -5,11 +5,10 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  ActivityIndicator,
   RefreshControl,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { ScreenLayout, Header } from '../components';
+import { ScreenLayout, Header, AnnouncementItemSkeleton } from '../components';
 import { Colors } from '../constants/colors';
 import { Spacing, FontSizes } from '../constants/spacing';
 import { announcementService, FlattenedAnnouncement } from '../services';
@@ -141,9 +140,17 @@ export const AnnouncementsScreen: React.FC<AnnouncementsScreenProps> = () => {
     return (
       <ScreenLayout backgroundColor={Colors.backgroundLight}>
         <Header title="Announcements" />
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={Colors.primary} />
-        </View>
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.announcementsList}>
+            {[1, 2, 3, 4, 5].map((_, index) => (
+              <AnnouncementItemSkeleton key={index} showDivider={index < 4} />
+            ))}
+          </View>
+        </ScrollView>
       </ScreenLayout>
     );
   }

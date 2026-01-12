@@ -19,10 +19,7 @@ import {
 import { Colors } from '../constants/colors';
 import { Spacing, FontSizes, BorderRadius } from '../constants/spacing';
 import { RootStackParamList } from '../types';
-import {
-  locationService,
-  LocationSearchResult,
-} from '../services';
+import { locationService, LocationSearchResult } from '../services';
 
 type AddVenueRouteProp = RouteProp<RootStackParamList, 'AddVenue'>;
 
@@ -75,12 +72,9 @@ export const AddVenueScreen: React.FC = () => {
   }, [searchQuery]);
 
   // Handle location selection
-  const handleLocationSelect = useCallback(
-    (location: LocationSearchResult) => {
-      setSelectedLocation(location);
-    },
-    [],
-  );
+  const handleLocationSelect = useCallback((location: LocationSearchResult) => {
+    setSelectedLocation(location);
+  }, []);
 
   const handleSelectVenue = () => {
     if (onSave && selectedLocation) {
@@ -161,7 +155,7 @@ export const AddVenueScreen: React.FC = () => {
             color={Colors.textSecondary}
             iconStyle="solid"
           />
-            <TextInput
+          <TextInput
             style={styles.searchInput}
             value={searchQuery}
             onChangeText={setSearchQuery}

@@ -6,12 +6,16 @@ import {
   ScrollView,
   TextInput,
   TouchableOpacity,
-  ActivityIndicator,
   RefreshControl,
 } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import FontAwesome6 from '@react-native-vector-icons/fontawesome6';
-import { ScreenLayout, ScreenHeader, EventListCard } from '../components';
+import {
+  ScreenLayout,
+  ScreenHeader,
+  EventListCard,
+  EventListCardSkeleton,
+} from '../components';
 import { Colors } from '../constants/colors';
 import { Spacing, FontSizes } from '../constants/spacing';
 import { RootStackParamList, Event } from '../types';
@@ -178,16 +182,16 @@ export const SearchResultsScreen = () => {
           }
         >
           {(isLoading || isDebouncing) && !hasSearched ? (
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color={Colors.primary} />
-              <Text style={styles.loadingText}>
-                {isDebouncing ? 'Searching...' : 'Searching events...'}
-              </Text>
+            <View>
+              {[1, 2, 3, 4, 5].map((_, index) => (
+                <EventListCardSkeleton key={index} />
+              ))}
             </View>
           ) : isLoading && hasSearched ? (
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color={Colors.primary} />
-              <Text style={styles.loadingText}>Updating results...</Text>
+            <View>
+              {[1, 2, 3, 4, 5].map((_, index) => (
+                <EventListCardSkeleton key={index} />
+              ))}
             </View>
           ) : events.length > 0 ? (
             events.map((event, index) => {

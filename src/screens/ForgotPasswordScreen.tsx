@@ -33,11 +33,13 @@ export const ForgotPasswordScreen: React.FC<ForgotPasswordScreenProps> = ({
     <ScreenLayout backgroundColor={Colors.background}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.keyboardView}>
+        style={styles.keyboardView}
+      >
         <ScrollView
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled">
+          keyboardShouldPersistTaps="handled"
+        >
           <ScreenHeader title="Forgot Password" onBack={onBack} />
 
           {/* Icon */}
@@ -47,7 +49,7 @@ export const ForgotPasswordScreen: React.FC<ForgotPasswordScreenProps> = ({
                 name="key"
                 size={40}
                 color={Colors.primary}
-                iconStyle='solid'
+                iconStyle="solid"
               />
             </View>
           </View>
@@ -56,7 +58,8 @@ export const ForgotPasswordScreen: React.FC<ForgotPasswordScreenProps> = ({
           <View style={styles.headerContainer}>
             <Text style={styles.title}>Forgot Password?</Text>
             <Text style={styles.subtitle}>
-              Don't worry! Enter your email address and we'll send you a link to reset your password.
+              Don't worry! Enter your email address and we'll send you a link to
+              reset your password.
             </Text>
           </View>
 

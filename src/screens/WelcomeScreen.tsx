@@ -1,10 +1,5 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  SafeAreaView,
-} from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, Image } from 'react-native';
 import { Button } from '../components';
 import { Colors } from '../constants/colors';
 import { Spacing, BorderRadius, FontSizes } from '../constants/spacing';
@@ -23,15 +18,17 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
       <View style={styles.content}>
         <View style={styles.logoContainer}>
           <View style={styles.logoOuter}>
-            <View style={styles.logoInner}>
-              <Text style={styles.logoIcon}>🎉</Text>
-            </View>
+            <Image
+              source={require('../assets/images/logo.png')}
+              style={{ width: 120, height: 120 }}
+              resizeMode="contain"
+            />
           </View>
         </View>
-        
+
         <Text style={styles.title}>Hap</Text>
         <Text style={styles.subtitle}>Your live event companion</Text>
-        
+
         <View style={styles.buttonContainer}>
           <Button
             title="Join Event"
@@ -41,7 +38,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
             style={styles.joinButton}
           />
         </View>
-        
+
         <View style={styles.signInContainer}>
           <Text style={styles.signInText}>Are you an organizer? </Text>
           <Text style={styles.signInLink} onPress={onSignIn}>
@@ -56,7 +53,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.backgroundLight,
+    backgroundColor: Colors.background,
   },
   content: {
     flex: 1,
@@ -70,18 +67,8 @@ const styles = StyleSheet.create({
   logoOuter: {
     width: 120,
     height: 120,
-    borderRadius: BorderRadius.full,
-    backgroundColor: Colors.white,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: Colors.black,
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 5,
   },
   logoInner: {
     width: 90,
@@ -126,4 +113,3 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 });
-
