@@ -40,7 +40,7 @@ export const EventCardSkeleton: React.FC<EventCardSkeletonProps> = ({
     <View style={styles.smallCard}>
       <ImageSkeleton
         width="100%"
-        height={160}
+        height={200}
         borderRadius={0}
         borderTopLeftRadius={20}
         borderTopRightRadius={20}

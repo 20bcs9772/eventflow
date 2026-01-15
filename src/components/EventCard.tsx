@@ -93,7 +93,7 @@ export const EventCard: React.FC<EventCardProps> = ({
             source={{ uri: event.portraitImage }}
             style={styles.smallImage}
             resizeMode="cover"
-            skeletonHeight={160}
+            skeletonHeight={200}
             skeletonBorderRadius={0}
             skeletonBorderTopLeftRadius={20}
             skeletonBorderTopRightRadius={20}
@@ -214,7 +214,7 @@ const styles = StyleSheet.create({
 
   smallImageContainer: {
     width: '100%',
-    height: 160,
+    height: 200,
   },
 
   smallImage: {
