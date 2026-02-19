@@ -5,9 +5,13 @@ import {
   StyleSheet,
   ScrollView,
   RefreshControl,
-  ActivityIndicator,
 } from 'react-native';
-import { ScreenLayout, EventListCard, ScreenHeader } from '../components';
+import {
+  ScreenLayout,
+  EventListCard,
+  ScreenHeader,
+  EventListCardSkeleton,
+} from '../components';
 import { Colors } from '../constants/colors';
 import { Spacing, FontSizes } from '../constants/spacing';
 import FontAwesome6 from '@react-native-vector-icons/fontawesome6';
@@ -124,8 +128,10 @@ export const JoinedEventsScreen: React.FC<JoinedEventsScreenProps> = ({
         }
       >
         {isLoading ? (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={Colors.primary} />
+          <View style={styles.skeletonContainer}>
+            {[1, 2, 3, 4, 5].map((_, index) => (
+              <EventListCardSkeleton key={index} />
+            ))}
           </View>
         ) : joinedEvents.length > 0 ? (
           joinedEvents.map(event => {
@@ -190,6 +196,9 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  skeletonContainer: {
+    paddingTop: Spacing.md,
   },
   emptyState: {
     flex: 1,

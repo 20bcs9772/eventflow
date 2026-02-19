@@ -1,17 +1,11 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  Image,
-  StyleSheet,
-  TouchableOpacity,
-  ImageBackground,
-} from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Colors } from '../constants/colors';
 import { Spacing, BorderRadius, FontSizes } from '../constants/spacing';
 import { Event } from '../types';
 import FontAwesome6 from '@react-native-vector-icons/fontawesome6';
 import { useNavigation } from '@react-navigation/native';
+import { SkeletonImage, SkeletonImageBackground } from './skeletons';
 
 interface EventCardProps {
   event: Event;
@@ -40,7 +34,7 @@ export const EventCard: React.FC<EventCardProps> = ({
         onPress={handlePress}
         activeOpacity={0.9}
       >
-        <ImageBackground
+        <SkeletonImageBackground
           source={
             event.coverImage
               ? { uri: event.coverImage }
@@ -50,6 +44,8 @@ export const EventCard: React.FC<EventCardProps> = ({
           }
           style={styles.largeImage}
           imageStyle={styles.largeImageStyle}
+          skeletonHeight={250}
+          skeletonBorderRadius={BorderRadius.lg}
         >
           <View style={styles.largeOverlay}>
             <View style={styles.fullGradientOverlay} />
@@ -80,7 +76,7 @@ export const EventCard: React.FC<EventCardProps> = ({
               </View>
             </View>
           </View>
-        </ImageBackground>
+        </SkeletonImageBackground>
       </TouchableOpacity>
     );
   }
@@ -93,10 +89,14 @@ export const EventCard: React.FC<EventCardProps> = ({
     >
       <View style={styles.smallImageContainer}>
         {event.portraitImage ? (
-          <Image
+          <SkeletonImage
             source={{ uri: event.portraitImage }}
             style={styles.smallImage}
             resizeMode="cover"
+            skeletonHeight={200}
+            skeletonBorderRadius={0}
+            skeletonBorderTopLeftRadius={20}
+            skeletonBorderTopRightRadius={20}
           />
         ) : (
           <View style={styles.smallImagePlaceholder}>
@@ -214,12 +214,14 @@ const styles = StyleSheet.create({
 
   smallImageContainer: {
     width: '100%',
-    height: 160,
+    height: 200,
   },
 
   smallImage: {
     width: '100%',
     height: '100%',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
   },
 
   smallImagePlaceholder: {

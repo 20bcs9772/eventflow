@@ -13,7 +13,7 @@ import { Button, TextInput, SocialButton, ScreenLayout } from '../components';
 import { Colors } from '../constants/colors';
 import { Spacing, BorderRadius, FontSizes } from '../constants/spacing';
 import { useAuth } from '../context';
-import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
+import { useRoute, RouteProp } from '@react-navigation/native';
 import { RootStackParamList } from '../types';
 
 interface SignUpScreenProps {
@@ -27,12 +27,17 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
   onSignUp,
   onLogin,
 }) => {
-  const navigation = useNavigation<any>();
   const route = useRoute<SignUpRouteProp>();
-  const { signUpWithEmail, signInWithGoogle, signInWithApple, isLoading, setPendingJoinAction } = useAuth();
+  const {
+    signUpWithEmail,
+    signInWithGoogle,
+    signInWithApple,
+    isLoading,
+    setPendingJoinAction,
+  } = useAuth();
   const returnTo = route.params?.returnTo;
   const eventCode = route.params?.eventCode;
-  
+
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -67,13 +72,13 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
 
   const handleSignUp = async () => {
     setError(null);
-    
+
     if (!validateForm()) return;
-    
+
     setIsSubmitting(true);
     try {
       const result = await signUpWithEmail(email.trim(), password, name.trim());
-      
+
       if (result.success) {
         // Store pending join action if user was trying to join an event
         if (returnTo === 'JoinEvent' && eventCode) {
@@ -93,15 +98,15 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
   const handleGoogleSignUp = async () => {
     setError(null);
     setIsSubmitting(true);
-    
+
     try {
       // Store pending join action BEFORE auth (if user was trying to join an event)
       if (returnTo === 'JoinEvent' && eventCode) {
         setPendingJoinAction(eventCode);
       }
-      
+
       const result = await signInWithGoogle();
-      
+
       if (result.success) {
         onSignUp();
       } else if (result.error !== 'Sign-in was cancelled') {
@@ -117,15 +122,15 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
   const handleAppleSignUp = async () => {
     setError(null);
     setIsSubmitting(true);
-    
+
     try {
       // Store pending join action BEFORE auth (if user was trying to join an event)
       if (returnTo === 'JoinEvent' && eventCode) {
         setPendingJoinAction(eventCode);
       }
-      
+
       const result = await signInWithApple();
-      
+
       if (result.success) {
         onSignUp();
       } else if (result.error !== 'Sign-in was cancelled') {
@@ -154,9 +159,7 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
           {/* Title */}
           <View style={styles.headerContainer}>
             <Text style={styles.title}>Create Account</Text>
-            <Text style={styles.subtitle}>
-              Sign up to get started with Hap
-            </Text>
+            <Text style={styles.subtitle}>Sign up to get started with Hap</Text>
           </View>
 
           {/* Error Message */}
@@ -197,7 +200,7 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
               label="Full Name"
               placeholder="Enter your full name"
               value={name}
-              onChangeText={(text) => {
+              onChangeText={text => {
                 setName(text);
                 setError(null);
               }}
@@ -210,7 +213,7 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
               label="Email"
               placeholder="Enter your email"
               value={email}
-              onChangeText={(text) => {
+              onChangeText={text => {
                 setEmail(text);
                 setError(null);
               }}
@@ -225,7 +228,7 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
               label="Password"
               placeholder="Create a password (min. 6 characters)"
               value={password}
-              onChangeText={(text) => {
+              onChangeText={text => {
                 setPassword(text);
                 setError(null);
               }}
@@ -250,16 +253,18 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
             size="large"
             style={styles.signUpButton}
             disabled={isFormDisabled}
-            icon={isSubmitting ? (
-              <ActivityIndicator color={Colors.white} size="small" />
-            ) : undefined}
+            icon={
+              isSubmitting ? (
+                <ActivityIndicator color={Colors.white} size="small" />
+              ) : undefined
+            }
           />
 
           {/* Login Link */}
           <View style={styles.loginContainer}>
             <Text style={styles.loginText}>Already have an account? </Text>
-            <TouchableOpacity 
-              onPress={onLogin} 
+            <TouchableOpacity
+              onPress={onLogin}
               activeOpacity={0.7}
               disabled={isFormDisabled}
             >

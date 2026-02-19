@@ -90,5 +90,3 @@ const styles = StyleSheet.create({
     marginLeft: Spacing.sm,
   },
 });
-
-

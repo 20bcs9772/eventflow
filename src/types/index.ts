@@ -34,7 +34,8 @@ export type RootStackParamList = {
   Welcome: undefined;
   Main: undefined;
   EventDetails: { event: Event };
-  CreateEvent: undefined;
+  CreateEvent: { initialData?: any } | undefined;
+  AddEventMedia: { eventData: any };
   ManageEvents: undefined;
   SearchResults: { query?: string };
   AddScheduleBlock: { onSave?: (block: any) => void; initialBlock?: any };

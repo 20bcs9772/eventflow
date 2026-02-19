@@ -5,6 +5,7 @@ export { AnnouncementsScreen } from './AnnouncementsScreen';
 export { SettingsScreen } from './SettingsScreen';
 export { EventDetailsScreen } from './EventDetailsScreen';
 export { CreateEventScreen } from './CreateEventScreen';
+export { AddEventMediaScreen } from './AddEventMediaScreen';
 export { SearchResultsScreen } from './SearchResultsScreen';
 export { AddScheduleBlockScreen } from './AddScheduleBlockScreen';
 export { AddVenueScreen } from './AddVenueScreen';

@@ -205,6 +205,40 @@ class EventService {
   }
 
   /**
+   * Create a new event with media (FormData)
+   */
+  async createEventWithMedia(formData: FormData): Promise<ServiceResponse<Event>> {
+    try {
+      const response = await apiService.postFormData<Event>(
+        API_ENDPOINTS.EVENTS.CREATE,
+        formData,
+      );
+
+      if (response.success && response.data) {
+        // Clear relevant caches
+        this.clearCache();
+        return {
+          success: true,
+          data: response.data,
+        };
+      }
+
+      return {
+        success: false,
+        message: response.message || 'Failed to create event',
+        error: response.error,
+      };
+    } catch (error: any) {
+      console.error('Error creating event with media:', error);
+      return {
+        success: false,
+        message: error.message || 'Failed to create event',
+        error: 'CREATE_EVENT_ERROR',
+      };
+    }
+  }
+
+  /**
    * Get event by ID
    */
   async getEventById(

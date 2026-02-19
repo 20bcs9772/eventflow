@@ -6,11 +6,15 @@ import {
   ScrollView,
   TouchableOpacity,
   RefreshControl,
-  ActivityIndicator,
   Dimensions,
 } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
-import { EventCard, ScreenLayout, ScreenHeader } from '../components';
+import {
+  EventCard,
+  ScreenLayout,
+  ScreenHeader,
+  EventCardSkeleton,
+} from '../components';
 import { Colors } from '../constants/colors';
 import { Spacing, FontSizes } from '../constants/spacing';
 import { Event, RootStackParamList } from '../types';
@@ -177,8 +181,22 @@ export const DiscoverEventsScreen: React.FC = () => {
 
         {/* Events Grid */}
         {isLoading ? (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={Colors.primary} />
+          <View style={styles.eventsGrid}>
+            {[1, 2, 3, 4, 5, 6].map((_, index) => (
+              <View
+                key={index}
+                style={[
+                  styles.eventCardWrapper,
+                  {
+                    width: cardWidth,
+                    marginLeft: index % 2 === 0 ? leftMargin : gapBetweenCards,
+                    marginBottom: Spacing.md,
+                  },
+                ]}
+              >
+                <EventCardSkeleton variant="small" />
+              </View>
+            ))}
           </View>
         ) : events.length > 0 ? (
           <View style={styles.eventsGrid}>

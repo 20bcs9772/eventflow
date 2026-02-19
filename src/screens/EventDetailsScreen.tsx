@@ -17,7 +17,13 @@ import { Spacing, FontSizes, BorderRadius } from '../constants/spacing';
 import FontAwesome6 from '@react-native-vector-icons/fontawesome6';
 import { RouteProp, useRoute, useNavigation } from '@react-navigation/native';
 import { RootStackParamList } from '../types';
-import { FloatingActionButton } from '../components';
+import {
+  FloatingActionButton,
+  ImageSkeleton,
+  SkeletonBox,
+  SkeletonImage,
+  SkeletonText,
+} from '../components';
 import { eventService, guestService } from '../services';
 import { useAuth } from '../context/AuthContext';
 import dayjs from 'dayjs';
@@ -473,9 +479,35 @@ export const EventDetailsScreen = () => {
   if (isLoading) {
     return (
       <View style={styles.container}>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={Colors.primary} />
+        {/* Cover Image Skeleton */}
+        <View style={[styles.headerImageContainer, { height: 300 }]}>
+          <ImageSkeleton width="100%" height="100%" borderRadius={0} />
         </View>
+
+        {/* Floating Header Skeleton */}
+        <View style={styles.floatingHeader}>
+          <SkeletonBox width={40} height={40} borderRadius={20} />
+          <View style={styles.headerActions}>
+            <SkeletonBox width={40} height={40} borderRadius={20} />
+            <SkeletonBox width={40} height={40} borderRadius={20} />
+          </View>
+        </View>
+
+        {/* Content Skeleton */}
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+        >
+          <View style={styles.contentBlock}>
+            <SkeletonBox width="80%" height={32} borderRadius={8} />
+            <View style={styles.skeletonSpacer} />
+            <SkeletonText width="60%" height={16} lines={2} spacing={8} />
+            <View style={styles.skeletonSpacer} />
+            <SkeletonBox width="100%" height={200} borderRadius={12} />
+            <View style={styles.skeletonSpacer} />
+            <SkeletonText width="100%" height={16} lines={3} spacing={8} />
+          </View>
+        </ScrollView>
       </View>
     );
   }
@@ -523,7 +555,7 @@ export const EventDetailsScreen = () => {
           },
         ]}
       >
-        <Image
+        <SkeletonImage
           source={{
             uri:
               coverImage ||
@@ -531,6 +563,8 @@ export const EventDetailsScreen = () => {
           }}
           style={styles.coverImage}
           resizeMode="cover"
+          skeletonHeight={300}
+          skeletonBorderRadius={0}
         />
         {/* Gradient overlay for better text readability */}
         <View style={styles.imageOverlay} />
@@ -687,6 +721,9 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.backgroundLight,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  skeletonSpacer: {
+    height: Spacing.lg,
   },
 
   /* Cover Image */

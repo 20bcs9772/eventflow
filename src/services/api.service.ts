@@ -185,6 +185,116 @@ class ApiService {
   ): Promise<ApiResponse<T>> {
     return this.request<T>(endpoint, { method: 'DELETE', body, requiresAuth });
   }
+
+  /**
+   * POST request with FormData (for file uploads)
+   */
+  async postFormData<T = any>(
+    endpoint: string,
+    formData: FormData,
+    requiresAuth = true,
+  ): Promise<ApiResponse<T>> {
+    const url = `${this.baseURL}${endpoint}`;
+
+    const requestHeaders: Record<string, string> = {};
+
+    // Add authorization header if required
+    if (requiresAuth) {
+      const token = await authService.getIdToken();
+      if (token) {
+        requestHeaders['Authorization'] = `Bearer ${token}`;
+      }
+    }
+
+    // Don't set Content-Type header - let the browser set it with boundary
+    // for multipart/form-data
+
+    // Use longer timeout for file uploads (5 minutes for multiple image uploads to S3)
+    const uploadTimeout = 300000; // 5 minutes
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), uploadTimeout);
+
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: requestHeaders,
+        body: formData,
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      // Check if response is JSON before parsing
+      const contentType = response.headers.get('content-type');
+      const isJson = contentType && contentType.includes('application/json');
+
+      let data: any;
+
+      if (isJson) {
+        try {
+          data = await response.json();
+        } catch (jsonError) {
+          const text = await response.text();
+          console.error(
+            'Failed to parse JSON response:',
+            text.substring(0, 500),
+          );
+          return {
+            success: false,
+            message: 'Invalid JSON response from server',
+            error: `HTTP ${response.status}`,
+          };
+        }
+      } else {
+        const text = await response.text();
+        console.error('Non-JSON response received:', text.substring(0, 500));
+
+        let errorMessage = 'Request failed';
+        if (text.includes('<title>')) {
+          const titleMatch = text.match(/<title>(.*?)<\/title>/i);
+          if (titleMatch) {
+            errorMessage = titleMatch[1];
+          }
+        }
+
+        return {
+          success: false,
+          message:
+            errorMessage ||
+            `Server returned non-JSON response (${contentType || 'unknown'})`,
+          error: `HTTP ${response.status}`,
+        };
+      }
+
+      if (!response.ok) {
+        return {
+          success: false,
+          message: data.message || data.error || 'Request failed',
+          error: data.error || `HTTP ${response.status}`,
+        };
+      }
+
+      return data;
+    } catch (error: any) {
+      clearTimeout(timeoutId);
+
+      if (error.name === 'AbortError') {
+        return {
+          success: false,
+          message: 'Request timed out',
+          error: 'TIMEOUT',
+        };
+      }
+
+      console.error('API request error:', error);
+
+      return {
+        success: false,
+        message: error.message || 'Network error',
+        error: 'NETWORK_ERROR',
+      };
+    }
+  }
 }
 
 export const apiService = new ApiService();

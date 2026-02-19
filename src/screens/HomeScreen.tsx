@@ -6,12 +6,16 @@ import {
   ScrollView,
   TouchableOpacity,
   RefreshControl,
-  ActivityIndicator,
   Image,
   Dimensions,
   FlatList,
 } from 'react-native';
-import { EventCard, ScreenLayout } from '../components';
+import {
+  EventCard,
+  ScreenLayout,
+  EventCardSkeleton,
+  EventTypeCardSkeleton,
+} from '../components';
 import { Colors } from '../constants/colors';
 import { Spacing, FontSizes } from '../constants/spacing';
 import { Event } from '../types';
@@ -213,9 +217,50 @@ export const HomeScreen: React.FC<HomeScreenProps> = () => {
         }
       >
         {isLoading ? (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={Colors.primary} />
-          </View>
+          <>
+            <View style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>What's Happening Now</Text>
+              </View>
+              <View style={styles.carouselContainer}>
+                <EventCardSkeleton variant="large" />
+              </View>
+            </View>
+
+            <View style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>Discover Events</Text>
+              </View>
+              <View style={styles.eventsRow}>
+                {[1, 2, 3, 4].map((_, index) => (
+                  <View
+                    key={index}
+                    style={[
+                      {
+                        width: cardWidth,
+                        marginLeft:
+                          index % 2 === 0 ? leftMargin : gapBetweenCards,
+                        marginBottom: Spacing.md,
+                      },
+                    ]}
+                  >
+                    <EventCardSkeleton variant="small" />
+                  </View>
+                ))}
+              </View>
+            </View>
+
+            <View style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>Browse Events</Text>
+              </View>
+              <View style={styles.browseEventsSkeletonContainer}>
+                {[1, 2, 3, 4, 5].map((_, index) => (
+                  <EventTypeCardSkeleton key={index} />
+                ))}
+              </View>
+            </View>
+          </>
         ) : (
           <>
             <View style={styles.section}>
@@ -338,12 +383,14 @@ export const HomeScreen: React.FC<HomeScreenProps> = () => {
           </>
         )}
 
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Browse Events</Text>
+        {!isLoading && (
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Browse Events</Text>
+            </View>
+            <EventTypeCard />
           </View>
-          <EventTypeCard />
-        </View>
+        )}
       </ScrollView>
     </ScreenLayout>
   );
