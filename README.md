@@ -14,7 +14,6 @@ Hap (Happenings at places) is a React Native mobile app for creating, discoverin
 - [Testing](#testing)
 - [Development Guidelines](#development-guidelines)
 - [Troubleshooting](#troubleshooting)
-- [Additional Documentation](#additional-documentation)
 
 ## Features
 
