@@ -2,6 +2,15 @@
 
 Hap (Happenings at places) is a React Native mobile app for creating, discovering, and managing events. Users can organize events, browse what's happening nearby, join events through invite codes, and interact with other attendees.
 
+<p align="center">
+  <img src="public/image1.png" width="18%" />
+  <img src="public/image2.png" width="18%" />
+  <img src="public/image3.png" width="18%" />
+  <img src="public/image4.png" width="18%" />
+  <img src="public/image5.png" width="18%" />
+</p>
+
+
 ## Table of Contents
 
 - [Features](#features)
